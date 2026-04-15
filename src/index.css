@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  /* Stone texture colors */
-  --color-stone-light: #c4b59a;
-  --color-stone-dark: #8b7355;
-  --color-stone-accent: #6b5b3e;
-  --color-stone-bg: #2a2318;
-  --color-stone-border: #5a4a34;
+  /* Stone grey theme colors */
+  --color-stone-light: #b0b0b0;
+  --color-stone-dark: #4a4a4a;
+  --color-stone-accent: #606060;
+  --color-stone-bg: #2a2a2a;
+  --color-stone-border: #555555;
 
-  /* Player colors */
+  /* Player colors (kept for pieces/dice) */
   --color-player1: #d4a574;
   --color-player1-accent: #b8864e;
   --color-player1-dark: #8b6340;
@@ -17,8 +17,8 @@
   --color-player2-dark: #3d5a66;
 
   /* Board */
-  --color-board-bg: #3e3426;
-  --color-board-surface: #4a3d2e;
+  --color-board-bg: #333333;
+  --color-board-surface: #3d3d3d;
 
   /* Highlights */
   --color-highlight-valid: #4caf50;

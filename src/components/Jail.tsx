@@ -13,8 +13,8 @@ export default function Jail({ jail, validMoves, onClickJailPiece, currentPlayer
 
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-6 py-4 rounded-xl
-                    bg-stone-bg/80 border-2 border-stone-accent/40 min-w-[120px]">
-      <div className="text-xs font-heading uppercase tracking-wider text-stone-light/60">
+                    bg-[#3a3a3a] border-2 border-[#555] min-w-[120px] shadow-md">
+      <div className="text-xs font-heading uppercase tracking-wider text-white/70">
         Jail
       </div>
 

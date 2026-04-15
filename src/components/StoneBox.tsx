@@ -13,19 +13,14 @@ interface StoneBoxProps {
   isSelected?: boolean;
 }
 
-export default function StoneBox({ player, pieces, label, interactive, hinting, onClick, isSelected }: StoneBoxProps) {
-  const isP1 = player === 1;
-
+export default function StoneBox({ pieces, label, interactive, hinting, onClick, isSelected }: StoneBoxProps) {
   return (
     <div
       onClick={interactive ? onClick : undefined}
       className={`
         flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-xl
         border-2 min-w-[60px] w-[68px] transition-all
-        ${isP1
-          ? 'border-player1-accent/40 bg-player1-dark/20'
-          : 'border-player2-accent/40 bg-player2-dark/20'
-        }
+        border-[#555] bg-[#3a3a3a] shadow-md
         ${isSelected
           ? 'ring-3 ring-highlight-selected shadow-[0_0_20px_rgba(255,152,0,0.7)] brightness-125'
           : interactive
@@ -36,7 +31,7 @@ export default function StoneBox({ player, pieces, label, interactive, hinting, 
         }
       `}
     >
-      <div className="text-[8px] font-heading uppercase tracking-wider text-stone-light/50 leading-tight text-center">
+      <div className="text-[8px] font-heading uppercase tracking-wider text-white/70 leading-tight text-center">
         {label}
       </div>
 
@@ -48,19 +43,19 @@ export default function StoneBox({ player, pieces, label, interactive, hinting, 
       </div>
 
       {pieces.length > 6 && (
-        <span className={`text-[10px] ${isP1 ? 'text-player1/70' : 'text-player2/70'}`}>
+        <span className="text-[10px] text-white/70">
           +{pieces.length - 6}
         </span>
       )}
 
       {pieces.length > 0 && (
-        <div className={`text-[10px] font-bold ${isP1 ? 'text-player1' : 'text-player2'}`}>
+        <div className="text-[10px] font-bold text-white">
           {pieces.length}
         </div>
       )}
 
       {pieces.length === 0 && (
-        <div className="text-[9px] text-stone-light/25 italic">—</div>
+        <div className="text-[9px] text-white/30 italic">—</div>
       )}
     </div>
   );

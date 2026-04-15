@@ -100,7 +100,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
   return (
     <div className="flex flex-col gap-0 rounded-2xl border-4 border-stone-border bg-board-bg p-3 shadow-2xl"
       style={{
-        background: 'linear-gradient(135deg, #3e3426 0%, #332b1f 50%, #3e3426 100%)',
+        background: 'linear-gradient(135deg, #3a3a3a 0%, #2e2e2e 50%, #3a3a3a 100%)',
         boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
       }}
     >

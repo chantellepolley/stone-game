@@ -9,9 +9,9 @@ interface PieceProps {
 }
 
 const sizes = {
-  sm: { box: 'w-6 h-6', px: 24, icon: 16 },
-  md: { box: 'w-8 h-8', px: 32, icon: 22 },
-  lg: { box: 'w-10 h-10', px: 40, icon: 28 },
+  sm: { box: 'w-7 h-7', px: 28, icon: 18 },
+  md: { box: 'w-9 h-9', px: 36, icon: 24 },
+  lg: { box: 'w-11 h-11', px: 44, icon: 30 },
 };
 
 /** Jester/trickster mask SVG for crowned pieces */

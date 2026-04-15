@@ -4,10 +4,10 @@ export default function RulesPanel() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-xl border border-stone-accent bg-stone-dark overflow-hidden shadow-md">
+    <div className="rounded-xl border border-[#666] bg-[#4a4a4a] overflow-hidden shadow-md">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full px-3 py-2 flex items-center justify-between font-heading text-xs uppercase tracking-wider text-stone-light hover:text-white transition-colors cursor-pointer"
+        className="w-full px-3 py-2 flex items-center justify-between font-heading text-xs uppercase tracking-wider text-white hover:text-gray-300 transition-colors cursor-pointer"
       >
         <span>Rules</span>
         <span className="text-lg leading-none">{open ? '−' : '+'}</span>
