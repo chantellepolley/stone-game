@@ -12,15 +12,9 @@ export default function Game() {
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-6 gap-6">
-      {/* Title */}
-      <header className="text-center">
-        <h1 className="font-heading text-4xl tracking-widest text-stone-light uppercase"
-          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-          STONE
-        </h1>
-        <p className="text-xs text-stone-light/40 font-heading tracking-wider -mt-1">
-          A game of ancient temples
-        </p>
+      {/* Logo */}
+      <header>
+        <img src="/logo.png" alt="STONE" className="h-20 object-contain drop-shadow-lg" />
       </header>
 
       {/* Turn indicator */}
