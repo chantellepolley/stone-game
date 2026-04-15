@@ -176,6 +176,9 @@ export function getMultiStepMoves(state: GameState): Move[] {
   if (remaining.length < 2) return [];
   if (state.jail[player].length > 0) return [];
 
+  // Double Jokers: the mandatory 1 and 2 must be used as separate moves
+  if (state.dice.pendingDoubleJoker) return [];
+
   const moves: Move[] = [];
   const counts: Record<number, number> = {};
   for (const v of remaining) counts[v] = (counts[v] || 0) + 1;
