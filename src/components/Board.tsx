@@ -100,7 +100,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
   return (
     <div className="flex flex-col gap-0 rounded-2xl border-4 border-stone-border bg-board-bg p-3 shadow-2xl"
       style={{
-        background: 'linear-gradient(135deg, #3a3a3a 0%, #2e2e2e 50%, #3a3a3a 100%)',
+        background: 'linear-gradient(135deg, #3d3632 0%, #322d28 50%, #3d3632 100%)',
         boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
       }}
     >
@@ -116,20 +116,36 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           isSelected={selectedSource?.type === 'bench' && selectedSource.player === 1}
         />
 
-        <div className="grid grid-cols-10 gap-1 flex-1">
+        <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
           {topIndices.map(idx => (
-            <BoardSpace
-              key={idx}
-              index={idx}
-              pieces={state.board[idx]}
-              variant={getSpaceVariant(idx)}
-              isValidSource={validSourceSpaces.has(idx)}
-              isValidTarget={validTargetSpaces.has(idx)}
-              isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
-              currentPlayer={state.currentPlayer}
-              onClickSpace={() => handleClickSpace(idx)}
-              onClickPiece={handleClickPiece}
-            />
+            idx === 5
+              ? [
+                  <div key="divider-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />,
+                  <BoardSpace
+                    key={idx}
+                    index={idx}
+                    pieces={state.board[idx]}
+                    variant={getSpaceVariant(idx)}
+                    isValidSource={validSourceSpaces.has(idx)}
+                    isValidTarget={validTargetSpaces.has(idx)}
+                    isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
+                    currentPlayer={state.currentPlayer}
+                    onClickSpace={() => handleClickSpace(idx)}
+                    onClickPiece={handleClickPiece}
+                  />
+                ]
+              : <BoardSpace
+                  key={idx}
+                  index={idx}
+                  pieces={state.board[idx]}
+                  variant={getSpaceVariant(idx)}
+                  isValidSource={validSourceSpaces.has(idx)}
+                  isValidTarget={validTargetSpaces.has(idx)}
+                  isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
+                  currentPlayer={state.currentPlayer}
+                  onClickSpace={() => handleClickSpace(idx)}
+                  onClickPiece={handleClickPiece}
+                />
           ))}
         </div>
 
@@ -166,20 +182,36 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           isSelected={selectedSource?.type === 'bench' && selectedSource.player === 2}
         />
 
-        <div className="grid grid-cols-10 gap-1 flex-1">
-          {bottomIndices.map(idx => (
-            <BoardSpace
-              key={idx}
-              index={idx}
-              pieces={state.board[idx]}
-              variant={getSpaceVariant(idx)}
-              isValidSource={validSourceSpaces.has(idx)}
-              isValidTarget={validTargetSpaces.has(idx)}
-              isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
-              currentPlayer={state.currentPlayer}
-              onClickSpace={() => handleClickSpace(idx)}
-              onClickPiece={handleClickPiece}
-            />
+        <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
+          {bottomIndices.map((idx, i) => (
+            i === 5
+              ? [
+                  <div key="divider-bottom" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />,
+                  <BoardSpace
+                    key={idx}
+                    index={idx}
+                    pieces={state.board[idx]}
+                    variant={getSpaceVariant(idx)}
+                    isValidSource={validSourceSpaces.has(idx)}
+                    isValidTarget={validTargetSpaces.has(idx)}
+                    isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
+                    currentPlayer={state.currentPlayer}
+                    onClickSpace={() => handleClickSpace(idx)}
+                    onClickPiece={handleClickPiece}
+                  />
+                ]
+              : <BoardSpace
+                  key={idx}
+                  index={idx}
+                  pieces={state.board[idx]}
+                  variant={getSpaceVariant(idx)}
+                  isValidSource={validSourceSpaces.has(idx)}
+                  isValidTarget={validTargetSpaces.has(idx)}
+                  isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
+                  currentPlayer={state.currentPlayer}
+                  onClickSpace={() => handleClickSpace(idx)}
+                  onClickPiece={handleClickPiece}
+                />
           ))}
         </div>
 

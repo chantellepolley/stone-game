@@ -15,8 +15,8 @@ export default function MoveLog({ entries }: MoveLogProps) {
   }, [entries.length]);
 
   return (
-    <div className="flex flex-col rounded-xl border border-[#666] bg-[#4a4a4a] overflow-hidden shadow-md">
-      <div className="px-3 py-2 border-b border-[#666] font-heading text-xs uppercase tracking-wider text-white">
+    <div className="flex flex-col rounded-xl border border-[#6b5f55] bg-[#504840] overflow-hidden shadow-md">
+      <div className="px-3 py-2 border-b border-[#6b5f55] font-heading text-xs uppercase tracking-wider text-white">
         Move Log
       </div>
       <div ref={scrollRef} className="move-log overflow-y-auto max-h-[240px] p-2 space-y-1">

@@ -60,8 +60,8 @@ export default function BoardSpace({
       onClick={onClickSpace}
       style={{
         background: variant === 'light'
-          ? 'linear-gradient(180deg, #8a8a8a 0%, #707070 100%)'
-          : 'linear-gradient(180deg, #656565 0%, #505050 100%)',
+          ? 'linear-gradient(180deg, #918578 0%, #7a6f64 100%)'
+          : 'linear-gradient(180deg, #6b6058 0%, #57504a 100%)',
       }}
     >
       {/* Space index label */}

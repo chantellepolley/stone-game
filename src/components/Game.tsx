@@ -26,10 +26,11 @@ export default function Game() {
 
       {/* Main layout: sidebar + board + sidebar */}
       <div className="flex gap-3 items-start w-full max-w-[1100px] justify-center flex-1 min-h-0">
-        {/* Left sidebar: Move Log */}
+        {/* Left sidebar: Move Log + Rules + New Game */}
         <div className="hidden lg:flex flex-col gap-3 w-[200px] shrink-0">
           <MoveLog entries={state.moveLog} />
           <RulesPanel />
+          <GameControls onRestart={restart} />
         </div>
 
         {/* Board */}
@@ -41,7 +42,7 @@ export default function Game() {
           />
         </div>
 
-        {/* Right sidebar: Dice + Controls */}
+        {/* Right sidebar: Dice + Undo */}
         <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center">
           <DiceArea
             dice={state.dice}
@@ -51,7 +52,9 @@ export default function Game() {
             awaitingJokerChoice={awaitingJokerChoice}
             onChooseJokerDoubles={chooseJokerDoubles}
           />
-          <GameControls onRestart={restart} onUndo={undo} canUndo={canUndo} />
+          {canUndo && (
+            <GameControls onUndo={undo} canUndo={canUndo} />
+          )}
         </div>
       </div>
 

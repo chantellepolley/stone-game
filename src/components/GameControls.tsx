@@ -1,5 +1,5 @@
 interface GameControlsProps {
-  onRestart: () => void;
+  onRestart?: () => void;
   onUndo?: () => void;
   canUndo?: boolean;
 }
@@ -17,14 +17,16 @@ export default function GameControls({ onRestart, onUndo, canUndo }: GameControl
           Undo
         </button>
       )}
-      <button
-        onClick={onRestart}
-        className="px-4 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
-                   bg-[#4a4a4a] text-white border border-[#666]
-                   hover:bg-[#5a5a5a] transition-all cursor-pointer shadow-md"
-      >
-        New Game
-      </button>
+      {onRestart && (
+        <button
+          onClick={onRestart}
+          className="px-4 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55]
+                     hover:bg-[#5e5549] transition-all cursor-pointer shadow-md"
+        >
+          New Game
+        </button>
+      )}
     </div>
   );
 }

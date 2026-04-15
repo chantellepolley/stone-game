@@ -76,10 +76,11 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
       title={`${isP1 ? 'Sunstone' : 'Moonstone'}${piece.crowned ? ' (Crowned - Jester)' : ''}`}
       style={{
         backgroundImage: `url('/stone-bg.jpg')`,
-        backgroundSize: '200px',
+        backgroundSize: '150px',
         backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
-        boxShadow: '0 3px 6px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.4)',
-        filter: 'brightness(1.4)',
+        boxShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08) inset',
+        filter: 'brightness(1.3) contrast(1.1)',
+        border: `2px solid ${isP1 ? 'rgba(160,120,70,0.5)' : 'rgba(80,120,160,0.5)'}`,
       }}
     >
       {/* Color tint overlay */}
@@ -88,9 +89,9 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
         style={{ backgroundColor: tintOverlay }}
       />
 
-      {/* Subtle inner shadow for 3D carved look */}
+      {/* Chiseled stone inner shadow */}
       <div className="absolute inset-0 rounded-full"
-        style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4), inset 0 -1px 2px rgba(255,255,255,0.1)' }}
+        style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08), inset 0 0 12px rgba(0,0,0,0.2)' }}
       />
 
       {/* Crowned jester icon */}

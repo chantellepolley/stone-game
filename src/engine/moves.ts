@@ -138,8 +138,8 @@ export function getValidMoves(state: GameState, diceValue: number): Move[] {
     return moves;
   }
 
-  // Bench entry
-  if (state.bench[player].length > 0) {
+  // Bench entry — only dice values 1-5 can enter (no 6)
+  if (state.bench[player].length > 0 && diceValue <= 5) {
     const entryRoutePos = diceValue - 1;
     if (entryRoutePos < ROUTE_LENGTH) {
       const dest = spaceAt(entryRoutePos, player);
@@ -155,11 +155,12 @@ export function getValidMoves(state: GameState, diceValue: number): Move[] {
     }
   }
 
-  // Board moves
+  // Board moves — a single die of 6 cannot bear off (only move on board)
   const seen = new Set<string>();
   for (const piece of getBoardPieces(state, player)) {
     const m = tryMove(state, piece, diceValue, 1, [diceValue], player);
     if (m) {
+      if (diceValue === 6 && m.bearsOff) continue; // can't bear off with a 6
       const key = `${m.pieceId}:${m.to.type === 'home' ? 'H' : m.to.index}`;
       if (!seen.has(key)) { seen.add(key); moves.push(m); }
     }
