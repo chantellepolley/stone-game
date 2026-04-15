@@ -25,7 +25,7 @@ export default function Game() {
       />
 
       {/* Main layout: sidebar + board + sidebar */}
-      <div className="flex gap-3 items-start w-full max-w-[1100px] justify-center flex-1 min-h-0">
+      <div className="flex gap-3 items-start w-full max-w-[1250px] justify-center flex-1 min-h-0">
         {/* Left sidebar: Move Log + Rules + New Game */}
         <div className="hidden lg:flex flex-col gap-3 w-[200px] shrink-0">
           <MoveLog entries={state.moveLog} />
@@ -34,7 +34,7 @@ export default function Game() {
         </div>
 
         {/* Board */}
-        <div className="flex-1 max-w-[750px]">
+        <div className="flex-1 max-w-[900px]">
           <Board
             state={state}
             validMoves={validMoves}

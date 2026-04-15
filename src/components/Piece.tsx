@@ -76,7 +76,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
       title={`${isP1 ? 'Sunstone' : 'Moonstone'}${piece.crowned ? ' (Crowned - Jester)' : ''}`}
       style={{
         backgroundImage: `url('/stone-bg.jpg')`,
-        backgroundSize: '150px',
+        backgroundSize: '100px',
         backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
         boxShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08) inset',
         filter: 'brightness(1.3) contrast(1.1)',

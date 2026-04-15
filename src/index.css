@@ -25,8 +25,8 @@
   --color-highlight-selected: #ff9800;
 
   /* Fonts */
-  --font-heading: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Cinzel", "Trajan Pro", "Copperplate", "Small Caps", system-ui, sans-serif;
+  --font-body: "Inter", "Helvetica Neue", "Arial", system-ui, sans-serif;
 }
 
 body {
