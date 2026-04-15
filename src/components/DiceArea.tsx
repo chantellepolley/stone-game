@@ -171,7 +171,7 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
 
       {/* Remaining moves indicator */}
       {dice.hasRolled && phase === 'moving' && !awaitingJokerChoice && dice.remaining.length > 0 && (
-        <div className="text-xs text-stone-light/60">
+        <div className="text-xs text-stone-light font-bold">
           Moves left: {dice.remaining.join(', ')}
         </div>
       )}
