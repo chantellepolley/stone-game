@@ -34,7 +34,7 @@ body {
   color: #c4b59a;
   font-family: var(--font-body);
   min-height: 100vh;
-  background: #1a1510 url('/stone-bg.jpg') center / cover fixed;
+  background: #1a1510 url('/stone-bg.jpg') center / 150% fixed;
 }
 
 #root {
