@@ -62,10 +62,11 @@ function applyMove(prev: GameState, move: Move): GameState {
   if (prev.phase !== 'moving') return prev;
   const newState = executeMove(prev, move);
 
-  // Play sound effects based on what happened
+  // Play sound effects
   if (move.bearsOff) playHomeSound();
   else if (move.captures) playJailedSound();
   else if (move.crowns) playCrownedSound();
+
 
   const winner = checkWinCondition(newState);
   if (winner) {
