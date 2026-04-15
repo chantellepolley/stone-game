@@ -106,6 +106,7 @@ export function useGame() {
   const [state, setState] = useState<GameState>(createInitialState);
   const undoStack = useRef<GameState[]>([]);
   const aiTimerRef = useRef<number | null>(null);
+  const [pendingAIMove, setPendingAIMove] = useState<Move | null>(null);
 
   const isAITurn = state.gameMode === 'ai' && state.currentPlayer === 2 && state.phase !== 'not_started' && state.phase !== 'game_over';
 
@@ -185,11 +186,15 @@ export function useGame() {
         const allMoves = computeValidMoves(state);
         if (allMoves.length === 0) return;
 
-        // Pick and execute a move
-        await delay(2500);
+        // Pick move, show animation, then execute
+        await delay(1500);
         if (cancelled) return;
         const bestMove = chooseBestMove(state, allMoves, state.aiDifficulty);
         if (bestMove) {
+          setPendingAIMove(bestMove);        // Board will animate this
+          await delay(500);                  // Wait for animation
+          if (cancelled) return;
+          setPendingAIMove(null);
           setState(prev => applyMove(prev, bestMove));
         }
       }
@@ -214,7 +219,7 @@ export function useGame() {
   return {
     state, roll, selectMove, restart, validMoves,
     awaitingJokerChoice, chooseJokerDoubles,
-    undo, canUndo, startGame, isAITurn,
+    undo, canUndo, startGame, isAITurn, pendingAIMove,
   };
 }
 

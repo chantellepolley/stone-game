@@ -9,7 +9,7 @@ import GameControls from './GameControls';
 import StartScreen from './StartScreen';
 
 export default function Game() {
-  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn } = useGame();
+  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove } = useGame();
 
   // Show start screen before game begins
   if (state.phase === 'not_started') {
@@ -50,6 +50,7 @@ export default function Game() {
             state={state}
             validMoves={isAITurn ? [] : validMoves}
             onSelectMove={selectMove}
+            pendingAIMove={pendingAIMove}
           />
         </div>
 

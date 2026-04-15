@@ -10,6 +10,7 @@ interface BoardProps {
   state: GameState;
   validMoves: Move[];
   onSelectMove: (move: Move) => void;
+  pendingAIMove?: Move | null;
 }
 
 type SelectedSource =
@@ -34,7 +35,7 @@ interface DragState {
 
 const ANIM_MS = 350;
 
-export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
+export default function Board({ state, validMoves, onSelectMove, pendingAIMove }: BoardProps) {
   const [selected, setSelected] = useState<SelectedSource>(null);
   const [anim, setAnim] = useState<AnimState | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -78,6 +79,14 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
     return { x: er.left - br.left + er.width / 2, y: er.top - br.top + er.height / 2 };
   }
 
+  // ── AI move animation ──
+  useEffect(() => {
+    if (pendingAIMove) {
+      animateMove(pendingAIMove, true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAIMove]);
+
   // ── Two-frame animation ──
   useEffect(() => {
     if (anim?.phase === 'start') {
@@ -102,7 +111,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
     }
   }, [anim?.phase, onSelectMove]);
 
-  function animateMove(move: Move) {
+  function animateMove(move: Move, isAI = false) {
     let piece: PieceType | undefined;
     if (move.from.type === 'board') piece = state.board[move.from.index].find(p => p.id === move.pieceId);
     else if (move.from.type === 'bench') piece = state.bench[state.currentPlayer].find(p => p.id === move.pieceId);
@@ -112,8 +121,9 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
     const toKey = move.to.type === 'board' ? `space-${move.to.index}` : `home-${state.currentPlayer}`;
     const from = getCenter(fromKey); const to = getCenter(toKey);
 
-    if (!piece || !from || !to) { onSelectMove(move); return; }
-    pendingMove.current = move;
+    if (!piece || !from || !to) { if (!isAI) onSelectMove(move); return; }
+    // Only queue onSelectMove callback for human moves; AI handles its own state
+    pendingMove.current = isAI ? null : move;
     setAnim({ piece, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, phase: 'start' });
   }
 
@@ -146,12 +156,14 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
     const br = boardRef.current?.getBoundingClientRect();
     if (!br) { setDrag(null); return; }
 
-    // Find which space we dropped on
     const dropX = e.clientX; const dropY = e.clientY;
     let droppedMove: Move | null = null;
 
-    // Check target spaces
-    for (const m of movesForSelected) {
+    // Find moves for the dragged piece specifically
+    const dragMoves = validMoves.filter(m => m.pieceId === drag.pieceId);
+
+    // Check all target spaces and home boxes
+    for (const m of dragMoves) {
       const key = m.to.type === 'board' ? `space-${m.to.index}` : `home-${state.currentPlayer}`;
       const el = refs.current[key];
       if (!el) continue;
@@ -163,9 +175,9 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
     }
 
     setDrag(null);
+    setSelected(null);
     if (droppedMove) {
       animateMove(droppedMove);
-      setSelected(null);
     }
   }
 
