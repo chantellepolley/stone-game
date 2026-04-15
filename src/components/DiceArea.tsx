@@ -53,10 +53,10 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
   const dots = !joker ? (DOT_POSITIONS[value] || []) : [];
   const isP1 = player === 1;
 
-  // Player-colored dice
+  // Player-colored dice — fully opaque
   const normalBg = isP1
-    ? 'bg-player1/90 border-player1-accent shadow-md'
-    : 'bg-player2/90 border-player2-accent shadow-md';
+    ? 'bg-player1 border-player1-accent shadow-lg'
+    : 'bg-player2 border-player2-accent shadow-lg';
   const dotColor = isP1 ? '#3d2a14' : '#1a2e38';
   const dotFaded = '#8b735580';
 
@@ -64,9 +64,9 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
     <div className={`
       relative w-14 h-14 rounded-lg border-2 flex items-center justify-center
       ${used
-        ? 'bg-stone-dark/40 border-stone-accent/20 opacity-40'
+        ? 'bg-stone-dark border-stone-accent/40 opacity-50'
         : joker
-          ? 'bg-amber-50 border-amber-600/60 shadow-md shadow-amber-900/20'
+          ? 'bg-amber-50 border-amber-600 shadow-lg'
           : normalBg
       }
       ${rolling ? 'dice-rolling' : ''}
