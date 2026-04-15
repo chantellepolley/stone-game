@@ -55,10 +55,10 @@ function tryMove(
   const newPos = piece.routePos + totalDist;
   const fromSpace = spaceAt(piece.routePos, player);
 
-  // Bearing off
+  // Bearing off — piece must ALREADY be crowned (on the home stretch) before this move.
+  // No skipping straight to Home from early in the route.
   if (newPos >= ROUTE_LENGTH) {
-    const crownedOrWillBe = piece.crowned || willCrownOnPath(piece.routePos, totalDist, player);
-    if (!crownedOrWillBe) return null;
+    if (!piece.crowned) return null;
     const isExact = newPos === ROUTE_LENGTH;
     if (!isExact && !GAME_CONFIG.BEAR_OFF_ALLOW_OVERSHOOT) return null;
     if (!isExact && hasFartherCrownedPiece(state, piece.id, piece.routePos, player)) return null;
@@ -67,7 +67,7 @@ function tryMove(
       from: { type: 'board', index: fromSpace },
       to: { type: 'home' },
       diceValue: totalDist, diceCount, diceConsumed,
-      captures: false, crowns: !piece.crowned, bearsOff: true,
+      captures: false, crowns: false, bearsOff: true,
     };
   }
 
@@ -83,16 +83,6 @@ function tryMove(
     crowns: !piece.crowned && isInHomeStretch(newPos),
     bearsOff: false,
   };
-}
-
-/** Check if a piece would pass through the home stretch during a move. */
-function willCrownOnPath(routePos: number, totalDist: number, _player: PlayerId): boolean {
-  for (let d = 1; d <= totalDist; d++) {
-    const pos = routePos + d;
-    if (pos >= ROUTE_LENGTH) return false;
-    if (isInHomeStretch(pos)) return true;
-  }
-  return false;
 }
 
 /** Check intermediate positions for equal-step path (doubles). */
