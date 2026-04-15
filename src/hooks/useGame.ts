@@ -155,7 +155,7 @@ export function useGame() {
     const playAITurn = async () => {
       // Rolling phase
       if (state.phase === 'rolling') {
-        await delay(1200);
+        await delay(2000);
         if (cancelled) return;
         setState(applyRoll);
         return;
@@ -166,7 +166,7 @@ export function useGame() {
         // Handle Joker doubles choice
         const awaitingChoice = state.dice.pendingDoubleJoker && state.dice.remaining.length === 0;
         if (awaitingChoice) {
-          await delay(1000);
+          await delay(2000);
           if (cancelled) return;
           const value = chooseBestJokerValue(state, state.aiDifficulty);
           setState(prev => applyJokerChoice(prev, value));
@@ -178,7 +178,7 @@ export function useGame() {
         if (allMoves.length === 0) return;
 
         // Pick and execute a move
-        await delay(1500);
+        await delay(2500);
         if (cancelled) return;
         const bestMove = chooseBestMove(state, allMoves, state.aiDifficulty);
         if (bestMove) {
