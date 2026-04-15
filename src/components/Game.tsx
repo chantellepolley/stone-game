@@ -14,7 +14,7 @@ export default function Game() {
     <div className="min-h-screen flex flex-col items-center px-4 py-6 gap-6">
       {/* Logo */}
       <header>
-        <img src="/logo.png" alt="STONE" className="h-44 object-contain drop-shadow-lg" />
+        <img src="/logo.png" alt="STONE" className="h-64 object-contain drop-shadow-lg" />
       </header>
 
       {/* Turn indicator */}
