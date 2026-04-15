@@ -120,7 +120,7 @@ export function getValidMoves(state: GameState, diceValue: number): Move[] {
   const player = state.currentPlayer;
   const moves: Move[] = [];
 
-  // Jail re-entry (mandatory)
+  // Jail re-entry (mandatory) — never crown on re-entry, piece starts fresh
   if (state.jail[player].length > 0) {
     const entryRoutePos = diceValue - 1;
     if (entryRoutePos < ROUTE_LENGTH) {
@@ -131,7 +131,7 @@ export function getValidMoves(state: GameState, diceValue: number): Move[] {
           from: { type: 'jail' }, to: { type: 'board', index: dest },
           diceValue, diceCount: 1, diceConsumed: [diceValue],
           captures: wouldCapture(state.board, dest, player),
-          crowns: isInHomeStretch(entryRoutePos), bearsOff: false,
+          crowns: false, bearsOff: false,
         });
       }
     }
@@ -186,12 +186,16 @@ export function getMultiStepMoves(state: GameState): Move[] {
     const step = Number(vs);
 
     // Bench entry with same-value combo
+    // Pieces entering from bench/jail can never be crowned — they must
+    // physically travel the first two rows before reaching the home stretch.
     if (state.bench[player].length > 0) {
       const piece = state.bench[player][0];
       for (let n = 2; n <= count; n++) {
         const total = step * n;
         const entryPos = total - 1;
         if (entryPos >= ROUTE_LENGTH) break;
+        // Cap bench entry before home stretch — piece must earn its way there
+        if (isInHomeStretch(entryPos)) break;
         let ok = true;
         for (let s = 1; s < n; s++) {
           const mid = step * s - 1;
@@ -205,7 +209,7 @@ export function getMultiStepMoves(state: GameState): Move[] {
           to: { type: 'board', index: dest },
           diceValue: total, diceCount: n, diceConsumed: Array(n).fill(step),
           captures: wouldCapture(state.board, dest, player),
-          crowns: isInHomeStretch(entryPos), bearsOff: false,
+          crowns: false, bearsOff: false,
         });
       }
     }
@@ -238,11 +242,11 @@ export function getMultiStepMoves(state: GameState): Move[] {
       const total = a + b;
       const consumed = [a, b];
 
-      // Bench entry with mixed combo
+      // Bench entry with mixed combo — never crown, never enter home stretch
       if (state.bench[player].length > 0) {
         const piece = state.bench[player][0];
         const entryPos = total - 1;
-        if (entryPos < ROUTE_LENGTH) {
+        if (entryPos < ROUTE_LENGTH && !isInHomeStretch(entryPos)) {
           const midA = a - 1, midB = b - 1;
           const midAOk = midA < ROUTE_LENGTH && canLandOn(state.board, spaceAt(midA, player), player);
           const midBOk = midB < ROUTE_LENGTH && canLandOn(state.board, spaceAt(midB, player), player);
@@ -254,7 +258,7 @@ export function getMultiStepMoves(state: GameState): Move[] {
                 to: { type: 'board', index: dest },
                 diceValue: total, diceCount: 2, diceConsumed: consumed,
                 captures: wouldCapture(state.board, dest, player),
-                crowns: isInHomeStretch(entryPos), bearsOff: false,
+                crowns: false, bearsOff: false,
               });
             }
           }
