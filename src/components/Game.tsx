@@ -13,8 +13,8 @@ export default function Game() {
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-6 gap-6">
       {/* Logo */}
-      <header>
-        <img src="/logo.png" alt="STONE" className="h-64 object-contain drop-shadow-lg" />
+      <header className="overflow-hidden" style={{ marginBottom: '-12px' }}>
+        <img src="/logo.png" alt="STONE" className="h-48 object-contain mix-blend-lighten" />
       </header>
 
       {/* Turn indicator */}
