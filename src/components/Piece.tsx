@@ -14,25 +14,6 @@ const sizes = {
   lg: { box: 'w-13 h-13', px: 52, icon: 34 },
 };
 
-/** Jester/trickster mask SVG for crowned pieces */
-function JesterIcon({ size, color }: { size: number; color: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <path d="M6 15 L10 5 L14 11 L16 3 L18 11 L22 5 L26 15"
-        stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="10" cy="4.5" r="1.8" fill={color} opacity="0.8" />
-      <circle cx="16" cy="2.5" r="1.8" fill={color} opacity="0.8" />
-      <circle cx="22" cy="4.5" r="1.8" fill={color} opacity="0.8" />
-      <circle cx="16" cy="21" r="8" fill="rgba(255,255,255,0.15)" stroke={color} strokeWidth="1.2" />
-      <path d="M12 19 L13 17.5 L14 19 L13 20.5 Z" fill={color} />
-      <path d="M18 19 L19 17.5 L20 19 L19 20.5 Z" fill={color} />
-      <path d="M11 23.5 Q16 28 21 23.5" stroke={color} strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      <line x1="14" y1="24.5" x2="14" y2="25.8" stroke={color} strokeWidth="0.7" />
-      <line x1="16" y1="25" x2="16" y2="26.3" stroke={color} strokeWidth="0.7" />
-      <line x1="18" y1="24.5" x2="18" y2="25.8" stroke={color} strokeWidth="0.7" />
-    </svg>
-  );
-}
 
 export default function Piece({ piece, size = 'md', onClick, highlighted, className = '' }: PieceProps) {
   const isP1 = piece.owner === 1;
@@ -59,8 +40,6 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
     : '';
 
   const clickable = onClick ? 'cursor-pointer hover:scale-105' : '';
-
-  const jesterColor = isP1 ? '#fbbf24' : '#93c5fd';
 
   return (
     <div
@@ -94,11 +73,13 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
         style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08), inset 0 0 12px rgba(0,0,0,0.2)' }}
       />
 
-      {/* Crowned jester icon */}
+      {/* Crowned: jester face image replaces stone texture */}
       {piece.crowned && (
-        <div className="relative z-10">
-          <JesterIcon size={s.icon} color={jesterColor} />
-        </div>
+        <img
+          src="/jester.png"
+          alt="Crowned"
+          className="absolute inset-0 w-full h-full rounded-full object-cover z-10"
+        />
       )}
     </div>
   );
