@@ -39,16 +39,14 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
   const s = sizes[size];
 
   // Player-colored border and tint overlay
-  const borderColor = 'border-transparent';
-
-  // Color overlay for player differentiation on top of stone texture
+  // Lighter color overlay for player differentiation
   const tintOverlay = piece.crowned
     ? isP1
-      ? 'rgba(120, 60, 0, 0.55)'   // dark amber tint
-      : 'rgba(30, 30, 100, 0.55)'   // dark indigo tint
+      ? 'rgba(180, 120, 40, 0.35)'  // warm amber tint
+      : 'rgba(60, 80, 140, 0.35)'   // cool indigo tint
     : isP1
-      ? 'rgba(160, 100, 40, 0.45)'  // warm orange/sandstone tint
-      : 'rgba(50, 80, 110, 0.45)';  // cool blue/slate tint
+      ? 'rgba(200, 140, 60, 0.25)'  // light warm sandstone tint
+      : 'rgba(70, 110, 150, 0.25)'; // light cool slate tint
 
   const crownedStyle = piece.crowned
     ? 'ring-2 ring-amber-400/70 shadow-[0_0_10px_rgba(255,180,0,0.5)]'
@@ -65,11 +63,11 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
   return (
     <div
       className={`
-        ${s.box} rounded-full border-2 relative overflow-hidden
-        ${borderColor} ${crownedStyle} ${highlightStyle} ${clickable}
+        ${s.box} rounded-full relative overflow-hidden
+        ${crownedStyle} ${highlightStyle} ${clickable}
         flex items-center justify-center
         transition-transform duration-150
-        shadow-md piece-enter
+        piece-enter
         ${className}
       `}
       onClick={onClick}
@@ -78,6 +76,8 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
         backgroundImage: `url('/stone-bg.jpg')`,
         backgroundSize: '200px',
         backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
+        boxShadow: '0 3px 6px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.4)',
+        filter: 'brightness(1.4)',
       }}
     >
       {/* Color tint overlay */}
