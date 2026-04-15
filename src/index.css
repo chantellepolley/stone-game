@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@theme {
+  /* Stone texture colors */
+  --color-stone-light: #c4b59a;
+  --color-stone-dark: #8b7355;
+  --color-stone-accent: #6b5b3e;
+  --color-stone-bg: #2a2318;
+  --color-stone-border: #5a4a34;
+
+  /* Player colors */
+  --color-player1: #d4a574;
+  --color-player1-accent: #b8864e;
+  --color-player1-dark: #8b6340;
+  --color-player2: #7b9aa8;
+  --color-player2-accent: #5a7d8b;
+  --color-player2-dark: #3d5a66;
+
+  /* Board */
+  --color-board-bg: #3e3426;
+  --color-board-surface: #4a3d2e;
+
+  /* Highlights */
+  --color-highlight-valid: #4caf50;
+  --color-highlight-selected: #ff9800;
+
+  /* Fonts */
+  --font-heading: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #1a1510;
+  color: #c4b59a;
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Dice dot patterns */
+.dice-face {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 1px;
+}
+
+.dice-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2a2318;
+}
+
+/* Scrollbar styling for move log */
+.move-log::-webkit-scrollbar {
+  width: 6px;
+}
+.move-log::-webkit-scrollbar-track {
+  background: #2a2318;
+}
+.move-log::-webkit-scrollbar-thumb {
+  background: #5a4a34;
+  border-radius: 3px;
+}
+
+/* Piece entrance animation */
+@keyframes piece-place {
+  from {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.piece-enter {
+  animation: piece-place 0.2s ease-out;
+}
+
+/* Pulse for valid move targets */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(76, 175, 80, 0.4); }
+  50% { box-shadow: 0 0 12px rgba(76, 175, 80, 0.8); }
+}
+.pulse-valid {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* Dice roll animation */
+@keyframes dice-roll {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(0.9); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  75% { transform: rotate(270deg) scale(0.9); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.dice-rolling {
+  animation: dice-roll 0.4s ease-out;
+}
