@@ -287,7 +287,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
     >
       {/* Top row */}
       <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
-        <div ref={el => setRef('bench-1', el)}>
+        <div ref={el => setRef('bench-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.bench[1]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 1}
             currentPlayer={state.currentPlayer}
@@ -304,7 +304,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
           )}
         </div>
 
-        <div ref={el => setRef('home-1', el)}>
+        <div ref={el => setRef('home-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.home[1]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === 1}
             hinting={anyBearOffP1} currentPlayer={state.currentPlayer}
@@ -323,7 +323,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
 
       {/* Bottom row */}
       <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
-        <div ref={el => setRef('bench-2', el)}>
+        <div ref={el => setRef('bench-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.bench[2]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 2}
             currentPlayer={state.currentPlayer}
@@ -340,7 +340,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
           )}
         </div>
 
-        <div ref={el => setRef('home-2', el)}>
+        <div ref={el => setRef('home-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.home[2]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === 2}
             hinting={anyBearOffP2} currentPlayer={state.currentPlayer}
