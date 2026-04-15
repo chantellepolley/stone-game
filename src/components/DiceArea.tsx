@@ -48,9 +48,17 @@ function JokerFaceSVG({ faded }: { faded: boolean }) {
   );
 }
 
-function DieFace({ value, used, rolling }: { value: number; used: boolean; rolling: boolean }) {
+function DieFace({ value, used, rolling, player }: { value: number; used: boolean; rolling: boolean; player: PlayerId }) {
   const joker = isJoker(value);
   const dots = !joker ? (DOT_POSITIONS[value] || []) : [];
+  const isP1 = player === 1;
+
+  // Player-colored dice
+  const normalBg = isP1
+    ? 'bg-player1/90 border-player1-accent shadow-md'
+    : 'bg-player2/90 border-player2-accent shadow-md';
+  const dotColor = isP1 ? '#3d2a14' : '#1a2e38';
+  const dotFaded = '#8b735580';
 
   return (
     <div className={`
@@ -59,7 +67,7 @@ function DieFace({ value, used, rolling }: { value: number; used: boolean; rolli
         ? 'bg-stone-dark/40 border-stone-accent/20 opacity-40'
         : joker
           ? 'bg-amber-50 border-amber-600/60 shadow-md shadow-amber-900/20'
-          : 'bg-stone-light border-stone-accent/60 shadow-md'
+          : normalBg
       }
       ${rolling ? 'dice-rolling' : ''}
       transition-opacity duration-300
@@ -74,7 +82,7 @@ function DieFace({ value, used, rolling }: { value: number; used: boolean; rolli
               cx={cx}
               cy={cy}
               r={4}
-              fill={used ? '#8b735580' : '#2a2318'}
+              fill={used ? dotFaded : dotColor}
             />
           ))}
         </svg>
@@ -122,8 +130,8 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
       {/* Dice display */}
       {dice.hasRolled && (
         <div className="flex gap-3">
-          <DieFace value={dice.values[0]} used={diceUsed[0]} rolling={rolling} />
-          <DieFace value={dice.values[1]} used={diceUsed[1]} rolling={rolling} />
+          <DieFace value={dice.values[0]} used={diceUsed[0]} rolling={rolling} player={currentPlayer} />
+          <DieFace value={dice.values[1]} used={diceUsed[1]} rolling={rolling} player={currentPlayer} />
         </div>
       )}
 
