@@ -4,6 +4,7 @@ import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, execute
 import { isJoker } from '../engine/dice';
 import { chooseBestMove, chooseBestJokerValue } from '../engine/ai';
 import { GAME_CONFIG } from '../config/gameConfig';
+import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
 
 function applyRoll(prev: GameState): GameState {
   if (prev.phase !== 'rolling') return prev;
@@ -60,6 +61,12 @@ function applyRoll(prev: GameState): GameState {
 function applyMove(prev: GameState, move: Move): GameState {
   if (prev.phase !== 'moving') return prev;
   const newState = executeMove(prev, move);
+
+  // Play sound effects based on what happened
+  if (move.bearsOff) playHomeSound();
+  else if (move.captures) playJailedSound();
+  else if (move.crowns) playCrownedSound();
+
   const winner = checkWinCondition(newState);
   if (winner) {
     return { ...newState, winner, phase: 'game_over' };
