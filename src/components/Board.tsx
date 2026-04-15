@@ -43,9 +43,9 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
     if (m.to.type === 'home') canBearOff = true;
   });
 
-  // Check if ANY valid move is a bear-off (hint glow even before selecting a source)
-  const anyBearOffP1 = state.currentPlayer === 1 && validMoves.some(m => m.to.type === 'home');
-  const anyBearOffP2 = state.currentPlayer === 2 && validMoves.some(m => m.to.type === 'home');
+  // Hint glow for home boxes — only when no source selected yet, or when selected source can bear off
+  const anyBearOffP1 = !selectedSource && state.currentPlayer === 1 && validMoves.some(m => m.to.type === 'home');
+  const anyBearOffP2 = !selectedSource && state.currentPlayer === 2 && validMoves.some(m => m.to.type === 'home');
 
   const handleClickSpace = (index: number) => {
     if (selectedSource && validTargetSpaces.has(index)) {
@@ -110,7 +110,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           player={1}
           pieces={state.bench[1]}
           label="Start"
-          interactive={hasBenchMoves && state.currentPlayer === 1}
+          interactive={!selectedSource && hasBenchMoves && state.currentPlayer === 1}
           currentPlayer={state.currentPlayer}
           onClick={() => handleClickBench(1)}
           isSelected={selectedSource?.type === 'bench' && selectedSource.player === 1}
@@ -126,7 +126,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
                     index={idx}
                     pieces={state.board[idx]}
                     variant={getSpaceVariant(idx)}
-                    isValidSource={validSourceSpaces.has(idx)}
+                    isValidSource={!selectedSource && validSourceSpaces.has(idx)}
                     isValidTarget={validTargetSpaces.has(idx)}
                     isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
                     currentPlayer={state.currentPlayer}
@@ -139,7 +139,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
                   index={idx}
                   pieces={state.board[idx]}
                   variant={getSpaceVariant(idx)}
-                  isValidSource={validSourceSpaces.has(idx)}
+                  isValidSource={!selectedSource && validSourceSpaces.has(idx)}
                   isValidTarget={validTargetSpaces.has(idx)}
                   isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
                   currentPlayer={state.currentPlayer}
@@ -176,7 +176,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           player={2}
           pieces={state.bench[2]}
           label="Start"
-          interactive={hasBenchMoves && state.currentPlayer === 2}
+          interactive={!selectedSource && hasBenchMoves && state.currentPlayer === 2}
           currentPlayer={state.currentPlayer}
           onClick={() => handleClickBench(2)}
           isSelected={selectedSource?.type === 'bench' && selectedSource.player === 2}
@@ -192,7 +192,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
                     index={idx}
                     pieces={state.board[idx]}
                     variant={getSpaceVariant(idx)}
-                    isValidSource={validSourceSpaces.has(idx)}
+                    isValidSource={!selectedSource && validSourceSpaces.has(idx)}
                     isValidTarget={validTargetSpaces.has(idx)}
                     isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
                     currentPlayer={state.currentPlayer}
@@ -205,7 +205,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
                   index={idx}
                   pieces={state.board[idx]}
                   variant={getSpaceVariant(idx)}
-                  isValidSource={validSourceSpaces.has(idx)}
+                  isValidSource={!selectedSource && validSourceSpaces.has(idx)}
                   isValidTarget={validTargetSpaces.has(idx)}
                   isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
                   currentPlayer={state.currentPlayer}
