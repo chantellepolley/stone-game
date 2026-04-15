@@ -22,7 +22,7 @@ export default function StoneBox({ pieces, label, interactive, hinting, currentP
       onClick={interactive ? onClick : undefined}
       className={`
         flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-xl
-        border-2 min-w-[60px] w-[68px] transition-all
+        border-2 min-w-[80px] w-[90px] transition-all overflow-hidden
         border-[#555] bg-[#3a3a3a] shadow-md
         ${isSelected
           ? `ring-3 ${ringColor} brightness-125 ${pulseClass}`
@@ -39,15 +39,15 @@ export default function StoneBox({ pieces, label, interactive, hinting, currentP
       </div>
 
       {/* Stacked pieces */}
-      <div className="flex flex-wrap justify-center gap-0.5 max-w-[50px]">
-        {pieces.slice(0, 6).map(piece => (
+      <div className="flex flex-wrap justify-center gap-0.5 max-w-[76px]">
+        {pieces.slice(0, 4).map(piece => (
           <Piece key={piece.id} piece={piece} size="sm" />
         ))}
       </div>
 
-      {pieces.length > 6 && (
+      {pieces.length > 4 && (
         <span className="text-[10px] text-white/70">
-          +{pieces.length - 6}
+          +{pieces.length - 4}
         </span>
       )}
 
