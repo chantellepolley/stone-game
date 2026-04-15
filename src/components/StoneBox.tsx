@@ -7,11 +7,13 @@ interface StoneBoxProps {
   label: string;
   /** Interactive: can be clicked to select (bench) or bear off (home) */
   interactive?: boolean;
+  /** Hint glow: a bear-off move exists but source isn't selected yet */
+  hinting?: boolean;
   onClick?: () => void;
   isSelected?: boolean;
 }
 
-export default function StoneBox({ player, pieces, label, interactive, onClick, isSelected }: StoneBoxProps) {
+export default function StoneBox({ player, pieces, label, interactive, hinting, onClick, isSelected }: StoneBoxProps) {
   const isP1 = player === 1;
 
   return (
@@ -27,7 +29,9 @@ export default function StoneBox({ player, pieces, label, interactive, onClick, 
         ${isSelected
           ? 'ring-3 ring-highlight-selected shadow-[0_0_20px_rgba(255,152,0,0.7)] brightness-125'
           : interactive
-          ? 'ring-2 ring-highlight-valid shadow-[0_0_14px_rgba(76,175,80,0.6)] cursor-pointer hover:brightness-120 pulse-valid'
+          ? 'ring-3 ring-highlight-valid shadow-[0_0_16px_rgba(76,175,80,0.7)] cursor-pointer hover:brightness-120 pulse-valid'
+          : hinting
+          ? 'ring-2 ring-highlight-valid/60 shadow-[0_0_12px_rgba(76,175,80,0.4)] pulse-valid'
           : ''
         }
       `}

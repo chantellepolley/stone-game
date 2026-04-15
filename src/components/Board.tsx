@@ -43,6 +43,10 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
     if (m.to.type === 'home') canBearOff = true;
   });
 
+  // Check if ANY valid move is a bear-off (hint glow even before selecting a source)
+  const anyBearOffP1 = state.currentPlayer === 1 && validMoves.some(m => m.to.type === 'home');
+  const anyBearOffP2 = state.currentPlayer === 2 && validMoves.some(m => m.to.type === 'home');
+
   const handleClickSpace = (index: number) => {
     if (selectedSource && validTargetSpaces.has(index)) {
       const move = movesFromSelected.find(m => m.to.type === 'board' && m.to.index === index);
@@ -132,6 +136,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           pieces={state.home[1]}
           label="Home"
           interactive={canBearOff && state.currentPlayer === 1}
+          hinting={anyBearOffP1}
           onClick={() => handleBearOff(1)}
         />
       </div>
@@ -178,6 +183,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           pieces={state.home[2]}
           label="Home"
           interactive={canBearOff && state.currentPlayer === 2}
+          hinting={anyBearOffP2}
           onClick={() => handleBearOff(2)}
         />
       </div>
