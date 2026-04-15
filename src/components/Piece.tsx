@@ -3,8 +3,9 @@ import type { Piece as PieceType } from '../types/game';
 interface PieceProps {
   piece: PieceType;
   size?: 'sm' | 'md' | 'lg';
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   highlighted?: boolean;
+  selected?: boolean;
   className?: string;
 }
 
@@ -15,7 +16,7 @@ const sizes = {
 };
 
 
-export default function Piece({ piece, size = 'md', onClick, highlighted, className = '' }: PieceProps) {
+export default function Piece({ piece, size = 'md', onClick, highlighted, selected, className = '' }: PieceProps) {
   const isP1 = piece.owner === 1;
   const s = sizes[size];
 
@@ -35,8 +36,11 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
 
   const pulseClass = isP1 ? 'pulse-gold' : 'pulse-blue';
   const highlightRing = isP1 ? 'ring-amber-400' : 'ring-sky-400';
-  const highlightStyle = highlighted
-    ? `ring-3 ${highlightRing} cursor-pointer hover:scale-115 ${pulseClass} brightness-120`
+  const selectedStyle = selected
+    ? `ring-4 ring-white shadow-[0_0_16px_rgba(255,255,255,0.6)] scale-110 z-10`
+    : '';
+  const highlightStyle = !selected && highlighted
+    ? `ring-3 ${highlightRing} cursor-pointer hover:scale-110 ${pulseClass} brightness-120`
     : '';
 
   const clickable = onClick ? 'cursor-pointer hover:scale-105' : '';
@@ -45,7 +49,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
     <div
       className={`
         ${s.box} rounded-full relative overflow-hidden
-        ${crownedStyle} ${highlightStyle} ${clickable}
+        ${crownedStyle} ${selectedStyle} ${highlightStyle} ${clickable}
         flex items-center justify-center
         transition-transform duration-150
         piece-enter

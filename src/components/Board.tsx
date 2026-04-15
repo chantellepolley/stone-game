@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { GameState, Move, PlayerId, Piece as PieceType } from '../types/game';
 import { getSpaceVariant } from '../utils/boardLayout';
 import BoardSpace from './BoardSpace';
@@ -13,319 +13,359 @@ interface BoardProps {
 }
 
 type SelectedSource =
-  | { type: 'board'; index: number }
+  | { type: 'board'; index: number; pieceId: string }
   | { type: 'jail'; pieceId: string }
   | { type: 'bench'; player: PlayerId }
   | null;
 
-interface AnimatingPiece {
+interface AnimState {
   piece: PieceType;
-  fromX: number;
-  fromY: number;
-  toX: number;
-  toY: number;
+  fromX: number; fromY: number;
+  toX: number; toY: number;
+  phase: 'start' | 'moving';
 }
 
-const ANIM_DURATION = 400; // ms
+interface DragState {
+  pieceId: string;
+  piece: PieceType;
+  x: number; y: number;
+  fromKey: string;
+}
+
+const ANIM_MS = 350;
 
 export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
-  const [selectedSource, setSelectedSource] = useState<SelectedSource>(null);
-  const [animating, setAnimating] = useState<AnimatingPiece | null>(null);
+  const [selected, setSelected] = useState<SelectedSource>(null);
+  const [anim, setAnim] = useState<AnimState | null>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
-  const spaceRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const refs = useRef<Record<string, HTMLDivElement | null>>({});
+  const pendingMove = useRef<Move | null>(null);
 
-  const setSpaceRef = useCallback((key: string, el: HTMLDivElement | null) => {
-    spaceRefs.current[key] = el;
-  }, []);
+  const setRef = useCallback((key: string, el: HTMLDivElement | null) => { refs.current[key] = el; }, []);
 
+  // ── Computed sets ──
   const validSourceSpaces = new Set<number>();
   const hasJailMoves = validMoves.some(m => m.from.type === 'jail');
   const hasBenchMoves = validMoves.some(m => m.from.type === 'bench');
-  validMoves.forEach(m => {
-    if (m.from.type === 'board') validSourceSpaces.add(m.from.index);
-  });
+  validMoves.forEach(m => { if (m.from.type === 'board') validSourceSpaces.add(m.from.index); });
 
-  const movesFromSelected: Move[] = selectedSource
+  // Filter moves for the selected piece specifically
+  const movesForSelected: Move[] = selected
     ? validMoves.filter(m => {
-        if (selectedSource.type === 'jail' && m.from.type === 'jail') return true;
-        if (selectedSource.type === 'bench' && m.from.type === 'bench') return true;
-        if (selectedSource.type === 'board' && m.from.type === 'board' && m.from.index === selectedSource.index) return true;
+        if (selected.type === 'jail' && m.from.type === 'jail' && m.pieceId === selected.pieceId) return true;
+        if (selected.type === 'bench' && m.from.type === 'bench') return true;
+        if (selected.type === 'board' && m.from.type === 'board' && m.from.index === selected.index && m.pieceId === selected.pieceId) return true;
         return false;
       })
     : [];
 
-  const validTargetSpaces = new Set<number>();
+  const targetSpaces = new Set<number>();
   let canBearOff = false;
-  movesFromSelected.forEach(m => {
-    if (m.to.type === 'board') validTargetSpaces.add(m.to.index);
+  movesForSelected.forEach(m => {
+    if (m.to.type === 'board') targetSpaces.add(m.to.index);
     if (m.to.type === 'home') canBearOff = true;
   });
 
-  const anyBearOffP1 = !selectedSource && state.currentPlayer === 1 && validMoves.some(m => m.to.type === 'home');
-  const anyBearOffP2 = !selectedSource && state.currentPlayer === 2 && validMoves.some(m => m.to.type === 'home');
+  const anyBearOffP1 = !selected && state.currentPlayer === 1 && validMoves.some(m => m.to.type === 'home');
+  const anyBearOffP2 = !selected && state.currentPlayer === 2 && validMoves.some(m => m.to.type === 'home');
 
-  /** Get the center position of a space/box element relative to the board container */
-  function getPos(key: string): { x: number; y: number } | null {
-    const el = spaceRefs.current[key];
-    const board = boardRef.current;
-    if (!el || !board) return null;
-    const bRect = board.getBoundingClientRect();
-    const eRect = el.getBoundingClientRect();
-    return {
-      x: eRect.left - bRect.left + eRect.width / 2,
-      y: eRect.top - bRect.top + eRect.height / 2,
-    };
+  // ── Position helper ──
+  function getCenter(key: string) {
+    const el = refs.current[key]; const b = boardRef.current;
+    if (!el || !b) return null;
+    const br = b.getBoundingClientRect(); const er = el.getBoundingClientRect();
+    return { x: er.left - br.left + er.width / 2, y: er.top - br.top + er.height / 2 };
   }
 
-  /** Animate a piece from source to destination, then execute the move */
-  function animateAndMove(move: Move) {
-    // Find the piece being moved
-    let piece: PieceType | undefined;
-    if (move.from.type === 'board') {
-      const pieces = state.board[move.from.index].filter(p => p.owner === state.currentPlayer);
-      piece = pieces.find(p => p.id === move.pieceId);
-    } else if (move.from.type === 'bench') {
-      piece = state.bench[state.currentPlayer].find(p => p.id === move.pieceId);
-    } else if (move.from.type === 'jail') {
-      piece = state.jail[state.currentPlayer].find(p => p.id === move.pieceId);
+  // ── Two-frame animation ──
+  useEffect(() => {
+    if (anim?.phase === 'start') {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnim(prev => prev ? { ...prev, phase: 'moving' } : null);
+        });
+      });
     }
-    if (!piece) { onSelectMove(move); return; }
+  }, [anim?.phase]);
 
-    // Get positions
-    const fromKey = move.from.type === 'board' ? `space-${move.from.index}`
-      : move.from.type === 'bench' ? `bench-${state.currentPlayer}`
-      : `jail`;
-    const toKey = move.to.type === 'board' ? `space-${move.to.index}`
-      : `home-${state.currentPlayer}`;
+  useEffect(() => {
+    if (anim?.phase === 'moving') {
+      const t = setTimeout(() => {
+        setAnim(null);
+        if (pendingMove.current) {
+          onSelectMove(pendingMove.current);
+          pendingMove.current = null;
+        }
+      }, ANIM_MS);
+      return () => clearTimeout(t);
+    }
+  }, [anim?.phase, onSelectMove]);
 
-    const from = getPos(fromKey);
-    const to = getPos(toKey);
+  function animateMove(move: Move) {
+    let piece: PieceType | undefined;
+    if (move.from.type === 'board') piece = state.board[move.from.index].find(p => p.id === move.pieceId);
+    else if (move.from.type === 'bench') piece = state.bench[state.currentPlayer].find(p => p.id === move.pieceId);
+    else if (move.from.type === 'jail') piece = state.jail[state.currentPlayer].find(p => p.id === move.pieceId);
 
-    if (!from || !to) { onSelectMove(move); return; }
+    const fromKey = move.from.type === 'board' ? `space-${move.from.index}` : move.from.type === 'bench' ? `bench-${state.currentPlayer}` : 'jail';
+    const toKey = move.to.type === 'board' ? `space-${move.to.index}` : `home-${state.currentPlayer}`;
+    const from = getCenter(fromKey); const to = getCenter(toKey);
 
-    setAnimating({ piece, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y });
-
-    setTimeout(() => {
-      setAnimating(null);
-      onSelectMove(move);
-    }, ANIM_DURATION);
+    if (!piece || !from || !to) { onSelectMove(move); return; }
+    pendingMove.current = move;
+    setAnim({ piece, fromX: from.x, fromY: from.y, toX: to.x, toY: to.y, phase: 'start' });
   }
+
+  // ── Drag and drop ──
+  function handleDragStart(pieceId: string, e: React.PointerEvent) {
+    const piece = findPiece(pieceId);
+    if (!piece) return;
+
+    // Select this piece
+    const spaceIdx = state.board.findIndex(sp => sp.some(p => p.id === pieceId));
+    if (spaceIdx !== -1) {
+      setSelected({ type: 'board', index: spaceIdx, pieceId });
+    }
+
+    const br = boardRef.current?.getBoundingClientRect();
+    if (!br) return;
+    setDrag({ pieceId, piece, x: e.clientX - br.left, y: e.clientY - br.top, fromKey: `space-${spaceIdx}` });
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+  }
+
+  function handleDragMove(e: React.PointerEvent) {
+    if (!drag) return;
+    const br = boardRef.current?.getBoundingClientRect();
+    if (!br) return;
+    setDrag(prev => prev ? { ...prev, x: e.clientX - br.left, y: e.clientY - br.top } : null);
+  }
+
+  function handleDragEnd(e: React.PointerEvent) {
+    if (!drag) return;
+    const br = boardRef.current?.getBoundingClientRect();
+    if (!br) { setDrag(null); return; }
+
+    // Find which space we dropped on
+    const dropX = e.clientX; const dropY = e.clientY;
+    let droppedMove: Move | null = null;
+
+    // Check target spaces
+    for (const m of movesForSelected) {
+      const key = m.to.type === 'board' ? `space-${m.to.index}` : `home-${state.currentPlayer}`;
+      const el = refs.current[key];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (dropX >= r.left && dropX <= r.right && dropY >= r.top && dropY <= r.bottom) {
+        droppedMove = m;
+        break;
+      }
+    }
+
+    setDrag(null);
+    if (droppedMove) {
+      animateMove(droppedMove);
+      setSelected(null);
+    }
+  }
+
+  function findPiece(id: string): PieceType | undefined {
+    for (const sp of state.board) { const p = sp.find(p => p.id === id); if (p) return p; }
+    for (const p of state.bench[1]) { if (p.id === id) return p; }
+    for (const p of state.bench[2]) { if (p.id === id) return p; }
+    return undefined;
+  }
+
+  // ── Click handlers ──
+  const busy = !!anim || !!drag;
 
   const handleClickSpace = (index: number) => {
-    if (animating) return;
-    if (selectedSource && validTargetSpaces.has(index)) {
-      const move = movesFromSelected.find(m => m.to.type === 'board' && m.to.index === index);
-      if (move) {
-        animateAndMove(move);
-        setSelectedSource(null);
+    if (busy) return;
+    // Click a target → execute move
+    if (selected && targetSpaces.has(index)) {
+      const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
+      if (move) { animateMove(move); setSelected(null); return; }
+    }
+    // Click a source space → select the top movable piece
+    if (validSourceSpaces.has(index)) {
+      const playerPieces = state.board[index].filter(p => p.owner === state.currentPlayer);
+      if (playerPieces.length > 0) {
+        const topPiece = playerPieces[playerPieces.length - 1];
+        setSelected({ type: 'board', index, pieceId: topPiece.id });
         return;
       }
     }
-    if (validSourceSpaces.has(index)) {
-      setSelectedSource({ type: 'board', index });
-      return;
-    }
-    setSelectedSource(null);
+    setSelected(null);
   };
 
   const handleClickPiece = (pieceId: string) => {
-    if (animating) return;
-    const spaceIdx = state.board.findIndex(space => space.some(p => p.id === pieceId));
-    if (spaceIdx !== -1 && validSourceSpaces.has(spaceIdx)) {
-      setSelectedSource({ type: 'board', index: spaceIdx });
+    if (busy) return;
+    const spaceIdx = state.board.findIndex(sp => sp.some(p => p.id === pieceId));
+    if (spaceIdx === -1) return;
+
+    // If this piece is already selected, deselect
+    if (selected?.type === 'board' && selected.pieceId === pieceId) {
+      setSelected(null);
+      return;
     }
+
+    // If this space is a valid source, select this specific piece
+    if (validSourceSpaces.has(spaceIdx)) {
+      const piece = state.board[spaceIdx].find(p => p.id === pieceId);
+      if (piece && piece.owner === state.currentPlayer) {
+        setSelected({ type: 'board', index: spaceIdx, pieceId });
+        return;
+      }
+    }
+    setSelected(null);
   };
 
   const handleClickJailPiece = (pieceId: string) => {
-    if (animating) return;
-    if (hasJailMoves) {
-      setSelectedSource({ type: 'jail', pieceId });
-    }
+    if (busy) return;
+    if (hasJailMoves) setSelected({ type: 'jail', pieceId });
   };
 
   const handleClickBench = (player: PlayerId) => {
-    if (animating) return;
-    if (hasBenchMoves && player === state.currentPlayer) {
-      setSelectedSource({ type: 'bench', player });
-    }
+    if (busy) return;
+    if (hasBenchMoves && player === state.currentPlayer) setSelected({ type: 'bench', player });
   };
 
   const handleBearOff = (player: PlayerId) => {
-    if (animating) return;
+    if (busy) return;
     if (canBearOff && player === state.currentPlayer) {
-      const move = movesFromSelected.find(m => m.to.type === 'home');
-      if (move) {
-        animateAndMove(move);
-        setSelectedSource(null);
-      }
+      const move = movesForSelected.find(m => m.to.type === 'home');
+      if (move) { animateMove(move); setSelected(null); }
     }
   };
 
   const topIndices = Array.from({ length: 10 }, (_, i) => i);
   const bottomIndices = Array.from({ length: 10 }, (_, i) => 19 - i);
 
+  function renderSpace(idx: number) {
+    return (
+      <div key={idx} ref={el => setRef(`space-${idx}`, el)}>
+        <BoardSpace
+          index={idx}
+          pieces={state.board[idx]}
+          variant={getSpaceVariant(idx)}
+          isValidSource={!selected && !busy && validSourceSpaces.has(idx)}
+          isValidTarget={targetSpaces.has(idx)}
+          isSelected={selected?.type === 'board' && selected.index === idx}
+          selectedPieceId={selected?.type === 'board' && selected.index === idx ? selected.pieceId : null}
+          currentPlayer={state.currentPlayer}
+          onClickSpace={() => handleClickSpace(idx)}
+          onClickPiece={handleClickPiece}
+          onDragStart={handleDragStart}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div ref={boardRef} className="relative flex flex-col gap-0 rounded-2xl border-4 border-stone-border bg-board-bg p-3 shadow-2xl"
+    <div
+      ref={boardRef}
+      className="relative flex flex-col gap-0 rounded-2xl border-4 border-stone-border bg-board-bg p-3 shadow-2xl select-none"
       style={{
         background: 'linear-gradient(135deg, #3d3632 0%, #322d28 50%, #3d3632 100%)',
         boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
+        touchAction: 'none',
       }}
+      onPointerMove={handleDragMove}
+      onPointerUp={handleDragEnd}
     >
-      {/* Top row: P1 start | spaces 0-9 | P1 home */}
+      {/* Top row */}
       <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
-        <div ref={el => setSpaceRef('bench-1', el)}>
-          <StoneBox
-            player={1}
-            pieces={state.bench[1]}
-            label="Start"
-            interactive={!selectedSource && !animating && hasBenchMoves && state.currentPlayer === 1}
+        <div ref={el => setRef('bench-1', el)}>
+          <StoneBox player={1} pieces={state.bench[1]} label="Start"
+            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 1}
             currentPlayer={state.currentPlayer}
             onClick={() => handleClickBench(1)}
-            isSelected={selectedSource?.type === 'bench' && selectedSource.player === 1}
+            isSelected={selected?.type === 'bench' && selected.player === 1}
           />
         </div>
 
         <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
-          {topIndices.map(idx => (
+          {topIndices.map(idx =>
             idx === 5
-              ? [
-                  <div key="divider-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />,
-                  <div key={idx} ref={el => setSpaceRef(`space-${idx}`, el)}>
-                    <BoardSpace
-                      index={idx}
-                      pieces={state.board[idx]}
-                      variant={getSpaceVariant(idx)}
-                      isValidSource={!selectedSource && !animating && validSourceSpaces.has(idx)}
-                      isValidTarget={validTargetSpaces.has(idx)}
-                      isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
-                      currentPlayer={state.currentPlayer}
-                      onClickSpace={() => handleClickSpace(idx)}
-                      onClickPiece={handleClickPiece}
-                    />
-                  </div>
-                ]
-              : <div key={idx} ref={el => setSpaceRef(`space-${idx}`, el)}>
-                  <BoardSpace
-                    index={idx}
-                    pieces={state.board[idx]}
-                    variant={getSpaceVariant(idx)}
-                    isValidSource={!selectedSource && !animating && validSourceSpaces.has(idx)}
-                    isValidTarget={validTargetSpaces.has(idx)}
-                    isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
-                    currentPlayer={state.currentPlayer}
-                    onClickSpace={() => handleClickSpace(idx)}
-                    onClickPiece={handleClickPiece}
-                  />
-                </div>
-          ))}
+              ? [<div key="div-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx)]
+              : renderSpace(idx)
+          )}
         </div>
 
-        <div ref={el => setSpaceRef('home-1', el)}>
-          <StoneBox
-            player={1}
-            pieces={state.home[1]}
-            label="Home"
-            interactive={!animating && canBearOff && state.currentPlayer === 1}
-            hinting={anyBearOffP1}
-            currentPlayer={state.currentPlayer}
+        <div ref={el => setRef('home-1', el)}>
+          <StoneBox player={1} pieces={state.home[1]} label="Home"
+            interactive={!busy && canBearOff && state.currentPlayer === 1}
+            hinting={anyBearOffP1} currentPlayer={state.currentPlayer}
             onClick={() => handleBearOff(1)}
           />
         </div>
       </div>
 
-      {/* Center: jail */}
+      {/* Jail */}
       <div className="flex items-center justify-center py-2 px-1">
-        <div ref={el => setSpaceRef('jail', el)}>
-          <Jail
-            jail={state.jail}
-            validMoves={animating ? [] : validMoves}
-            onClickJailPiece={handleClickJailPiece}
-            currentPlayer={state.currentPlayer}
-          />
+        <div ref={el => setRef('jail', el)}>
+          <Jail jail={state.jail} validMoves={busy ? [] : validMoves}
+            onClickJailPiece={handleClickJailPiece} currentPlayer={state.currentPlayer} />
         </div>
       </div>
 
-      {/* Bottom row: P2 start | spaces 19-10 | P2 home */}
+      {/* Bottom row */}
       <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
-        <div ref={el => setSpaceRef('bench-2', el)}>
-          <StoneBox
-            player={2}
-            pieces={state.bench[2]}
-            label="Start"
-            interactive={!selectedSource && !animating && hasBenchMoves && state.currentPlayer === 2}
+        <div ref={el => setRef('bench-2', el)}>
+          <StoneBox player={2} pieces={state.bench[2]} label="Start"
+            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 2}
             currentPlayer={state.currentPlayer}
             onClick={() => handleClickBench(2)}
-            isSelected={selectedSource?.type === 'bench' && selectedSource.player === 2}
+            isSelected={selected?.type === 'bench' && selected.player === 2}
           />
         </div>
 
         <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
-          {bottomIndices.map((idx, i) => (
+          {bottomIndices.map((idx, i) =>
             i === 5
-              ? [
-                  <div key="divider-bottom" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />,
-                  <div key={idx} ref={el => setSpaceRef(`space-${idx}`, el)}>
-                    <BoardSpace
-                      index={idx}
-                      pieces={state.board[idx]}
-                      variant={getSpaceVariant(idx)}
-                      isValidSource={!selectedSource && !animating && validSourceSpaces.has(idx)}
-                      isValidTarget={validTargetSpaces.has(idx)}
-                      isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
-                      currentPlayer={state.currentPlayer}
-                      onClickSpace={() => handleClickSpace(idx)}
-                      onClickPiece={handleClickPiece}
-                    />
-                  </div>
-                ]
-              : <div key={idx} ref={el => setSpaceRef(`space-${idx}`, el)}>
-                  <BoardSpace
-                    index={idx}
-                    pieces={state.board[idx]}
-                    variant={getSpaceVariant(idx)}
-                    isValidSource={!selectedSource && !animating && validSourceSpaces.has(idx)}
-                    isValidTarget={validTargetSpaces.has(idx)}
-                    isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
-                    currentPlayer={state.currentPlayer}
-                    onClickSpace={() => handleClickSpace(idx)}
-                    onClickPiece={handleClickPiece}
-                  />
-                </div>
-          ))}
+              ? [<div key="div-bot" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx)]
+              : renderSpace(idx)
+          )}
         </div>
 
-        <div ref={el => setSpaceRef('home-2', el)}>
-          <StoneBox
-            player={2}
-            pieces={state.home[2]}
-            label="Home"
-            interactive={!animating && canBearOff && state.currentPlayer === 2}
-            hinting={anyBearOffP2}
-            currentPlayer={state.currentPlayer}
+        <div ref={el => setRef('home-2', el)}>
+          <StoneBox player={2} pieces={state.home[2]} label="Home"
+            interactive={!busy && canBearOff && state.currentPlayer === 2}
+            hinting={anyBearOffP2} currentPlayer={state.currentPlayer}
             onClick={() => handleBearOff(2)}
           />
         </div>
       </div>
 
-      {/* Decorative footer */}
       <div className="mt-2">
         <div className="h-0.5 bg-gradient-to-r from-transparent via-stone-accent/40 to-transparent" />
       </div>
 
-      {/* Animated moving piece overlay */}
-      {animating && (
+      {/* Animated sliding piece */}
+      {anim && (
         <div
           className="absolute z-50 pointer-events-none"
           style={{
-            left: animating.fromX - 22,
-            top: animating.fromY - 22,
-            width: 44,
-            height: 44,
-            transition: `all ${ANIM_DURATION}ms ease-in-out`,
-            transform: `translate(${animating.toX - animating.fromX}px, ${animating.toY - animating.fromY}px)`,
+            left: anim.fromX - 22,
+            top: anim.fromY - 22,
+            width: 44, height: 44,
+            transform: anim.phase === 'moving'
+              ? `translate(${anim.toX - anim.fromX}px, ${anim.toY - anim.fromY}px)`
+              : 'translate(0, 0)',
+            transition: anim.phase === 'moving' ? `transform ${ANIM_MS}ms ease-out` : 'none',
           }}
         >
-          <Piece piece={animating.piece} size="md" />
+          <Piece piece={anim.piece} size="md" />
+        </div>
+      )}
+
+      {/* Dragging piece */}
+      {drag && (
+        <div
+          className="absolute z-50 pointer-events-none opacity-80"
+          style={{ left: drag.x - 22, top: drag.y - 22, width: 44, height: 44 }}
+        >
+          <Piece piece={drag.piece} size="md" />
         </div>
       )}
     </div>

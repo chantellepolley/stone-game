@@ -8,9 +8,11 @@ interface BoardSpaceProps {
   isValidSource: boolean;
   isValidTarget: boolean;
   isSelected: boolean;
+  selectedPieceId?: string | null;
   currentPlayer: PlayerId;
   onClickSpace: () => void;
   onClickPiece: (pieceId: string) => void;
+  onDragStart?: (pieceId: string, e: React.PointerEvent) => void;
   targetMoves?: Move[];
 }
 
@@ -21,9 +23,11 @@ export default function BoardSpace({
   isValidSource,
   isValidTarget,
   isSelected,
+  selectedPieceId,
   currentPlayer,
   onClickSpace,
   onClickPiece,
+  onDragStart,
 }: BoardSpaceProps) {
   const bgColor = variant === 'light'
     ? 'bg-stone-light/80'
@@ -41,10 +45,13 @@ export default function BoardSpace({
     ? `ring-2 ${ringColor}/70 ${pulseClass} cursor-pointer brightness-110`
     : '';
 
-  // Show max 4 pieces visually, then a count badge
-  const maxVisible = 4;
+  const maxVisible = 5;
   const visiblePieces = pieces.slice(-maxVisible);
   const hiddenCount = Math.max(0, pieces.length - maxVisible);
+
+  // When selected, spread pieces out more so each is individually clickable
+  const playerPieces = pieces.filter(p => p.owner === currentPlayer);
+  const hasMultipleSelectable = isSelected && playerPieces.length > 1;
 
   return (
     <div
@@ -52,7 +59,7 @@ export default function BoardSpace({
         relative flex flex-col items-center justify-end overflow-hidden
         ${bgColor} ${borderHighlight}
         rounded-t-lg rounded-b-sm
-        h-[220px] w-full
+        h-full w-full
         border border-stone-accent/40
         transition-all duration-200
         hover:brightness-110
@@ -69,23 +76,38 @@ export default function BoardSpace({
         {index}
       </div>
 
-      {/* Pieces stack — overlapping to fit fixed height */}
+      {/* Pieces stack */}
       <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}>
         {hiddenCount > 0 && (
           <div className="text-[10px] font-bold text-stone-bg bg-stone-light/60 rounded-full w-5 h-5 flex items-center justify-center mb-0.5">
             +{hiddenCount}
           </div>
         )}
-        {visiblePieces.map((piece, i) => (
-          <div key={piece.id} style={{ marginTop: i === 0 ? 0 : -4 }}>
-            <Piece
-              piece={piece}
-              size="sm"
-              highlighted={isValidSource}
-              onClick={isValidSource ? () => onClickPiece(piece.id) : undefined}
-            />
-          </div>
-        ))}
+        {visiblePieces.map((piece, i) => {
+          const isThisPieceSelected = selectedPieceId === piece.id;
+          const canSelect = isValidSource || (isSelected && piece.owner === currentPlayer);
+          return (
+            <div
+              key={piece.id}
+              style={{ marginTop: i === 0 ? 0 : hasMultipleSelectable ? 2 : -4 }}
+              onPointerDown={canSelect && onDragStart ? (e) => {
+                e.stopPropagation();
+                onDragStart(piece.id, e);
+              } : undefined}
+            >
+              <Piece
+                piece={piece}
+                size="sm"
+                highlighted={canSelect}
+                selected={isThisPieceSelected}
+                onClick={canSelect ? (e?: React.MouseEvent) => {
+                  if (e) e.stopPropagation();
+                  onClickPiece(piece.id);
+                } : undefined}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Obelisk carved line details */}
