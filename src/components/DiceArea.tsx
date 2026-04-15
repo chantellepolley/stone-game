@@ -10,6 +10,7 @@ interface DiceAreaProps {
   onRoll: () => void;
   awaitingJokerChoice?: boolean;
   onChooseJokerDoubles?: (value: number) => void;
+  isAITurn?: boolean;
 }
 
 /** SVG dot positions for dice faces 1-5 */
@@ -91,9 +92,9 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
   );
 }
 
-export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJokerChoice, onChooseJokerDoubles }: DiceAreaProps) {
+export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJokerChoice, onChooseJokerDoubles, isAITurn }: DiceAreaProps) {
   const [rolling, setRolling] = useState(false);
-  const canRoll = phase === 'rolling';
+  const canRoll = phase === 'rolling' && !isAITurn;
   const playerName = GAME_CONFIG.PLAYER_NAMES[currentPlayer];
 
   const handleRoll = () => {

@@ -6,9 +6,15 @@ import TurnIndicator from './TurnIndicator';
 import MoveLog from './MoveLog';
 import RulesPanel from './RulesPanel';
 import GameControls from './GameControls';
+import StartScreen from './StartScreen';
 
 export default function Game() {
-  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo } = useGame();
+  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn } = useGame();
+
+  // Show start screen before game begins
+  if (state.phase === 'not_started') {
+    return <StartScreen onStart={startGame} />;
+  }
 
   return (
     <div className="h-screen flex flex-col items-center px-4 py-2 gap-1 overflow-hidden">
@@ -18,11 +24,16 @@ export default function Game() {
       </header>
 
       {/* Turn indicator */}
-      <TurnIndicator
-        currentPlayer={state.currentPlayer}
-        phase={state.phase}
-        winner={state.winner}
-      />
+      <div className="flex items-center gap-3">
+        <TurnIndicator
+          currentPlayer={state.currentPlayer}
+          phase={state.phase}
+          winner={state.winner}
+        />
+        {isAITurn && (
+          <span className="text-xs text-white/40 animate-pulse">AI thinking...</span>
+        )}
+      </div>
 
       {/* Main layout: sidebar + board + sidebar */}
       <div className="flex gap-3 items-start w-full max-w-[1250px] justify-center flex-1 min-h-0">
@@ -37,7 +48,7 @@ export default function Game() {
         <div className="flex-1 max-w-[1050px]">
           <Board
             state={state}
-            validMoves={validMoves}
+            validMoves={isAITurn ? [] : validMoves}
             onSelectMove={selectMove}
           />
         </div>
@@ -49,8 +60,9 @@ export default function Game() {
             phase={state.phase}
             currentPlayer={state.currentPlayer}
             onRoll={roll}
-            awaitingJokerChoice={awaitingJokerChoice}
+            awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
             onChooseJokerDoubles={chooseJokerDoubles}
+            isAITurn={isAITurn}
           />
           {canUndo && (
             <GameControls onUndo={undo} canUndo={canUndo} />
@@ -65,8 +77,11 @@ export default function Game() {
           phase={state.phase}
           currentPlayer={state.currentPlayer}
           onRoll={roll}
+          awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
+          onChooseJokerDoubles={chooseJokerDoubles}
+          isAITurn={isAITurn}
         />
-        <GameControls onRestart={restart} />
+        <GameControls onRestart={restart} onUndo={undo} canUndo={canUndo} />
       </div>
 
       {/* Mobile: move log and rules below */}
@@ -87,7 +102,7 @@ export default function Game() {
             <h2 className="font-heading text-3xl text-highlight-selected mb-2">
               {GAME_CONFIG.PLAYER_NAMES[state.winner]} Wins!
             </h2>
-            <p className="text-stone-light/60 mb-6 text-sm">
+            <p className="text-white/60 mb-6 text-sm">
               All stones have been borne off. The temple is sealed.
             </p>
             <button

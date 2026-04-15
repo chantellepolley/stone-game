@@ -8,7 +8,9 @@ export interface Piece {
   routePos: number;
 }
 
-export type GamePhase = 'rolling' | 'moving' | 'game_over';
+export type GamePhase = 'not_started' | 'rolling' | 'moving' | 'game_over';
+export type GameMode = 'pvp' | 'ai';
+export type AIDifficulty = 'easy' | 'medium' | 'hard';
 
 export interface DiceState {
   values: [number, number];
@@ -33,6 +35,8 @@ export interface GameState {
   currentPlayer: PlayerId;
   dice: DiceState;
   phase: GamePhase;
+  gameMode: GameMode;
+  aiDifficulty: AIDifficulty;
   winner: PlayerId | null;
   moveLog: MoveLogEntry[];
   turnCount: number;
@@ -63,6 +67,7 @@ export interface Move {
 }
 
 export type GameAction =
+  | { type: 'START_GAME'; mode: GameMode; difficulty: AIDifficulty }
   | { type: 'ROLL_DICE' }
   | { type: 'SELECT_MOVE'; move: Move }
   | { type: 'CHOOSE_JOKER_DOUBLES'; value: number }
