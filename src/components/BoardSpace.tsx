@@ -17,7 +17,7 @@ interface BoardSpaceProps {
 }
 
 export default function BoardSpace({
-  index,
+  index: _index,
   pieces,
   variant,
   isValidSource,
@@ -71,10 +71,6 @@ export default function BoardSpace({
           : 'linear-gradient(180deg, #6b6058 0%, #57504a 100%)',
       }}
     >
-      {/* Space index label */}
-      <div className="absolute top-1 text-[9px] font-mono opacity-40 select-none">
-        {index}
-      </div>
 
       {/* Pieces stack */}
       <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}>
