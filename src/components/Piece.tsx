@@ -39,9 +39,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
   const s = sizes[size];
 
   // Player-colored border and tint overlay
-  const borderColor = piece.crowned
-    ? isP1 ? 'border-amber-500' : 'border-indigo-400'
-    : isP1 ? 'border-player1-accent' : 'border-player2-accent';
+  const borderColor = 'border-transparent';
 
   // Color overlay for player differentiation on top of stone texture
   const tintOverlay = piece.crowned
