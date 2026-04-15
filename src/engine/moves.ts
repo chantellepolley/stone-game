@@ -26,16 +26,6 @@ function wouldCapture(board: Piece[][], index: number, player: PlayerId): boolea
   return occ.length >= 1 && occ.length <= CAPTURE_MAX_OPPONENTS && occ[0].owner !== player;
 }
 
-function hasFartherCrownedPiece(state: GameState, skipId: string, routePos: number, player: PlayerId): boolean {
-  for (let i = 0; i < NUM_SPACES; i++) {
-    for (const p of state.board[i]) {
-      if (p.id === skipId) continue;
-      if (p.owner === player && p.crowned && p.routePos < routePos) return true;
-    }
-  }
-  return false;
-}
-
 /** Collect all of a player's pieces currently on the board, with their route positions. */
 function getBoardPieces(state: GameState, player: PlayerId): Piece[] {
   const pieces: Piece[] = [];
@@ -55,13 +45,21 @@ function tryMove(
   const newPos = piece.routePos + totalDist;
   const fromSpace = spaceAt(piece.routePos, player);
 
-  // Bearing off — piece must ALREADY be crowned (on the home stretch) before this move.
-  // No skipping straight to Home from early in the route.
+  // Bearing off — piece must ALREADY be crowned (on the home stretch).
+  // Exact roll required UNLESS all board pieces are in the home quadrant (last 5 spaces).
   if (newPos >= ROUTE_LENGTH) {
     if (!piece.crowned) return null;
     const isExact = newPos === ROUTE_LENGTH;
-    if (!isExact && !GAME_CONFIG.BEAR_OFF_ALLOW_OVERSHOOT) return null;
-    if (!isExact && hasFartherCrownedPiece(state, piece.id, piece.routePos, player)) return null;
+    if (!isExact) {
+      // Check if ALL of this player's pieces on the board are in the home quadrant (last 5)
+      const homeQuadrantStart = ROUTE_LENGTH - 5; // positions 25-29
+      const allInHomeQuadrant = !state.board.some((space) =>
+        space.some(p =>
+          p.owner === player && p.routePos >= 0 && p.routePos < homeQuadrantStart
+        )
+      ) && state.bench[player].length === 0 && state.jail[player].length === 0;
+      if (!allInHomeQuadrant) return null;
+    }
     return {
       pieceId: piece.id,
       from: { type: 'board', index: fromSpace },
