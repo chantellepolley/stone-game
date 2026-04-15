@@ -66,4 +66,5 @@ export type GameAction =
   | { type: 'ROLL_DICE' }
   | { type: 'SELECT_MOVE'; move: Move }
   | { type: 'CHOOSE_JOKER_DOUBLES'; value: number }
+  | { type: 'UNDO_MOVE' }
   | { type: 'RESTART_GAME' };

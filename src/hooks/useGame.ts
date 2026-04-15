@@ -1,17 +1,21 @@
-import { useReducer, useCallback, useMemo } from 'react';
-import type { GameState, GameAction, Move } from '../types/game';
+import { useState, useCallback, useMemo, useRef } from 'react';
+import type { GameState, Move } from '../types/game';
 import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
 import { isJoker } from '../engine/dice';
 import { GAME_CONFIG } from '../config/gameConfig';
 
-function gameReducer(state: GameState, action: GameAction): GameState {
-  switch (action.type) {
-    case 'ROLL_DICE': {
-      if (state.phase !== 'rolling') return state;
-      const dice = rollDice();
-      const newState: GameState = { ...state, dice, phase: 'moving' };
+export function useGame() {
+  const [state, setState] = useState<GameState>(createInitialState);
+  const undoStack = useRef<GameState[]>([]);
 
-      // Check if any valid moves exist
+  const roll = useCallback(() => {
+    setState(prev => {
+      if (prev.phase !== 'rolling') return prev;
+      undoStack.current = []; // Clear undo stack on new roll
+
+      const dice = rollDice();
+      const newState: GameState = { ...prev, dice, phase: 'moving' };
+
       if (!canPlayerMove(newState)) {
         return {
           ...newState,
@@ -31,7 +35,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         };
       }
 
-      // Log the roll
       const d1Joker = isJoker(dice.values[0]);
       const d2Joker = isJoker(dice.values[1]);
       const d1Label = d1Joker ? 'Joker' : String(dice.values[0]);
@@ -58,39 +61,59 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           },
         ],
       };
-    }
+    });
+  }, []);
 
-    case 'SELECT_MOVE': {
-      if (state.phase !== 'moving') return state;
-      const newState = executeMove(state, action.move);
+  const selectMove = useCallback((move: Move) => {
+    setState(prev => {
+      if (prev.phase !== 'moving') return prev;
+      // Save state before the move for undo
+      undoStack.current.push(JSON.parse(JSON.stringify(prev)));
+      const newState = executeMove(prev, move);
       const winner = checkWinCondition(newState);
       if (winner) {
+        undoStack.current = []; // No undo after winning
         return { ...newState, winner, phase: 'game_over' };
       }
+      // If turn switched, clear undo stack (can't undo into other player's turn)
+      if (newState.currentPlayer !== prev.currentPlayer) {
+        undoStack.current = [];
+      }
       return newState;
-    }
+    });
+  }, []);
 
-    case 'CHOOSE_JOKER_DOUBLES': {
-      if (!state.dice.pendingDoubleJoker || state.dice.remaining.length > 0) return state;
-      const value = action.value;
+  const undo = useCallback(() => {
+    if (undoStack.current.length === 0) return;
+    const prevState = undoStack.current.pop()!;
+    setState(prevState);
+  }, []);
+
+  const restart = useCallback(() => {
+    undoStack.current = [];
+    setState(createInitialState());
+  }, []);
+
+  const chooseJokerDoubles = useCallback((value: number) => {
+    setState(prev => {
+      if (!prev.dice.pendingDoubleJoker || prev.dice.remaining.length > 0) return prev;
       const newState: GameState = {
-        ...state,
+        ...prev,
         dice: {
-          ...state.dice,
+          ...prev.dice,
           remaining: [value, value, value, value],
           pendingDoubleJoker: false,
         },
         moveLog: [
-          ...state.moveLog,
+          ...prev.moveLog,
           {
-            turn: state.turnCount,
-            player: state.currentPlayer,
-            action: `${GAME_CONFIG.PLAYER_NAMES[state.currentPlayer]} chose doubles of ${value}`,
+            turn: prev.turnCount,
+            player: prev.currentPlayer,
+            action: `${GAME_CONFIG.PLAYER_NAMES[prev.currentPlayer]} chose doubles of ${value}`,
             timestamp: Date.now(),
           },
         ],
       };
-      // Check if new doubles have valid moves
       if (!canPlayerMove(newState)) {
         return {
           ...newState,
@@ -101,53 +124,33 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         };
       }
       return newState;
-    }
+    });
+  }, []);
 
-    case 'RESTART_GAME':
-      return createInitialState();
-
-    default:
-      return state;
-  }
-}
-
-export function useGame() {
-  const [state, dispatch] = useReducer(gameReducer, undefined, createInitialState);
-
-  const roll = useCallback(() => dispatch({ type: 'ROLL_DICE' }), []);
-  const selectMove = useCallback((move: Move) => dispatch({ type: 'SELECT_MOVE', move }), []);
-  const restart = useCallback(() => dispatch({ type: 'RESTART_GAME' }), []);
-  const chooseJokerDoubles = useCallback((value: number) => dispatch({ type: 'CHOOSE_JOKER_DOUBLES', value }), []);
-
-  // Is the player currently choosing their double joker value?
   const awaitingJokerChoice = state.dice.pendingDoubleJoker && state.dice.remaining.length === 0 && state.phase === 'moving';
 
   const validMoves = useMemo(() => {
     if (state.phase !== 'moving') return [];
-    if (awaitingJokerChoice) return []; // No board moves while choosing
+    if (awaitingJokerChoice) return [];
     const seen = new Set<string>();
     const moves: Move[] = [];
 
     for (const dv of state.dice.remaining) {
       for (const m of getValidMoves(state, dv)) {
         const key = `${m.pieceId}:${m.to.type === 'home' ? 'home' : m.to.index}:${m.diceValue}:${m.diceCount}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          moves.push(m);
-        }
+        if (!seen.has(key)) { seen.add(key); moves.push(m); }
       }
     }
 
     for (const m of getMultiStepMoves(state)) {
       const key = `${m.pieceId}:${m.to.type === 'home' ? 'home' : m.to.index}:${m.diceValue}:${m.diceCount}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        moves.push(m);
-      }
+      if (!seen.has(key)) { seen.add(key); moves.push(m); }
     }
 
     return moves;
   }, [state, awaitingJokerChoice]);
 
-  return { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles };
+  const canUndo = undoStack.current.length > 0 && state.phase === 'moving';
+
+  return { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo };
 }

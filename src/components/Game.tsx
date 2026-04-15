@@ -8,7 +8,7 @@ import RulesPanel from './RulesPanel';
 import GameControls from './GameControls';
 
 export default function Game() {
-  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles } = useGame();
+  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo } = useGame();
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-6 gap-6">
@@ -57,7 +57,7 @@ export default function Game() {
             awaitingJokerChoice={awaitingJokerChoice}
             onChooseJokerDoubles={chooseJokerDoubles}
           />
-          <GameControls onRestart={restart} />
+          <GameControls onRestart={restart} onUndo={undo} canUndo={canUndo} />
         </div>
       </div>
 
