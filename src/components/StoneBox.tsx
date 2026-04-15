@@ -5,15 +5,18 @@ interface StoneBoxProps {
   player: PlayerId;
   pieces: PieceType[];
   label: string;
-  /** Interactive: can be clicked to select (bench) or bear off (home) */
   interactive?: boolean;
-  /** Hint glow: a bear-off move exists but source isn't selected yet */
   hinting?: boolean;
+  currentPlayer?: PlayerId;
   onClick?: () => void;
   isSelected?: boolean;
 }
 
-export default function StoneBox({ pieces, label, interactive, hinting, onClick, isSelected }: StoneBoxProps) {
+export default function StoneBox({ pieces, label, interactive, hinting, currentPlayer, onClick, isSelected }: StoneBoxProps) {
+  const isP1Turn = (currentPlayer ?? 1) === 1;
+  const ringColor = isP1Turn ? 'ring-amber-400' : 'ring-sky-400';
+  const pulseClass = isP1Turn ? 'pulse-gold' : 'pulse-blue';
+
   return (
     <div
       onClick={interactive ? onClick : undefined}
@@ -22,11 +25,11 @@ export default function StoneBox({ pieces, label, interactive, hinting, onClick,
         border-2 min-w-[60px] w-[68px] transition-all
         border-[#555] bg-[#3a3a3a] shadow-md
         ${isSelected
-          ? 'ring-3 ring-highlight-selected shadow-[0_0_20px_rgba(255,152,0,0.7)] brightness-125'
+          ? `ring-3 ${ringColor} brightness-125 ${pulseClass}`
           : interactive
-          ? 'ring-3 ring-highlight-valid shadow-[0_0_16px_rgba(76,175,80,0.7)] cursor-pointer hover:brightness-120 pulse-valid'
+          ? `ring-3 ${ringColor} cursor-pointer hover:brightness-120 ${pulseClass}`
           : hinting
-          ? 'ring-2 ring-highlight-valid/60 shadow-[0_0_12px_rgba(76,175,80,0.4)] pulse-valid'
+          ? `ring-2 ${ringColor}/60 ${pulseClass}`
           : ''
         }
       `}

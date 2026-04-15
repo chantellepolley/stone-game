@@ -1,4 +1,4 @@
-import type { Piece as PieceType, Move } from '../types/game';
+import type { Piece as PieceType, Move, PlayerId } from '../types/game';
 import Piece from './Piece';
 
 interface BoardSpaceProps {
@@ -8,6 +8,7 @@ interface BoardSpaceProps {
   isValidSource: boolean;
   isValidTarget: boolean;
   isSelected: boolean;
+  currentPlayer: PlayerId;
   onClickSpace: () => void;
   onClickPiece: (pieceId: string) => void;
   targetMoves?: Move[];
@@ -20,6 +21,7 @@ export default function BoardSpace({
   isValidSource,
   isValidTarget,
   isSelected,
+  currentPlayer,
   onClickSpace,
   onClickPiece,
 }: BoardSpaceProps) {
@@ -27,12 +29,16 @@ export default function BoardSpace({
     ? 'bg-stone-light/80'
     : 'bg-stone-dark/80';
 
+  const isP1 = currentPlayer === 1;
+  const ringColor = isP1 ? 'ring-amber-400' : 'ring-sky-400';
+  const pulseClass = isP1 ? 'pulse-gold' : 'pulse-blue';
+
   const borderHighlight = isSelected
-    ? 'ring-3 ring-highlight-selected shadow-[0_0_20px_rgba(255,152,0,0.7)] brightness-125'
+    ? `ring-3 ${ringColor} ${pulseClass} brightness-125`
     : isValidTarget
-    ? 'ring-3 ring-highlight-valid shadow-[0_0_16px_rgba(76,175,80,0.7)] cursor-pointer pulse-valid brightness-115'
+    ? `ring-3 ${ringColor} cursor-pointer ${pulseClass} brightness-115`
     : isValidSource
-    ? 'ring-2 ring-highlight-valid shadow-[0_0_10px_rgba(76,175,80,0.5)] pulse-valid cursor-pointer brightness-110'
+    ? `ring-2 ${ringColor}/70 ${pulseClass} cursor-pointer brightness-110`
     : '';
 
   // Show max 4 pieces visually, then a count badge

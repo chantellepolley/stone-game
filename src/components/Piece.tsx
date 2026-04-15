@@ -52,8 +52,10 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
     ? 'ring-2 ring-amber-400/70 shadow-[0_0_10px_rgba(255,180,0,0.5)]'
     : '';
 
+  const pulseClass = isP1 ? 'pulse-gold' : 'pulse-blue';
+  const highlightRing = isP1 ? 'ring-amber-400' : 'ring-sky-400';
   const highlightStyle = highlighted
-    ? 'ring-3 ring-highlight-valid cursor-pointer hover:scale-115 pulse-valid brightness-120'
+    ? `ring-3 ${highlightRing} cursor-pointer hover:scale-115 ${pulseClass} brightness-120`
     : '';
 
   const clickable = onClick ? 'cursor-pointer hover:scale-105' : '';

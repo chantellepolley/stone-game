@@ -111,6 +111,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           pieces={state.bench[1]}
           label="Start"
           interactive={hasBenchMoves && state.currentPlayer === 1}
+          currentPlayer={state.currentPlayer}
           onClick={() => handleClickBench(1)}
           isSelected={selectedSource?.type === 'bench' && selectedSource.player === 1}
         />
@@ -125,6 +126,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
               isValidSource={validSourceSpaces.has(idx)}
               isValidTarget={validTargetSpaces.has(idx)}
               isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
+              currentPlayer={state.currentPlayer}
               onClickSpace={() => handleClickSpace(idx)}
               onClickPiece={handleClickPiece}
             />
@@ -137,6 +139,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           label="Home"
           interactive={canBearOff && state.currentPlayer === 1}
           hinting={anyBearOffP1}
+          currentPlayer={state.currentPlayer}
           onClick={() => handleBearOff(1)}
         />
       </div>
@@ -158,6 +161,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           pieces={state.bench[2]}
           label="Start"
           interactive={hasBenchMoves && state.currentPlayer === 2}
+          currentPlayer={state.currentPlayer}
           onClick={() => handleClickBench(2)}
           isSelected={selectedSource?.type === 'bench' && selectedSource.player === 2}
         />
@@ -172,6 +176,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
               isValidSource={validSourceSpaces.has(idx)}
               isValidTarget={validTargetSpaces.has(idx)}
               isSelected={selectedSource?.type === 'board' && selectedSource.index === idx}
+              currentPlayer={state.currentPlayer}
               onClickSpace={() => handleClickSpace(idx)}
               onClickPiece={handleClickPiece}
             />
@@ -184,6 +189,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
           label="Home"
           interactive={canBearOff && state.currentPlayer === 2}
           hinting={anyBearOffP2}
+          currentPlayer={state.currentPlayer}
           onClick={() => handleBearOff(2)}
         />
       </div>

@@ -83,13 +83,22 @@ body {
   animation: piece-place 0.2s ease-out;
 }
 
-/* Pulse for valid move targets */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(76, 175, 80, 0.5); }
-  50% { box-shadow: 0 0 24px rgba(76, 175, 80, 1); }
+/* Pulse for valid move targets — gold (P1) */
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 180, 50, 0.5); }
+  50% { box-shadow: 0 0 24px rgba(255, 180, 50, 1); }
 }
-.pulse-valid {
-  animation: pulse-glow 1.2s ease-in-out infinite;
+.pulse-gold {
+  animation: pulse-gold 1.2s ease-in-out infinite;
+}
+
+/* Pulse for valid move targets — blue (P2) */
+@keyframes pulse-blue {
+  0%, 100% { box-shadow: 0 0 8px rgba(100, 180, 255, 0.5); }
+  50% { box-shadow: 0 0 24px rgba(100, 180, 255, 1); }
+}
+.pulse-blue {
+  animation: pulse-blue 1.2s ease-in-out infinite;
 }
 
 /* Dice roll animation */
