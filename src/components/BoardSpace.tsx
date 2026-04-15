@@ -52,7 +52,7 @@ export default function BoardSpace({
         relative flex flex-col items-center justify-end overflow-hidden
         ${bgColor} ${borderHighlight}
         rounded-t-lg rounded-b-sm
-        h-[190px] w-full
+        h-[220px] w-full
         border border-stone-accent/40
         transition-all duration-200
         hover:brightness-110

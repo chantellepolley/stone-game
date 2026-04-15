@@ -9,9 +9,9 @@ interface PieceProps {
 }
 
 const sizes = {
-  sm: { box: 'w-9 h-9', px: 36, icon: 22 },
-  md: { box: 'w-11 h-11', px: 44, icon: 28 },
-  lg: { box: 'w-13 h-13', px: 52, icon: 34 },
+  sm: { box: 'w-11 h-11', px: 44, icon: 26 },
+  md: { box: 'w-13 h-13', px: 52, icon: 32 },
+  lg: { box: 'w-15 h-15', px: 60, icon: 38 },
 };
 
 

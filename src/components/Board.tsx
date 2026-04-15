@@ -105,7 +105,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
       }}
     >
       {/* Top row: P1 start | spaces 0-9 | P1 home */}
-      <div className="flex gap-1 items-stretch" style={{ height: '190px' }}>
+      <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
         <StoneBox
           player={1}
           pieces={state.bench[1]}
@@ -171,7 +171,7 @@ export default function Board({ state, validMoves, onSelectMove }: BoardProps) {
       </div>
 
       {/* Bottom row: P2 start | spaces 19-10 | P2 home */}
-      <div className="flex gap-1 items-stretch" style={{ height: '190px' }}>
+      <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
         <StoneBox
           player={2}
           pieces={state.bench[2]}

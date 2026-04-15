@@ -34,7 +34,7 @@ export default function Game() {
         </div>
 
         {/* Board */}
-        <div className="flex-1 max-w-[900px]">
+        <div className="flex-1 max-w-[1050px]">
           <Board
             state={state}
             validMoves={validMoves}
