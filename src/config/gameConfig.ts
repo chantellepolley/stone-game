@@ -58,9 +58,10 @@ export const GAME_CONFIG = {
 
   /**
    * How many spaces from the end of the route constitute the "home stretch".
-   * Pieces entering the home stretch become crowned.
+   * Pieces entering the home stretch become crowned (flipped to jester side).
+   * Set to 10 = the entire final row (3rd pass).
    */
-  HOME_STRETCH_LENGTH: 5,
+  HOME_STRETCH_LENGTH: 10,
 
   /** Dice configuration */
   DICE: {
