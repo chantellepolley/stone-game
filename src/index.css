@@ -31,10 +31,41 @@
 
 body {
   margin: 0;
-  background: #1a1510;
   color: #c4b59a;
   font-family: var(--font-body);
   min-height: 100vh;
+  background-color: #1a1510;
+  background-image:
+    /* Subtle crack lines */
+    linear-gradient(165deg, transparent 45%, rgba(0,0,0,0.15) 45.5%, rgba(0,0,0,0.15) 46%, transparent 46.5%),
+    linear-gradient(30deg, transparent 60%, rgba(0,0,0,0.1) 60.3%, rgba(0,0,0,0.1) 60.6%, transparent 61%),
+    linear-gradient(195deg, transparent 70%, rgba(0,0,0,0.08) 70.2%, rgba(0,0,0,0.08) 70.5%, transparent 71%),
+    /* Stone block grid */
+    linear-gradient(0deg, rgba(0,0,0,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.12) 1px, transparent 1px),
+    /* Warm stone color variation */
+    radial-gradient(ellipse 120% 80% at 20% 30%, #231c12 0%, transparent 70%),
+    radial-gradient(ellipse 100% 100% at 80% 70%, #1e1a10 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 50%, #252015 0%, transparent 50%),
+    /* Mossy/weathered patches */
+    radial-gradient(circle at 15% 85%, rgba(40,50,30,0.3) 0%, transparent 15%),
+    radial-gradient(circle at 90% 20%, rgba(40,50,30,0.2) 0%, transparent 12%),
+    radial-gradient(circle at 60% 90%, rgba(35,45,28,0.25) 0%, transparent 10%),
+    /* Base stone texture */
+    linear-gradient(135deg, #1a1510 0%, #1f1a12 25%, #1a1510 50%, #171310 75%, #1a1510 100%);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    120px 80px,
+    120px 80px,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%;
 }
 
 #root {
