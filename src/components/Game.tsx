@@ -11,10 +11,10 @@ export default function Game() {
   const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo } = useGame();
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-6 gap-6">
+    <div className="h-screen flex flex-col items-center px-4 py-2 gap-1 overflow-hidden">
       {/* Logo */}
       <header>
-        <img src="/logo.png" alt="STONE" className="h-48 object-contain" />
+        <img src="/logo.png" alt="STONE" className="h-28 object-contain" />
       </header>
 
       {/* Turn indicator */}
@@ -25,7 +25,7 @@ export default function Game() {
       />
 
       {/* Main layout: sidebar + board + sidebar */}
-      <div className="flex gap-4 items-start w-full max-w-[1100px] justify-center">
+      <div className="flex gap-3 items-start w-full max-w-[1100px] justify-center flex-1 min-h-0">
         {/* Left sidebar: Move Log */}
         <div className="hidden lg:flex flex-col gap-3 w-[200px] shrink-0">
           <MoveLog entries={state.moveLog} />
