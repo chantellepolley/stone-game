@@ -1,5 +1,4 @@
-import type { Piece as PieceType, PlayerId, Move } from '../types/game';
-import { GAME_CONFIG } from '../config/gameConfig';
+import type { Piece as PieceType, PlayerId } from '../types/game';
 import Piece from './Piece';
 
 interface BenchProps {
@@ -11,7 +10,6 @@ interface BenchProps {
 }
 
 export default function Bench({ player, pieces, hasBenchMoves, onClickBench, isSelected }: BenchProps) {
-  const name = GAME_CONFIG.PLAYER_NAMES[player];
   const isP1 = player === 1;
 
   return (

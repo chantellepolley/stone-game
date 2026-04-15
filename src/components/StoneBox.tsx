@@ -1,5 +1,4 @@
 import type { Piece as PieceType, PlayerId } from '../types/game';
-import { GAME_CONFIG } from '../config/gameConfig';
 import Piece from './Piece';
 
 interface StoneBoxProps {
