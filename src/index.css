@@ -85,11 +85,11 @@ body {
 
 /* Pulse for valid move targets */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 4px rgba(76, 175, 80, 0.4); }
-  50% { box-shadow: 0 0 12px rgba(76, 175, 80, 0.8); }
+  0%, 100% { box-shadow: 0 0 8px rgba(76, 175, 80, 0.5); }
+  50% { box-shadow: 0 0 24px rgba(76, 175, 80, 1); }
 }
 .pulse-valid {
-  animation: pulse-glow 1.5s ease-in-out infinite;
+  animation: pulse-glow 1.2s ease-in-out infinite;
 }
 
 /* Dice roll animation */

@@ -28,11 +28,11 @@ export default function BoardSpace({
     : 'bg-stone-dark/80';
 
   const borderHighlight = isSelected
-    ? 'ring-2 ring-highlight-selected shadow-[0_0_12px_rgba(255,152,0,0.5)]'
+    ? 'ring-3 ring-highlight-selected shadow-[0_0_20px_rgba(255,152,0,0.7)] brightness-125'
     : isValidTarget
-    ? 'ring-2 ring-highlight-valid shadow-[0_0_8px_rgba(76,175,80,0.5)] cursor-pointer'
+    ? 'ring-3 ring-highlight-valid shadow-[0_0_16px_rgba(76,175,80,0.7)] cursor-pointer pulse-valid brightness-115'
     : isValidSource
-    ? 'ring-1 ring-highlight-valid/50'
+    ? 'ring-2 ring-highlight-valid shadow-[0_0_10px_rgba(76,175,80,0.5)] pulse-valid cursor-pointer brightness-110'
     : '';
 
   // Show max 4 pieces visually, then a count badge

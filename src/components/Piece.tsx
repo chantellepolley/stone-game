@@ -26,7 +26,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, classN
     : '';
 
   const highlightStyle = highlighted
-    ? 'ring-2 ring-highlight-valid cursor-pointer hover:scale-110 pulse-valid'
+    ? 'ring-3 ring-highlight-valid cursor-pointer hover:scale-115 pulse-valid brightness-120'
     : '';
 
   const clickable = onClick ? 'cursor-pointer hover:scale-105' : '';

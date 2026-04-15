@@ -25,9 +25,9 @@ export default function StoneBox({ player, pieces, label, interactive, onClick, 
           : 'border-player2-accent/40 bg-player2-dark/20'
         }
         ${isSelected
-          ? 'ring-2 ring-highlight-selected shadow-[0_0_12px_rgba(255,152,0,0.5)]'
+          ? 'ring-3 ring-highlight-selected shadow-[0_0_20px_rgba(255,152,0,0.7)] brightness-125'
           : interactive
-          ? 'ring-1 ring-highlight-valid/50 cursor-pointer hover:brightness-110 pulse-valid'
+          ? 'ring-2 ring-highlight-valid shadow-[0_0_14px_rgba(76,175,80,0.6)] cursor-pointer hover:brightness-120 pulse-valid'
           : ''
         }
       `}
