@@ -10,9 +10,10 @@ interface StoneBoxProps {
   currentPlayer?: PlayerId;
   onClick?: () => void;
   isSelected?: boolean;
+  onDragStart?: (pieceId: string, e: React.PointerEvent) => void;
 }
 
-export default function StoneBox({ pieces, label, interactive, hinting, currentPlayer, onClick, isSelected }: StoneBoxProps) {
+export default function StoneBox({ pieces, label, interactive, hinting, currentPlayer, onClick, isSelected, onDragStart }: StoneBoxProps) {
   const isP1Turn = (currentPlayer ?? 1) === 1;
   const ringColor = isP1Turn ? 'ring-amber-400' : 'ring-sky-400';
   const pulseClass = isP1Turn ? 'pulse-gold' : 'pulse-blue';
@@ -41,7 +42,20 @@ export default function StoneBox({ pieces, label, interactive, hinting, currentP
       {/* Stacked pieces */}
       <div className="flex flex-wrap justify-center gap-0.5 max-w-[76px]">
         {pieces.slice(0, 4).map(piece => (
-          <Piece key={piece.id} piece={piece} size="sm" />
+          <div
+            key={piece.id}
+            onPointerDown={interactive && onDragStart ? (e) => {
+              e.stopPropagation();
+              onDragStart(piece.id, e);
+            } : undefined}
+          >
+            <Piece
+              piece={piece}
+              size="sm"
+              highlighted={interactive}
+              onClick={interactive ? onClick : undefined}
+            />
+          </div>
         ))}
       </div>
 

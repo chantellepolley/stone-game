@@ -130,17 +130,23 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
   // ── Drag and drop ──
   function handleDragStart(pieceId: string, e: React.PointerEvent) {
     const piece = findPiece(pieceId);
-    if (!piece) return;
+    if (!piece || busy) return;
 
-    // Select this piece
+    // Determine source: board space or bench
     const spaceIdx = state.board.findIndex(sp => sp.some(p => p.id === pieceId));
+    let fromKey: string;
     if (spaceIdx !== -1) {
       setSelected({ type: 'board', index: spaceIdx, pieceId });
+      fromKey = `space-${spaceIdx}`;
+    } else {
+      // Must be from bench
+      setSelected({ type: 'bench', player: piece.owner });
+      fromKey = `bench-${piece.owner}`;
     }
 
     const br = boardRef.current?.getBoundingClientRect();
     if (!br) return;
-    setDrag({ pieceId, piece, x: e.clientX - br.left, y: e.clientY - br.top, fromKey: `space-${spaceIdx}` });
+    setDrag({ pieceId, piece, x: e.clientX - br.left, y: e.clientY - br.top, fromKey });
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
   }
 
@@ -293,6 +299,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
             currentPlayer={state.currentPlayer}
             onClick={() => handleClickBench(1)}
             isSelected={selected?.type === 'bench' && selected.player === 1}
+            onDragStart={hasBenchMoves && state.currentPlayer === 1 ? handleDragStart : undefined}
           />
         </div>
 
@@ -329,6 +336,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
             currentPlayer={state.currentPlayer}
             onClick={() => handleClickBench(2)}
             isSelected={selected?.type === 'bench' && selected.player === 2}
+            onDragStart={hasBenchMoves && state.currentPlayer === 2 ? handleDragStart : undefined}
           />
         </div>
 
