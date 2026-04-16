@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import type { GameState, GamePhase, Move, GameMode, AIDifficulty } from '../types/game';
 import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
+import { recordGameResult } from '../lib/statsTracker';
 import { isJoker } from '../engine/dice';
 import { chooseBestMove, chooseBestJokerValue } from '../engine/ai';
 import { GAME_CONFIG } from '../config/gameConfig';
@@ -114,6 +115,29 @@ export function useGame() {
   const [aiRolling, setAiRolling] = useState(false);
 
   const isAITurn = state.gameMode === 'ai' && state.currentPlayer === 2 && state.phase !== 'not_started' && state.phase !== 'game_over' && state.phase !== 'no_moves';
+  const statsRecorded = useRef(false);
+
+  // ── Record stats when game ends ──
+  useEffect(() => {
+    if (state.phase === 'game_over' && state.winner && !statsRecorded.current) {
+      statsRecorded.current = true;
+      const token = localStorage.getItem('stone_device_token');
+      if (token) {
+        // Get player ID from Supabase
+        import('../lib/supabase').then(({ supabase }) => {
+          supabase.from('players').select('id').eq('device_token', token).single()
+            .then(({ data }) => {
+              if (data) {
+                // For local/AI games, only the local player gets stats
+                const playerId = data.id;
+                recordGameResult(state, state.winner!, playerId, null);
+              }
+            });
+        });
+      }
+    }
+    if (state.phase === 'not_started') statsRecorded.current = false;
+  }, [state.phase, state.winner]);
 
   // ── Auto-switch after "no valid moves" display ──
   useEffect(() => {

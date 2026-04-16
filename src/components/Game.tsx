@@ -11,16 +11,18 @@ import StartScreen from './StartScreen';
 
 interface GameProps {
   onPlayOnline?: () => void;
+  onShowStats?: () => void;
+  onShowLeaderboard?: () => void;
 }
 
-export default function Game({ onPlayOnline }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling } = useGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [showMobileRules, setShowMobileRules] = useState(false);
 
   if (state.phase === 'not_started') {
-    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} />;
+    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} />;
   }
 
   return (

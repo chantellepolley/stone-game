@@ -1,17 +1,25 @@
 import { useState } from 'react';
 import type { GameMode, AIDifficulty } from '../types/game';
+import { usePlayerContext } from '../contexts/PlayerContext';
 
 interface StartScreenProps {
   onStart: (mode: GameMode, difficulty: AIDifficulty) => void;
   onPlayOnline?: () => void;
+  onShowStats?: () => void;
+  onShowLeaderboard?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard }: StartScreenProps) {
+  const { player } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
 
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4">
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+
+      {player && (
+        <p className="text-white/50 text-sm font-heading">Welcome back, <span className="text-amber-400">{player.username}</span></p>
+      )}
 
       {!showDifficulty ? (
         <div className="flex flex-col items-center gap-4">
@@ -76,6 +84,26 @@ export default function StartScreen({ onStart, onPlayOnline }: StartScreenProps)
           >
             Back
           </button>
+        </div>
+      )}
+
+      {/* Stats & Leaderboard */}
+      {!showDifficulty && (onShowStats || onShowLeaderboard) && (
+        <div className="flex gap-3">
+          {onShowStats && (
+            <button onClick={onShowStats}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+              My Stats
+            </button>
+          )}
+          {onShowLeaderboard && (
+            <button onClick={onShowLeaderboard}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+              Leaderboard
+            </button>
+          )}
         </div>
       )}
     </div>
