@@ -10,11 +10,48 @@ interface OnlineLobbyProps {
   onBack: () => void;
 }
 
+function getJoinUrl(code: string): string {
+  const base = window.location.origin;
+  return `${base}/join/${code}`;
+}
+
+async function shareInvite(code: string) {
+  const url = getJoinUrl(code);
+  const text = `Join my STONE game!\n${url}`;
+
+  // Try native share (mobile)
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'STONE Game Invite', text, url });
+      return 'shared';
+    } catch {
+      // User cancelled or share failed — fall through to clipboard
+    }
+  }
+
+  // Fallback: copy to clipboard
+  try {
+    await navigator.clipboard.writeText(text);
+    return 'copied';
+  } catch {
+    return 'failed';
+  }
+}
+
 export default function OnlineLobby({
   onlinePhase, roomCode, opponentConnected, error,
   onCreateRoom, onJoinRoom, onBack,
 }: OnlineLobbyProps) {
   const [joinCode, setJoinCode] = useState('');
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'failed'>('idle');
+
+  const handleShare = async () => {
+    const result = await shareInvite(roomCode);
+    setShareStatus(result);
+    if (result === 'copied') {
+      setTimeout(() => setShareStatus('idle'), 2000);
+    }
+  };
 
   if (onlinePhase === 'waiting') {
     return (
@@ -22,11 +59,33 @@ export default function OnlineLobby({
         <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
 
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
-          <p className="text-white text-sm font-heading">Share this code with your opponent:</p>
-          <div className="text-4xl font-heading tracking-[0.3em] text-amber-400 bg-black/30 px-6 py-3 rounded-lg select-all">
-            {roomCode}
+          <p className="text-white text-sm font-heading">Invite your opponent:</p>
+
+          {/* Share button — primary action */}
+          <button
+            onClick={handleShare}
+            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                       bg-amber-600 text-white border-2 border-amber-500
+                       hover:bg-amber-500 hover:scale-105 active:scale-95
+                       transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
+            {shareStatus === 'copied' ? 'Copied to Clipboard!' : shareStatus === 'shared' ? 'Shared!' : 'Share Invite Link'}
+          </button>
+
+          {/* Room code as fallback */}
+          <div className="flex flex-col items-center gap-1 mt-2">
+            <p className="text-white/40 text-[10px]">Or share this code manually:</p>
+            <div className="text-3xl font-heading tracking-[0.3em] text-amber-400 bg-black/30 px-5 py-2 rounded-lg select-all">
+              {roomCode}
+            </div>
           </div>
-          <p className="text-white/40 text-xs">
+
+          <p className="text-white/40 text-xs mt-2">
             {opponentConnected ? 'Opponent connected!' : 'Waiting for opponent to join...'}
           </p>
           {!opponentConnected && (
@@ -53,7 +112,6 @@ export default function OnlineLobby({
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
 
       <div className="flex flex-col items-center gap-6 max-w-sm w-full">
-        {/* Create room */}
         <button
           onClick={onCreateRoom}
           className="w-full px-6 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
@@ -70,7 +128,6 @@ export default function OnlineLobby({
           <div className="flex-1 h-px bg-white/20" />
         </div>
 
-        {/* Join room */}
         <div className="flex flex-col gap-3 w-full">
           <input
             type="text"

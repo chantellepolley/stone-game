@@ -10,9 +10,10 @@ import OnlineLobby from './OnlineLobby';
 
 interface OnlineGameProps {
   onBack: () => void;
+  autoJoinCode?: string | null;
 }
 
-export default function OnlineGame({ onBack }: OnlineGameProps) {
+export default function OnlineGame({ onBack, autoJoinCode }: OnlineGameProps) {
   const {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJokerChoice, chooseJokerDoubles,
@@ -21,6 +22,13 @@ export default function OnlineGame({ onBack }: OnlineGameProps) {
   } = useOnlineGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
+
+  // Auto-join if we got a code from the URL
+  const [autoJoined, setAutoJoined] = useState(false);
+  if (autoJoinCode && !autoJoined && onlinePhase === 'idle') {
+    setAutoJoined(true);
+    setTimeout(() => joinRoom(autoJoinCode), 100);
+  }
 
   // Show lobby if not playing yet
   if (onlinePhase !== 'playing') {

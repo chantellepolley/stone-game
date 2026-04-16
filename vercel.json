@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/join/:code", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
