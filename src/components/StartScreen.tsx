@@ -3,9 +3,10 @@ import type { GameMode, AIDifficulty } from '../types/game';
 
 interface StartScreenProps {
   onStart: (mode: GameMode, difficulty: AIDifficulty) => void;
+  onPlayOnline?: () => void;
 }
 
-export default function StartScreen({ onStart }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline }: StartScreenProps) {
   const [showDifficulty, setShowDifficulty] = useState(false);
 
   return (
@@ -34,6 +35,17 @@ export default function StartScreen({ onStart }: StartScreenProps) {
             >
               vs Computer
             </button>
+            {onPlayOnline && (
+              <button
+                onClick={onPlayOnline}
+                className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-amber-600/60
+                           hover:bg-[#5e5549] hover:scale-105 active:scale-95
+                           transition-all cursor-pointer shadow-lg"
+              >
+                Play Online
+              </button>
+            )}
           </div>
         </div>
       ) : (

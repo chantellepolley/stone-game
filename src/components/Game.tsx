@@ -9,13 +9,17 @@ import RulesPanel from './RulesPanel';
 import GameControls from './GameControls';
 import StartScreen from './StartScreen';
 
-export default function Game() {
+interface GameProps {
+  onPlayOnline?: () => void;
+}
+
+export default function Game({ onPlayOnline }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove } = useGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
 
   if (state.phase === 'not_started') {
-    return <StartScreen onStart={startGame} />;
+    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} />;
   }
 
   return (
