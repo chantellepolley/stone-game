@@ -3,20 +3,18 @@ import { getValidMoves, getMultiStepMoves, executeMove } from './moves';
 import { GAME_CONFIG } from '../config/gameConfig';
 
 const ROUTE_LENGTH = GAME_CONFIG.ROUTE_LENGTH;
+const NUM_SPACES = GAME_CONFIG.NUM_SPACES;
 
-/** Count how many of the opponent's pieces could reach a given route position */
+/** Count how many of the opponent's pieces could reach a board space within dice range */
 function countThreats(state: GameState, routePos: number, player: PlayerId): number {
   const opponent: PlayerId = player === 1 ? 2 : 1;
   const opponentRoute = GAME_CONFIG.PLAYER_ROUTE[opponent];
+  const targetSpace = GAME_CONFIG.PLAYER_ROUTE[player][routePos];
   let threats = 0;
 
-  // Check opponent pieces that could reach the board space at this routePos
-  const targetSpace = GAME_CONFIG.PLAYER_ROUTE[player][routePos];
-
-  for (let i = 0; i < GAME_CONFIG.NUM_SPACES; i++) {
+  for (let i = 0; i < NUM_SPACES; i++) {
     for (const p of state.board[i]) {
       if (p.owner !== opponent || p.routePos < 0) continue;
-      // Can this opponent piece reach targetSpace within 6 moves (max single die)?
       for (let d = 1; d <= 6; d++) {
         const destRoutePos = p.routePos + d;
         if (destRoutePos >= ROUTE_LENGTH) break;
@@ -30,9 +28,37 @@ function countThreats(state: GameState, routePos: number, player: PlayerId): num
   return threats;
 }
 
-/** Check if a board space has friendly pieces (safe stack) */
+/** Count friendly pieces at a board space */
 function friendlyCountAt(state: GameState, spaceIdx: number, player: PlayerId): number {
   return state.board[spaceIdx].filter(p => p.owner === player).length;
+}
+
+/** Count total pieces on the board for a player */
+function piecesOnBoard(state: GameState, player: PlayerId): number {
+  let count = 0;
+  for (let i = 0; i < NUM_SPACES; i++) {
+    count += state.board[i].filter(p => p.owner === player).length;
+  }
+  return count;
+}
+
+/** Count lone (unprotected) pieces on the board */
+function lonePieceCount(state: GameState, player: PlayerId): number {
+  let count = 0;
+  for (let i = 0; i < NUM_SPACES; i++) {
+    const friendly = state.board[i].filter(p => p.owner === player);
+    if (friendly.length === 1) count++;
+  }
+  return count;
+}
+
+/** Get the routePos of the piece being moved */
+function getMovingPiece(state: GameState, move: Move): { routePos: number; crowned: boolean } | null {
+  if (move.from.type === 'board') {
+    const piece = state.board[move.from.index].find(p => p.id === move.pieceId);
+    if (piece) return { routePos: piece.routePos, crowned: piece.crowned };
+  }
+  return null;
 }
 
 /**
@@ -44,111 +70,168 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
   }
 
   const player = state.currentPlayer;
+  const opponent: PlayerId = player === 1 ? 2 : 1;
+  const isHard = difficulty === 'hard';
   let score = 0;
 
-  // ── Bear off = top priority ──
-  if (move.bearsOff) score += 2000;
+  const movingPiece = getMovingPiece(state, move);
 
-  // ── Capture = very valuable ──
-  if (move.captures) score += 600;
+  // ═══════════════════════════════════════════
+  // BEARING OFF — always the best move
+  // ═══════════════════════════════════════════
+  if (move.bearsOff) return 5000 + Math.random() * 10;
 
-  // ── Crowning = good ──
-  if (move.crowns) score += 150;
+  // ═══════════════════════════════════════════
+  // CAPTURES — value depends on context
+  // ═══════════════════════════════════════════
+  if (move.captures && move.to.type === 'board') {
+    // How far along is the piece we're capturing? More progress = more valuable capture
+    const capturedPieces = state.board[move.to.index].filter(p => p.owner === opponent);
+    const capturedProgress = capturedPieces.length > 0 ? capturedPieces[0].routePos : 0;
+    const captureValue = 100 + capturedProgress * 15; // 100 base + up to 450 for advanced pieces
 
-  // ── Enter from bench = get pieces in play ──
-  if (move.from.type === 'bench') score += 80;
+    // But how safe is our piece AFTER capturing?
+    if (isHard) {
+      const newState = executeMove(state, move);
+      const destFriendly = friendlyCountAt(newState, move.to.index, player);
+      const threats = countThreats(newState, (movingPiece?.routePos ?? 0) + move.diceValue, player);
 
-  // ── Prefer advancing pieces (use dice efficiently) ──
-  score += move.diceValue * 2;
+      if (destFriendly >= 2) {
+        // Safe capture — full value
+        score += captureValue;
+      } else if (threats === 0) {
+        // No immediate threats — decent capture
+        score += captureValue * 0.7;
+      } else {
+        // Exposed after capture — only worth it if the captured piece was very advanced
+        if (capturedProgress > 15) {
+          score += captureValue * 0.4; // Still somewhat worth it
+        } else {
+          score -= 50; // Not worth risking our piece for a low-value capture
+        }
+      }
+    } else {
+      // Medium: simpler capture scoring
+      score += captureValue;
+    }
+  }
 
-  // ── Destination safety (medium + hard) ──
-  if (move.to.type === 'board') {
+  // ═══════════════════════════════════════════
+  // CROWNING — good but not at all costs
+  // ═══════════════════════════════════════════
+  if (move.crowns) score += 120;
+
+  // ═══════════════════════════════════════════
+  // BENCH ENTRY — important to get pieces out
+  // ═══════════════════════════════════════════
+  if (move.from.type === 'bench') {
+    const onBoard = piecesOnBoard(state, player);
+    if (onBoard < 3) score += 250;       // Very high priority when few pieces out
+    else if (onBoard < 6) score += 150;   // Still important
+    else score += 60;                     // Less urgent later
+
+    // Bonus if entering onto a space with a friendly piece (safe entry)
+    if (move.to.type === 'board') {
+      const destFriendly = friendlyCountAt(state, move.to.index, player);
+      if (destFriendly > 0) score += 100; // Safe entry with a buddy
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // DESTINATION SAFETY — the most important factor for Hard AI
+  // ═══════════════════════════════════════════
+  if (move.to.type === 'board' && !move.captures) {
     const newState = executeMove(state, move);
     const destFriendly = friendlyCountAt(newState, move.to.index, player);
+    const destRoutePos = (movingPiece?.routePos ?? 0) + move.diceValue;
 
-    // Landing with a friend = safe, big bonus
-    if (destFriendly >= 2) score += 200;
+    if (destFriendly >= 2) {
+      // Landing with a buddy = very safe
+      score += 250;
+    } else if (destFriendly === 1) {
+      // Landing alone
+      if (isHard) {
+        const threats = countThreats(newState, destRoutePos, player);
+        if (threats === 0) {
+          score += 30; // No threats, acceptable
+        } else {
+          score -= 150 * threats; // Heavy penalty per threat
+        }
 
-    // Landing alone = risky
-    if (destFriendly === 1) {
-      score -= 100;
+        // Extra penalty for lone pieces far from home (long way to go = more exposure)
+        const distFromHome = ROUTE_LENGTH - destRoutePos;
+        if (distFromHome > 15) score -= 100; // Very far from home, very risky
+        else if (distFromHome > 10) score -= 50;
+      } else {
+        score -= 50; // Medium: mild lone penalty
+      }
+    }
+  }
 
-      // Hard mode: check actual threats
-      if (difficulty === 'hard') {
-        const piece = newState.board[move.to.index].find(p => p.id === move.pieceId);
-        if (piece) {
-          const threats = countThreats(newState, piece.routePos, player);
-          score -= threats * 80; // More threats = much worse
+  // ═══════════════════════════════════════════
+  // SOURCE SAFETY — don't break safe stacks
+  // ═══════════════════════════════════════════
+  if (isHard && move.from.type === 'board') {
+    const srcBefore = friendlyCountAt(state, move.from.index, player);
+    if (srcBefore === 2) {
+      // Breaking a pair — leaves one piece exposed
+      const newState = executeMove(state, move);
+      const leftBehind = newState.board[move.from.index].find(p => p.owner === player);
+      if (leftBehind) {
+        const threats = countThreats(newState, leftBehind.routePos, player);
+        score -= 80 + threats * 60; // Heavy penalty for breaking a safe pair under threat
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // ADVANCEMENT — prefer moving pieces forward, but not recklessly
+  // ═══════════════════════════════════════════
+  if (movingPiece && !move.captures) {
+    // Small bonus for advancing
+    score += move.diceValue;
+
+    // Hard: prefer advancing pieces that are BEHIND (catch up, move as a group)
+    if (isHard) {
+      // Pieces in the home stretch should advance (they're safe there)
+      if (movingPiece.crowned) {
+        score += 100;
+      } else if (movingPiece.routePos > 18 && !movingPiece.crowned) {
+        // Far along but not yet crowned — advance to get crowned
+        score += 50;
+      } else if (movingPiece.routePos > 12) {
+        // Moderately advanced lone runner — slight penalty (let others catch up)
+        const loners = lonePieceCount(state, player);
+        if (loners > 2) score -= 40; // Too many exposed pieces, don't make it worse
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // PROXIMITY TO FRIENDLIES — prefer staying in groups
+  // ═══════════════════════════════════════════
+  if (isHard && move.to.type === 'board' && movingPiece) {
+    const destRoutePos = movingPiece.routePos + move.diceValue;
+    for (let offset = 1; offset <= 4; offset++) {
+      for (const dir of [offset, -offset]) {
+        const nearbyPos = destRoutePos + dir;
+        if (nearbyPos >= 0 && nearbyPos < ROUTE_LENGTH) {
+          const nearbySpace = GAME_CONFIG.PLAYER_ROUTE[player][nearbyPos];
+          const nearbyFriendly = friendlyCountAt(state, nearbySpace, player);
+          if (nearbyFriendly > 0) score += 15; // Nearby friends are good
         }
       }
     }
-
-    // ── Hard mode: leaving the source empty when it had a stack ──
-    if (difficulty === 'hard' && move.from.type === 'board') {
-      const srcFriendlyBefore = friendlyCountAt(state, move.from.index, player);
-      const srcFriendlyAfter = friendlyCountAt(newState, move.from.index, player);
-      // Breaking a safe pair into two singles = bad
-      if (srcFriendlyBefore === 2 && srcFriendlyAfter === 1) {
-        score -= 60;
-      }
-    }
   }
 
-  // ── Hard mode: prefer spreading entry across multiple pieces early game ──
-  if (difficulty === 'hard' && move.from.type === 'bench') {
-    // Count how many pieces are already on the board
-    let piecesOnBoard = 0;
-    for (let i = 0; i < GAME_CONFIG.NUM_SPACES; i++) {
-      piecesOnBoard += state.board[i].filter(p => p.owner === player).length;
-    }
-    // Bonus for entering when few pieces are out
-    if (piecesOnBoard < 4) score += 120;
-  }
-
-  // ── Hard mode: prefer moves that land on or near friendly pieces ──
-  if (difficulty === 'hard' && move.to.type === 'board') {
-    // Check adjacent spaces (within 1-3 route steps) for friendly pieces
-    const piece = state.board[move.from.type === 'board' ? move.from.index : 0]?.find(p => p.id === move.pieceId);
-    const destRoutePos = piece ? piece.routePos + move.diceValue : 0;
-    for (let offset = 1; offset <= 3; offset++) {
-      const nearbyPos = destRoutePos + offset;
-      const nearbyPosBehind = destRoutePos - offset;
-      if (nearbyPos < ROUTE_LENGTH) {
-        const nearbySpace = GAME_CONFIG.PLAYER_ROUTE[player][nearbyPos];
-        if (friendlyCountAt(state, nearbySpace, player) > 0) score += 20;
-      }
-      if (nearbyPosBehind >= 0) {
-        const nearbySpace = GAME_CONFIG.PLAYER_ROUTE[player][nearbyPosBehind];
-        if (friendlyCountAt(state, nearbySpace, player) > 0) score += 20;
-      }
-    }
-  }
-
-  // ── Medium: mild penalty for lone pieces, mild bonus for stacking ──
-  if (difficulty === 'medium' && move.to.type === 'board') {
-    const newState = executeMove(state, move);
-    const destFriendly = friendlyCountAt(newState, move.to.index, player);
-    if (destFriendly === 1) score -= 40;
-    if (destFriendly >= 2) score += 60;
-  }
-
-  // ── Avoid moving the same piece repeatedly (diversify) ──
-  if (move.from.type === 'board') {
-    const piece = state.board[move.from.index].find(p => p.id === move.pieceId);
-    if (piece && piece.routePos > 15 && !piece.crowned) {
-      // Piece is far along but not crowned — others might need catching up
-      score -= 30;
-    }
-  }
-
-  // Small random factor
+  // Small random factor to avoid predictability
   score += Math.random() * 8;
 
   return score;
 }
 
 /**
- * Choose the best move for the AI from the available moves.
+ * Choose the best move for the AI.
  */
 export function chooseBestMove(state: GameState, validMoves: Move[], difficulty: AIDifficulty): Move | null {
   if (validMoves.length === 0) return null;
