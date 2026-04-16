@@ -19,14 +19,14 @@ export default function Game() {
   }
 
   return (
-    <div className="h-screen flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-hidden">
+    <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1">
       {/* Logo */}
-      <header>
-        <img src="/logo.png" alt="STONE" className="h-16 sm:h-20 lg:h-28 object-contain" />
+      <header className="shrink-0">
+        <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain" />
       </header>
 
       {/* Turn indicator */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <TurnIndicator
           currentPlayer={state.currentPlayer}
           phase={state.phase}
@@ -38,7 +38,7 @@ export default function Game() {
       </div>
 
       {/* Mobile: dice above board */}
-      <div className="lg:hidden flex flex-col items-center gap-1">
+      <div className="lg:hidden flex items-center justify-center gap-2 shrink-0">
         <DiceArea
           dice={state.dice}
           phase={state.phase}
@@ -50,17 +50,17 @@ export default function Game() {
         />
       </div>
 
-      {/* Main layout: sidebar + board + sidebar */}
-      <div className="flex gap-3 items-start w-full max-w-[1250px] justify-center flex-1 min-h-0">
-        {/* Left sidebar: Move Log + Rules + New Game (desktop) */}
+      {/* Main layout: sidebar + board + sidebar — this section shrinks */}
+      <div className="flex gap-3 items-start w-full max-w-[1250px] justify-center flex-1 min-h-0 overflow-hidden">
+        {/* Left sidebar (desktop) */}
         <div className="hidden lg:flex flex-col gap-3 w-[200px] shrink-0">
           <MoveLog entries={state.moveLog} />
           <RulesPanel />
           <GameControls onRestart={restart} />
         </div>
 
-        {/* Board */}
-        <div className="flex-1 max-w-[1050px] w-full min-h-0">
+        {/* Board — shrinks to fit */}
+        <div className="flex-1 max-w-[1050px] w-full min-h-0 overflow-hidden">
           <Board
             state={state}
             validMoves={isAITurn ? [] : validMoves}
@@ -70,7 +70,7 @@ export default function Game() {
           />
         </div>
 
-        {/* Right sidebar: Dice + Undo + Hints toggle (desktop) */}
+        {/* Right sidebar (desktop) */}
         <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center">
           <DiceArea
             dice={state.dice}
@@ -84,7 +84,6 @@ export default function Game() {
           {canUndo && (
             <GameControls onUndo={undo} canUndo={canUndo} />
           )}
-          {/* Hints toggle */}
           <button
             onClick={() => setHintsEnabled(h => !h)}
             className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer"
@@ -94,8 +93,8 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Mobile: controls - always at bottom */}
-      <div className="lg:hidden flex items-center gap-1.5 py-1 shrink-0">
+      {/* Mobile: bottom bar — always pinned */}
+      <div className="lg:hidden flex items-center gap-1 py-0.5 shrink-0">
         {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
         <GameControls onRestart={restart} />
         <button
@@ -118,7 +117,7 @@ export default function Game() {
 
       {/* Mobile: move log overlay */}
       {showMobileLog && (
-        <div className="lg:hidden fixed bottom-12 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
+        <div className="lg:hidden fixed bottom-10 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
           <MoveLog entries={state.moveLog} />
         </div>
       )}

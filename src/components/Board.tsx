@@ -289,7 +289,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           pieces={state.board[idx]}
           variant={getSpaceVariant(idx)}
           isValidSource={hintsEnabled && !selected && !busy && validSourceSpaces.has(idx)}
-          isValidTarget={hintsEnabled && targetSpaces.has(idx)}
+          isValidTarget={!!selected && targetSpaces.has(idx)}
           isSelected={selected?.type === 'board' && selected.index === idx}
           selectedPieceId={selected?.type === 'board' && selected.index === idx ? selected.pieceId : null}
           currentPlayer={state.currentPlayer}
@@ -335,7 +335,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
         <div ref={el => setRef('home-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.home[1]} label="Home"
-            interactive={hintsEnabled && !busy && canBearOff && state.currentPlayer === 1}
+            interactive={!busy && canBearOff && state.currentPlayer === 1}
             hinting={hintsEnabled && anyBearOffP1} currentPlayer={state.currentPlayer}
             onClick={() => handleBearOff(1)}
           />
@@ -372,14 +372,27 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
         <div ref={el => setRef('home-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.home[2]} label="Home"
-            interactive={hintsEnabled && !busy && canBearOff && state.currentPlayer === 2}
+            interactive={!busy && canBearOff && state.currentPlayer === 2}
             hinting={hintsEnabled && anyBearOffP2} currentPlayer={state.currentPlayer}
             onClick={() => handleBearOff(2)}
           />
         </div>
       </div>
 
-      <div className="mt-2">
+      {/* Deselect button */}
+      {selected && !busy && (
+        <div className="flex justify-center py-1">
+          <button
+            onClick={() => setSelected(null)}
+            className="px-3 py-0.5 rounded text-[10px] font-heading uppercase tracking-wider
+                       bg-white/10 text-white/70 hover:bg-white/20 transition-all cursor-pointer"
+          >
+            Deselect
+          </button>
+        </div>
+      )}
+
+      <div className={selected ? '' : 'mt-1'}>
         <div className="h-0.5 bg-gradient-to-r from-transparent via-stone-accent/40 to-transparent" />
       </div>
 
