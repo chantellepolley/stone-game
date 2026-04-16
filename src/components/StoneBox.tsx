@@ -7,13 +7,14 @@ interface StoneBoxProps {
   label: string;
   interactive?: boolean;
   hinting?: boolean;
+  hintsEnabled?: boolean;
   currentPlayer?: PlayerId;
   onClick?: () => void;
   isSelected?: boolean;
   onDragStart?: (pieceId: string, e: React.PointerEvent) => void;
 }
 
-export default function StoneBox({ pieces, label, interactive, hinting, currentPlayer, onClick, isSelected, onDragStart }: StoneBoxProps) {
+export default function StoneBox({ pieces, label, interactive, hinting, hintsEnabled = true, currentPlayer, onClick, isSelected, onDragStart }: StoneBoxProps) {
   const isP1Turn = (currentPlayer ?? 1) === 1;
   const ringColor = isP1Turn ? 'ring-amber-400' : 'ring-sky-400';
   const pulseClass = isP1Turn ? 'pulse-gold' : 'pulse-blue';
@@ -27,9 +28,11 @@ export default function StoneBox({ pieces, label, interactive, hinting, currentP
         border-[#5e5549] bg-[#3d3632] shadow-md
         ${isSelected
           ? `ring-3 ${ringColor} brightness-125 ${pulseClass}`
-          : interactive
+          : interactive && hintsEnabled
           ? `ring-3 ${ringColor} cursor-pointer hover:brightness-120 ${pulseClass}`
-          : hinting
+          : interactive && !hintsEnabled
+          ? 'cursor-pointer'
+          : hinting && hintsEnabled
           ? `ring-2 ${ringColor}/60 ${pulseClass}`
           : ''
         }

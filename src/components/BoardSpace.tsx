@@ -10,6 +10,7 @@ interface BoardSpaceProps {
   isSelected: boolean;
   selectedPieceId?: string | null;
   currentPlayer: PlayerId;
+  hintsEnabled?: boolean;
   onClickSpace: () => void;
   onClickPiece: (pieceId: string) => void;
   onDragStart?: (pieceId: string, e: React.PointerEvent) => void;
@@ -25,6 +26,7 @@ export default function BoardSpace({
   isSelected,
   selectedPieceId,
   currentPlayer,
+  hintsEnabled = true,
   onClickSpace,
   onClickPiece,
   onDragStart,
@@ -37,19 +39,23 @@ export default function BoardSpace({
   const ringColor = isP1 ? 'ring-amber-400' : 'ring-sky-400';
   const pulseClass = isP1 ? 'pulse-gold' : 'pulse-blue';
 
+  // Visual glow: selected always shows, source/target only when hints on
   const borderHighlight = isSelected
     ? `ring-3 ${ringColor} ${pulseClass} brightness-125`
-    : isValidTarget
+    : isValidTarget && hintsEnabled
     ? `ring-3 ${ringColor} cursor-pointer ${pulseClass} brightness-115`
-    : isValidSource
+    : isValidTarget && !hintsEnabled
+    ? 'cursor-pointer'
+    : isValidSource && hintsEnabled
     ? `ring-2 ${ringColor}/70 ${pulseClass} cursor-pointer brightness-110`
+    : isValidSource && !hintsEnabled
+    ? 'cursor-pointer'
     : '';
 
   const maxVisible = 5;
   const visiblePieces = pieces.slice(-maxVisible);
   const hiddenCount = Math.max(0, pieces.length - maxVisible);
 
-  // When selected, spread pieces out more so each is individually clickable
   const playerPieces = pieces.filter(p => p.owner === currentPlayer);
   const hasMultipleSelectable = isSelected && playerPieces.length > 1;
 
@@ -71,7 +77,6 @@ export default function BoardSpace({
           : 'linear-gradient(180deg, #6b6058 0%, #57504a 100%)',
       }}
     >
-
       {/* Pieces stack */}
       <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}>
         {hiddenCount > 0 && (
@@ -81,12 +86,14 @@ export default function BoardSpace({
         )}
         {visiblePieces.map((piece, i) => {
           const isThisPieceSelected = selectedPieceId === piece.id;
-          const canSelect = isValidSource || isValidTarget || (isSelected && piece.owner === currentPlayer);
+          // Clickable: always when source or selected. Highlighted glow: only with hints.
+          const canInteract = isValidSource || isValidTarget || (isSelected && piece.owner === currentPlayer);
+          const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
           return (
             <div
               key={piece.id}
               style={{ marginTop: i === 0 ? 0 : hasMultipleSelectable ? 2 : -4 }}
-              onPointerDown={canSelect && onDragStart ? (e) => {
+              onPointerDown={canInteract && onDragStart ? (e) => {
                 e.stopPropagation();
                 onDragStart(piece.id, e);
               } : undefined}
@@ -94,9 +101,9 @@ export default function BoardSpace({
               <Piece
                 piece={piece}
                 size="sm"
-                highlighted={canSelect}
+                highlighted={showGlow}
                 selected={isThisPieceSelected}
-                onClick={canSelect ? (e?: React.MouseEvent) => {
+                onClick={canInteract ? (e?: React.MouseEvent) => {
                   if (e) e.stopPropagation();
                   onClickPiece(piece.id);
                 } : undefined}
