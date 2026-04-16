@@ -9,16 +9,16 @@ export default function StartScreen({ onStart }: StartScreenProps) {
   const [showDifficulty, setShowDifficulty] = useState(false);
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center gap-8 px-4">
-      <img src="/logo.png" alt="STONE" className="h-48 object-contain" />
+    <div className="h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4">
+      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
 
       {!showDifficulty ? (
         <div className="flex flex-col items-center gap-4">
           <p className="text-white/60 text-sm font-heading tracking-wider">Choose how to play</p>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               onClick={() => onStart('pvp', 'medium')}
-              className="px-8 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
+              className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
                          bg-[#504840] text-white border-2 border-[#6b5f55]
                          hover:bg-[#5e5549] hover:scale-105 active:scale-95
                          transition-all cursor-pointer shadow-lg"
@@ -27,7 +27,7 @@ export default function StartScreen({ onStart }: StartScreenProps) {
             </button>
             <button
               onClick={() => setShowDifficulty(true)}
-              className="px-8 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
+              className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
                          bg-[#504840] text-white border-2 border-[#6b5f55]
                          hover:bg-[#5e5549] hover:scale-105 active:scale-95
                          transition-all cursor-pointer shadow-lg"

@@ -23,7 +23,7 @@ export default function StoneBox({ pieces, label, interactive, hinting, currentP
       onClick={interactive ? onClick : undefined}
       className={`
         flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl
-        border-2 min-w-[80px] w-[90px] h-full transition-all
+        border-2 min-w-[40px] w-[50px] sm:min-w-[60px] sm:w-[70px] lg:min-w-[80px] lg:w-[90px] h-full transition-all
         border-[#5e5549] bg-[#3d3632] shadow-md
         ${isSelected
           ? `ring-3 ${ringColor} brightness-125 ${pulseClass}`

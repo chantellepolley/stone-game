@@ -294,7 +294,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
   return (
     <div
       ref={boardRef}
-      className="relative flex flex-col gap-0 rounded-2xl border-4 border-stone-border bg-board-bg p-3 shadow-2xl select-none"
+      className="relative flex flex-col gap-0 rounded-xl lg:rounded-2xl border-2 lg:border-4 border-stone-border bg-board-bg p-1.5 sm:p-2 lg:p-3 shadow-2xl select-none"
       style={{
         background: 'linear-gradient(135deg, #3d3632 0%, #322d28 50%, #3d3632 100%)',
         boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
@@ -304,7 +304,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
       onPointerUp={handleDragEnd}
     >
       {/* Top row */}
-      <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
+      <div className="flex gap-1 items-stretch" style={{ height: 'clamp(120px, 25vw, 220px)' }}>
         <div ref={el => setRef('bench-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.bench[1]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 1}
@@ -333,7 +333,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
       </div>
 
       {/* Jail */}
-      <div className="flex items-center justify-center py-2 px-1">
+      <div className="flex items-center justify-center py-1 lg:py-2 px-1">
         <div ref={el => setRef('jail', el)}>
           <Jail jail={state.jail} validMoves={busy ? [] : validMoves}
             onClickJailPiece={handleClickJailPiece} currentPlayer={state.currentPlayer} />
@@ -341,7 +341,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
       </div>
 
       {/* Bottom row */}
-      <div className="flex gap-1 items-stretch" style={{ height: '220px' }}>
+      <div className="flex gap-1 items-stretch" style={{ height: 'clamp(120px, 25vw, 220px)' }}>
         <div ref={el => setRef('bench-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.bench[2]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 2}

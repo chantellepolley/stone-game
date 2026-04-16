@@ -11,28 +11,40 @@ import StartScreen from './StartScreen';
 export default function Game() {
   const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove } = useGame();
 
-  // Show start screen before game begins
   if (state.phase === 'not_started') {
     return <StartScreen onStart={startGame} />;
   }
 
   return (
-    <div className="h-screen flex flex-col items-center px-4 py-2 gap-1 overflow-hidden">
+    <div className="min-h-screen lg:h-screen flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-1 lg:overflow-hidden">
       {/* Logo */}
       <header>
-        <img src="/logo.png" alt="STONE" className="h-28 object-contain" />
+        <img src="/logo.png" alt="STONE" className="h-16 sm:h-20 lg:h-28 object-contain" />
       </header>
 
       {/* Turn indicator */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <TurnIndicator
           currentPlayer={state.currentPlayer}
           phase={state.phase}
           winner={state.winner}
         />
         {isAITurn && (
-          <span className="text-xs text-white/40 animate-pulse">AI thinking...</span>
+          <span className="text-[10px] lg:text-xs text-white/40 animate-pulse">AI thinking...</span>
         )}
+      </div>
+
+      {/* Mobile: dice above board */}
+      <div className="lg:hidden flex flex-col items-center gap-1">
+        <DiceArea
+          dice={state.dice}
+          phase={state.phase}
+          currentPlayer={state.currentPlayer}
+          onRoll={roll}
+          awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
+          onChooseJokerDoubles={chooseJokerDoubles}
+          isAITurn={isAITurn}
+        />
       </div>
 
       {/* Main layout: sidebar + board + sidebar */}
@@ -45,7 +57,7 @@ export default function Game() {
         </div>
 
         {/* Board */}
-        <div className="flex-1 max-w-[1050px]">
+        <div className="flex-1 max-w-[1050px] w-full">
           <Board
             state={state}
             validMoves={isAITurn ? [] : validMoves}
@@ -54,7 +66,7 @@ export default function Game() {
           />
         </div>
 
-        {/* Right sidebar: Dice + Undo */}
+        {/* Right sidebar: Dice + Undo (desktop only) */}
         <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center">
           <DiceArea
             dice={state.dice}
@@ -71,39 +83,24 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Mobile: dice and controls below board */}
-      <div className="lg:hidden flex flex-col items-center gap-4">
-        <DiceArea
-          dice={state.dice}
-          phase={state.phase}
-          currentPlayer={state.currentPlayer}
-          onRoll={roll}
-          awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
-          onChooseJokerDoubles={chooseJokerDoubles}
-          isAITurn={isAITurn}
-        />
+      {/* Mobile: controls below board */}
+      <div className="lg:hidden flex items-center gap-2 py-1">
         <GameControls onRestart={restart} onUndo={undo} canUndo={canUndo} />
-      </div>
-
-      {/* Mobile: move log and rules below */}
-      <div className="lg:hidden flex flex-col gap-3 w-full max-w-[500px]">
-        <MoveLog entries={state.moveLog} />
-        <RulesPanel />
       </div>
 
       {/* Victory overlay */}
       {state.winner && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
           onClick={restart}>
-          <div className="bg-board-bg border-4 border-stone-border rounded-2xl p-8 text-center shadow-2xl max-w-md mx-4"
+          <div className="bg-board-bg border-4 border-stone-border rounded-2xl p-6 lg:p-8 text-center shadow-2xl max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}>
-            <div className="text-6xl mb-4">
+            <div className="text-5xl lg:text-6xl mb-4">
               {state.winner === 1 ? '☀' : '☽'}
             </div>
-            <h2 className="font-heading text-3xl text-highlight-selected mb-2">
+            <h2 className="font-heading text-2xl lg:text-3xl text-highlight-selected mb-2">
               {GAME_CONFIG.PLAYER_NAMES[state.winner]} Wins!
             </h2>
-            <p className="text-white/60 mb-6 text-sm">
+            <p className="text-white/60 mb-4 lg:mb-6 text-sm">
               All stones have been borne off. The temple is sealed.
             </p>
             <button
