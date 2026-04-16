@@ -14,7 +14,7 @@ interface GameProps {
 }
 
 export default function Game({ onPlayOnline }: GameProps) {
-  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove } = useGame();
+  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling } = useGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
 
@@ -84,6 +84,7 @@ export default function Game({ onPlayOnline }: GameProps) {
             awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
             onChooseJokerDoubles={chooseJokerDoubles}
             isAITurn={isAITurn}
+            externalRolling={aiRolling}
           />
           {canUndo && (
             <GameControls onUndo={undo} canUndo={canUndo} />

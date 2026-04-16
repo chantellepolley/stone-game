@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { DiceState, GamePhase, PlayerId } from '../types/game';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { isJoker } from '../engine/dice';
@@ -12,6 +12,7 @@ interface DiceAreaProps {
   awaitingJokerChoice?: boolean;
   onChooseJokerDoubles?: (value: number) => void;
   isAITurn?: boolean;
+  externalRolling?: boolean;
 }
 
 /** SVG dot positions for dice faces 1-5 */
@@ -93,10 +94,26 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
   );
 }
 
-export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJokerChoice, onChooseJokerDoubles, isAITurn }: DiceAreaProps) {
+export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJokerChoice, onChooseJokerDoubles, isAITurn, externalRolling }: DiceAreaProps) {
   const [rolling, setRolling] = useState(false);
   const [rollFaces, setRollFaces] = useState<[number, number]>([1, 1]);
   const canRoll = phase === 'rolling' && !isAITurn;
+
+  // External rolling animation (AI / online opponent)
+  useEffect(() => {
+    if (!externalRolling) return;
+    playDiceRattle();
+    const interval = setInterval(() => {
+      setRollFaces([
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+      ]);
+    }, 80);
+    return () => {
+      clearInterval(interval);
+      playDiceSlam();
+    };
+  }, [externalRolling]);
   const playerName = GAME_CONFIG.PLAYER_NAMES[currentPlayer];
 
   const handleRoll = () => {
@@ -153,18 +170,18 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
   return (
     <div className="flex flex-col items-center gap-3">
       {/* Dice display */}
-      {(dice.hasRolled || rolling) && (
+      {(dice.hasRolled || rolling || externalRolling) && (
         <div className="flex gap-3">
           <DieFace
-            value={rolling ? rollFaces[0] : dice.values[0]}
-            used={rolling ? false : diceUsed[0]}
-            rolling={rolling}
+            value={(rolling || externalRolling) ? rollFaces[0] : dice.values[0]}
+            used={(rolling || externalRolling) ? false : diceUsed[0]}
+            rolling={!!(rolling || externalRolling)}
             player={currentPlayer}
           />
           <DieFace
-            value={rolling ? rollFaces[1] : dice.values[1]}
-            used={rolling ? false : diceUsed[1]}
-            rolling={rolling}
+            value={(rolling || externalRolling) ? rollFaces[1] : dice.values[1]}
+            used={(rolling || externalRolling) ? false : diceUsed[1]}
+            rolling={!!(rolling || externalRolling)}
             player={currentPlayer}
           />
         </div>

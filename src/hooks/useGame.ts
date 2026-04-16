@@ -106,6 +106,7 @@ export function useGame() {
   const undoStack = useRef<GameState[]>([]);
   const aiTimerRef = useRef<number | null>(null);
   const [pendingAIMove, setPendingAIMove] = useState<Move | null>(null);
+  const [aiRolling, setAiRolling] = useState(false);
 
   const isAITurn = state.gameMode === 'ai' && state.currentPlayer === 2 && state.phase !== 'not_started' && state.phase !== 'game_over' && state.phase !== 'no_moves';
 
@@ -178,8 +179,12 @@ export function useGame() {
     const playAITurn = async () => {
       // Rolling phase
       if (state.phase === 'rolling') {
-        await delay(2000);
+        await delay(1000);
         if (cancelled) return;
+        setAiRolling(true); // Start dice animation
+        await delay(1200);  // Let animation play
+        if (cancelled) return;
+        setAiRolling(false);
         setState(applyRoll);
         return;
       }
@@ -233,7 +238,7 @@ export function useGame() {
   return {
     state, roll, selectMove, restart, validMoves,
     awaitingJokerChoice, chooseJokerDoubles,
-    undo, canUndo, startGame, isAITurn, pendingAIMove,
+    undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling,
   };
 }
 
