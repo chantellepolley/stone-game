@@ -7,9 +7,10 @@ interface StartScreenProps {
   onPlayOnline?: () => void;
   onShowStats?: () => void;
   onShowLeaderboard?: () => void;
+  onShowMyGames?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames }: StartScreenProps) {
   const { player } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
 
@@ -87,9 +88,16 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
-      {/* Stats & Leaderboard */}
-      {!showDifficulty && (onShowStats || onShowLeaderboard) && (
-        <div className="flex gap-3">
+      {/* Stats, Leaderboard & My Games */}
+      {!showDifficulty && (
+        <div className="flex gap-3 flex-wrap justify-center">
+          {onShowMyGames && (
+            <button onClick={onShowMyGames}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+              My Games
+            </button>
+          )}
           {onShowStats && (
             <button onClick={onShowStats}
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider

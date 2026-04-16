@@ -11,23 +11,29 @@ import OnlineLobby from './OnlineLobby';
 interface OnlineGameProps {
   onBack: () => void;
   autoJoinCode?: string | null;
+  resumeData?: { gameId: string; roomCode: string; player: 1 | 2 } | null;
 }
 
-export default function OnlineGame({ onBack, autoJoinCode }: OnlineGameProps) {
+export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineGameProps) {
   const {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJokerChoice, chooseJokerDoubles,
     onlinePhase, roomCode, myPlayer, opponentConnected,
-    error, createRoom, joinRoom, leave, isMyTurn, pendingOpponentMove,
+    error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
   } = useOnlineGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
 
-  // Auto-join if we got a code from the URL
+  // Auto-join from URL or resume from My Games
   const [autoJoined, setAutoJoined] = useState(false);
-  if (autoJoinCode && !autoJoined && onlinePhase === 'idle') {
-    setAutoJoined(true);
-    setTimeout(() => joinRoom(autoJoinCode), 100);
+  if (!autoJoined && onlinePhase === 'idle') {
+    if (resumeData) {
+      setAutoJoined(true);
+      setTimeout(() => resumeGame(resumeData.gameId, resumeData.roomCode, resumeData.player), 100);
+    } else if (autoJoinCode) {
+      setAutoJoined(true);
+      setTimeout(() => joinRoom(autoJoinCode), 100);
+    }
   }
 
   // Show lobby if not playing yet

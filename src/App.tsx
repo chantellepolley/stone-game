@@ -4,10 +4,11 @@ import OnlineGame from './components/OnlineGame';
 import UsernamePrompt from './components/UsernamePrompt';
 import PlayerStats from './components/PlayerStats';
 import Leaderboard from './components/Leaderboard';
+import MyGames from './components/MyGames';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -24,6 +25,7 @@ export default function App() {
   const { player, isLoading, createPlayer } = playerHook;
   const [screen, setScreen] = useState<AppScreen>('game');
   const [autoJoinCode, setAutoJoinCode] = useState<string | null>(null);
+  const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2 } | null>(null);
 
   useEffect(() => {
     const code = getJoinCodeFromURL();
@@ -49,10 +51,20 @@ export default function App() {
 
       {screen === 'stats' && <PlayerStats onBack={() => setScreen('game')} />}
       {screen === 'leaderboard' && <Leaderboard onBack={() => setScreen('game')} />}
+      {screen === 'my-games' && (
+        <MyGames
+          onResume={(gameId, roomCode, player) => {
+            setResumeData({ gameId, roomCode, player });
+            setScreen('online');
+          }}
+          onBack={() => setScreen('game')}
+        />
+      )}
       {screen === 'online' && (
         <OnlineGame
-          onBack={() => { setScreen('game'); setAutoJoinCode(null); }}
+          onBack={() => { setScreen('game'); setAutoJoinCode(null); setResumeData(null); }}
           autoJoinCode={autoJoinCode}
+          resumeData={resumeData}
         />
       )}
       {screen === 'game' && (
@@ -60,6 +72,7 @@ export default function App() {
           onPlayOnline={() => setScreen('online')}
           onShowStats={() => setScreen('stats')}
           onShowLeaderboard={() => setScreen('leaderboard')}
+          onShowMyGames={() => setScreen('my-games')}
         />
       )}
     </PlayerContext.Provider>

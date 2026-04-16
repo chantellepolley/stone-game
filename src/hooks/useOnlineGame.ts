@@ -5,6 +5,7 @@ import { isJoker } from '../engine/dice';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { supabase } from '../lib/supabase';
 import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
+import { recordGameResult } from '../lib/statsTracker';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 function generateRoomCode(): string {
@@ -15,6 +16,7 @@ function generateRoomCode(): string {
 }
 
 type OnlinePhase = 'idle' | 'waiting' | 'connecting' | 'playing' | 'error';
+
 
 export function useOnlineGame() {
   const [state, setState] = useState<GameState>(() => {
@@ -31,6 +33,8 @@ export function useOnlineGame() {
   const undoStack = useRef<GameState[]>([]);
   const pingRef = useRef<number | null>(null);
   const stateReceivedRef = useRef(false);
+  const gameDbId = useRef<string | null>(null);
+  const statsRecorded = useRef(false);
 
   const isMyTurn = myPlayer !== null && state.currentPlayer === myPlayer && state.phase !== 'game_over' && state.phase !== 'not_started';
 
@@ -40,6 +44,46 @@ export function useOnlineGame() {
       if (pingRef.current) clearInterval(pingRef.current);
     };
   }, []);
+
+  // ── Record stats when game ends ──
+  useEffect(() => {
+    if (state.phase === 'game_over' && state.winner && !statsRecorded.current) {
+      statsRecorded.current = true;
+      // Update game status in DB
+      if (gameDbId.current) {
+        getMyPlayerId().then(myId => {
+          supabase.from('games').update({
+            status: 'completed',
+            state,
+            winner_id: state.winner === myPlayer ? myId : null,
+            updated_at: new Date().toISOString(),
+          }).eq('id', gameDbId.current!).then(() => {});
+
+          // Record stats for this player
+          if (myId) {
+            const isWinner = state.winner === myPlayer;
+            recordGameResult(state, state.winner!, isWinner ? myId : null, isWinner ? null : myId);
+          }
+        });
+      }
+    }
+  }, [state.phase, state.winner, myPlayer]);
+
+  async function getMyPlayerId(): Promise<string | null> {
+    const token = localStorage.getItem('stone_device_token');
+    if (!token) return null;
+    const { data } = await supabase.from('players').select('id').eq('device_token', token).single();
+    return data?.id || null;
+  }
+
+  // ── Save state to DB on every change ──
+  async function saveGameState(newState: GameState) {
+    if (!gameDbId.current) return;
+    await supabase.from('games').update({
+      state: newState,
+      updated_at: new Date().toISOString(),
+    }).eq('id', gameDbId.current);
+  }
 
   function joinChannel(code: string, player: PlayerId) {
     if (channelRef.current) supabase.removeChannel(channelRef.current);
@@ -65,7 +109,6 @@ export function useOnlineGame() {
         } else if (payload.state) {
           setState(payload.state as GameState);
         }
-        // Mark that we've received state — game is live
         if (!stateReceivedRef.current) {
           stateReceivedRef.current = true;
           setOnlinePhase('playing');
@@ -73,17 +116,14 @@ export function useOnlineGame() {
         }
       })
       .on('broadcast', { event: 'ping' }, ({ payload }) => {
-        // Opponent is alive
         setOpponentConnected(true);
         if (payload.needState && player === 1) {
-          // Guest is requesting state — send it
           channel.send({ type: 'broadcast', event: 'state_update', payload: { state } });
         }
       })
       .on('broadcast', { event: 'player_joined' }, () => {
         setOpponentConnected(true);
         if (player === 1) {
-          // Host: send state immediately and switch to playing
           setOnlinePhase('playing');
           setTimeout(() => {
             channel.send({ type: 'broadcast', event: 'state_update', payload: { state } });
@@ -96,19 +136,12 @@ export function useOnlineGame() {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           if (player === 2) {
-            // Guest: announce join, then ping repeatedly until state is received
             await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
-
-            // Retry join announcement and request state every 1.5s
             let retries = 0;
             const retryInterval = setInterval(async () => {
-              if (stateReceivedRef.current) {
-                clearInterval(retryInterval);
-                return;
-              }
+              if (stateReceivedRef.current) { clearInterval(retryInterval); return; }
               retries++;
               if (retries > 7) {
-                // ~10 seconds with no response — game doesn't exist
                 clearInterval(retryInterval);
                 setOnlinePhase('error');
                 setError('Game not found or host has left. Try a different code.');
@@ -118,8 +151,6 @@ export function useOnlineGame() {
               await channel.send({ type: 'broadcast', event: 'ping', payload: { needState: true } });
             }, 1500);
           }
-
-          // Both sides: periodic ping to maintain connection awareness
           pingRef.current = window.setInterval(() => {
             channel.send({ type: 'broadcast', event: 'ping', payload: { needState: false } });
           }, 5000);
@@ -137,25 +168,42 @@ export function useOnlineGame() {
         payload: { state: newState, move: move || null },
       });
     }
+    // Save to DB
+    saveGameState(newState);
   }
 
   // ── Actions ──
 
-  const createRoom = useCallback(() => {
+  const createRoom = useCallback(async () => {
     const code = generateRoomCode();
     setRoomCode(code);
     setMyPlayer(1);
     setOnlinePhase('waiting');
+    statsRecorded.current = false;
+
     const initialState: GameState = {
       ...createInitialState(),
       phase: 'rolling',
       gameMode: 'pvp',
     };
     setState(initialState);
+
+    // Save game to DB
+    const myId = await getMyPlayerId();
+    const { data } = await supabase.from('games').insert({
+      room_code: code,
+      player1_id: myId,
+      mode: 'online',
+      state: initialState,
+      status: 'waiting',
+    }).select('id').single();
+
+    if (data) gameDbId.current = data.id;
+
     joinChannel(code, 1);
   }, []);
 
-  const joinRoom = useCallback((code: string) => {
+  const joinRoom = useCallback(async (code: string) => {
     const upperCode = code.toUpperCase().trim();
     if (upperCode.length < 4) {
       setError('Code must be at least 4 characters');
@@ -163,8 +211,58 @@ export function useOnlineGame() {
     }
     setRoomCode(upperCode);
     setMyPlayer(2);
-    setOnlinePhase('connecting'); // Show "Connecting..." not "playing"
+    setOnlinePhase('connecting');
+    statsRecorded.current = false;
+
+    // Find game in DB and join
+    const myId = await getMyPlayerId();
+    const { data: game } = await supabase
+      .from('games')
+      .select('id, state')
+      .eq('room_code', upperCode)
+      .in('status', ['waiting', 'active'])
+      .single();
+
+    if (game) {
+      gameDbId.current = game.id;
+      await supabase.from('games').update({
+        player2_id: myId,
+        status: 'active',
+        updated_at: new Date().toISOString(),
+      }).eq('id', game.id);
+
+      // Load saved state if it exists
+      if (game.state) {
+        setState(game.state as GameState);
+        stateReceivedRef.current = true;
+        setOnlinePhase('playing');
+        setOpponentConnected(true);
+      }
+    }
+
     joinChannel(upperCode, 2);
+  }, []);
+
+  const resumeGame = useCallback(async (gameId: string, code: string, player: PlayerId) => {
+    setRoomCode(code);
+    setMyPlayer(player);
+    setOnlinePhase('connecting');
+    statsRecorded.current = false;
+    gameDbId.current = gameId;
+
+    // Load state from DB
+    const { data: game } = await supabase
+      .from('games')
+      .select('state')
+      .eq('id', gameId)
+      .single();
+
+    if (game?.state) {
+      setState(game.state as GameState);
+      stateReceivedRef.current = true;
+    }
+
+    joinChannel(code, player);
   }, []);
 
   const roll = useCallback(() => {
@@ -299,6 +397,7 @@ export function useOnlineGame() {
     setOpponentConnected(false);
     setRoomCode('');
     stateReceivedRef.current = false;
+    gameDbId.current = null;
     setState(() => {
       const s = createInitialState();
       return { ...s, phase: 'not_started' as GamePhase, gameMode: 'pvp' as const };
@@ -331,7 +430,7 @@ export function useOnlineGame() {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJokerChoice, chooseJokerDoubles,
     onlinePhase, roomCode, myPlayer, opponentConnected, error,
-    createRoom, joinRoom, leave,
+    createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
   };
 }
