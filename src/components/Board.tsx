@@ -315,7 +315,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       onPointerUp={handleDragEnd}
     >
       {/* Top row */}
-      <div className="flex gap-0.5 lg:gap-1 items-stretch flex-1 min-h-0">
+      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18vh, 220px)' }}>
         <div ref={el => setRef('bench-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.bench[1]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 1}
@@ -352,7 +352,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       </div>
 
       {/* Bottom row */}
-      <div className="flex gap-0.5 lg:gap-1 items-stretch flex-1 min-h-0">
+      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18vh, 220px)' }}>
         <div ref={el => setRef('bench-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.bench[2]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 2}
