@@ -11,6 +11,7 @@ interface BoardSpaceProps {
   selectedPieceId?: string | null;
   currentPlayer: PlayerId;
   hintsEnabled?: boolean;
+  isMobile?: boolean;
   onClickSpace: () => void;
   onClickPiece: (pieceId: string) => void;
   onDragStart?: (pieceId: string, e: React.PointerEvent) => void;
@@ -27,6 +28,7 @@ export default function BoardSpace({
   selectedPieceId,
   currentPlayer,
   hintsEnabled = true,
+  isMobile = false,
   onClickSpace,
   onClickPiece,
   onDragStart,
@@ -39,8 +41,6 @@ export default function BoardSpace({
   const ringColor = isP1 ? 'ring-amber-400' : 'ring-sky-400';
   const pulseClass = isP1 ? 'pulse-gold' : 'pulse-blue';
 
-  // Visual glow: selected always shows, source/target only when hints on
-  // Thinner rings on mobile (ring-2), thicker on desktop (lg:ring-3)
   const borderHighlight = isSelected
     ? `ring-2 lg:ring-3 ${ringColor} ${pulseClass} brightness-115 lg:brightness-125`
     : isValidTarget && hintsEnabled
@@ -57,11 +57,10 @@ export default function BoardSpace({
   const visiblePieces = pieces.slice(-maxVisible);
   const hiddenCount = Math.max(0, pieces.length - maxVisible);
 
-  // Only spread pieces for selection when mixed crowned/uncrowned
+  // Only spread pieces for selection when mixed crowned/uncrowned AND on desktop
   const playerPieces = pieces.filter(p => p.owner === currentPlayer);
-  const hasMixed = isSelected && playerPieces.length > 1 &&
+  const hasMixed = !isMobile && isSelected && playerPieces.length > 1 &&
     playerPieces.some(p => p.crowned) && playerPieces.some(p => !p.crowned);
-  const hasMultipleSelectable = hasMixed;
 
   return (
     <div
@@ -94,14 +93,14 @@ export default function BoardSpace({
           const canInteract = isValidSource || isValidTarget || (isSelected && isPlayerPiece);
           const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
 
-          // Only allow individual piece click/drag when mixed crowned/uncrowned
-          const allowIndividualSelect = hasMultipleSelectable && isPlayerPiece;
+          // Desktop only: individual piece click/drag for mixed crowned/uncrowned
+          const allowIndividual = !isMobile && hasMixed && isPlayerPiece;
 
           return (
             <div
               key={piece.id}
-              style={{ marginTop: i === 0 ? 0 : hasMultipleSelectable ? 1 : -6 }}
-              onPointerDown={allowIndividualSelect && onDragStart ? (e) => {
+              style={{ marginTop: i === 0 ? 0 : hasMixed ? 1 : -6 }}
+              onPointerDown={allowIndividual && onDragStart ? (e) => {
                 e.stopPropagation();
                 onDragStart(piece.id, e);
               } : undefined}
@@ -111,7 +110,7 @@ export default function BoardSpace({
                 size="sm"
                 highlighted={showGlow}
                 selected={isThisPieceSelected}
-                onClick={allowIndividualSelect ? (e?: React.MouseEvent) => {
+                onClick={allowIndividual ? (e?: React.MouseEvent) => {
                   if (e) e.stopPropagation();
                   onClickPiece(piece.id);
                 } : undefined}
@@ -121,7 +120,6 @@ export default function BoardSpace({
         })}
       </div>
 
-      {/* Obelisk carved line details */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-stone-accent/20 rounded-b-sm" />
     </div>
   );

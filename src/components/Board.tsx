@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { GameState, Move, PlayerId, Piece as PieceType } from '../types/game';
 import { getSpaceVariant } from '../utils/boardLayout';
+import { useIsMobile } from '../hooks/useIsMobile';
 import BoardSpace from './BoardSpace';
 import StoneBox from './StoneBox';
 import Jail from './Jail';
@@ -37,9 +38,12 @@ interface DragState {
 const ANIM_MS = 350;
 
 export default function Board({ state, validMoves, onSelectMove, pendingAIMove, hintsEnabled = true }: BoardProps) {
+  const isMobile = useIsMobile();
   const [selected, setSelected] = useState<SelectedSource>(null);
   const [anim, setAnim] = useState<AnimState | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
+  // Mobile: toggle for crowned vs uncrowned when mixed on same space
+  const [mobileCrownedToggle, setMobileCrownedToggle] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
   const pendingMove = useRef<Move | null>(null);
@@ -208,8 +212,30 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     return hasCrowned && hasUncrowned;
   }
 
+  /** Pick the right piece from a space — handles mixed crowned/uncrowned via toggle on mobile */
+  function pickPiece(index: number): PieceType | null {
+    const playerPieces = state.board[index].filter(p => p.owner === state.currentPlayer);
+    if (playerPieces.length === 0) return null;
+
+    if (hasMixedCrownedPieces(index) && isMobile) {
+      // Mobile: use toggle to decide crowned vs uncrowned
+      const target = mobileCrownedToggle
+        ? playerPieces.find(p => p.crowned)
+        : playerPieces.find(p => !p.crowned);
+      return target || playerPieces[playerPieces.length - 1];
+    }
+
+    return playerPieces[playerPieces.length - 1]; // top piece
+  }
+
   const handleClickSpace = (index: number) => {
     if (busy) return;
+
+    // Tapping the already-selected space → deselect (easy deselect on mobile)
+    if (selected?.type === 'board' && selected.index === index && !targetSpaces.has(index)) {
+      setSelected(null);
+      return;
+    }
 
     // Click a target → execute move
     if (selected && targetSpaces.has(index)) {
@@ -219,26 +245,30 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
         if (move) { animateMove(move); setSelected(null); return; }
       }
+      // Same space wrap-around: need deliberate second tap
+      if (isSameSpace && !tooSoon) {
+        const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
+        if (move) { animateMove(move); setSelected(null); return; }
+      }
     }
 
-    // Click a source space
+    // Click a source space → auto-select piece
     if (validSourceSpaces.has(index)) {
-      const playerPieces = state.board[index].filter(p => p.owner === state.currentPlayer);
-      if (playerPieces.length > 0) {
-        // Only show piece chooser if mixed crowned/uncrowned
-        if (hasMixedCrownedPieces(index)) {
-          const topPiece = playerPieces[playerPieces.length - 1];
-          setSelected({ type: 'board', index, pieceId: topPiece.id });
-          selectionTime.current = Date.now();
+      const piece = pickPiece(index);
+      if (piece) {
+        if (!isMobile && hasMixedCrownedPieces(index)) {
+          // Desktop: show piece chooser
+          setSelected({ type: 'board', index, pieceId: piece.id });
         } else {
-          // Auto-select the top piece
-          const topPiece = playerPieces[playerPieces.length - 1];
-          setSelected({ type: 'board', index, pieceId: topPiece.id });
-          selectionTime.current = Date.now();
+          // Mobile & normal: auto-select
+          setSelected({ type: 'board', index, pieceId: piece.id });
         }
+        selectionTime.current = Date.now();
         return;
       }
     }
+
+    // Tap anything else → deselect
     setSelected(null);
   };
 
@@ -288,12 +318,13 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           isValidSource={!selected && !busy && validSourceSpaces.has(idx)}
           isValidTarget={!!selected && targetSpaces.has(idx)}
           hintsEnabled={hintsEnabled}
+          isMobile={isMobile}
           isSelected={selected?.type === 'board' && selected.index === idx}
           selectedPieceId={selected?.type === 'board' && selected.index === idx ? selected.pieceId : null}
           currentPlayer={state.currentPlayer}
           onClickSpace={() => handleClickSpace(idx)}
           onClickPiece={handleClickPiece}
-          onDragStart={handleDragStart}
+          onDragStart={isMobile ? undefined : handleDragStart}
         />
       </div>
     );
@@ -306,10 +337,10 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       style={{
         background: 'linear-gradient(135deg, #3d3632 0%, #322d28 50%, #3d3632 100%)',
         boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
-        touchAction: 'none',
+        touchAction: isMobile ? 'auto' : 'none',
       }}
-      onPointerMove={handleDragMove}
-      onPointerUp={handleDragEnd}
+      onPointerMove={isMobile ? undefined : handleDragMove}
+      onPointerUp={isMobile ? undefined : handleDragEnd}
     >
       {/* Top row */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
@@ -319,7 +350,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
             onClick={() => handleClickBench(1)}
             isSelected={selected?.type === 'bench' && selected.player === 1}
-            onDragStart={hasBenchMoves && state.currentPlayer === 1 ? handleDragStart : undefined}
+            onDragStart={!isMobile && hasBenchMoves && state.currentPlayer === 1 ? handleDragStart : undefined}
           />
         </div>
 
@@ -356,7 +387,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
             onClick={() => handleClickBench(2)}
             isSelected={selected?.type === 'bench' && selected.player === 2}
-            onDragStart={hasBenchMoves && state.currentPlayer === 2 ? handleDragStart : undefined}
+            onDragStart={!isMobile && hasBenchMoves && state.currentPlayer === 2 ? handleDragStart : undefined}
           />
         </div>
 
@@ -377,9 +408,9 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         </div>
       </div>
 
-      {/* Deselect button */}
+      {/* Deselect + mobile crowned toggle */}
       {selected && !busy && (
-        <div className="flex justify-center py-1">
+        <div className="flex justify-center gap-2 py-1">
           <button
             onClick={() => setSelected(null)}
             className="px-3 py-0.5 rounded text-[10px] font-heading uppercase tracking-wider
@@ -387,6 +418,23 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           >
             Deselect
           </button>
+          {isMobile && selected.type === 'board' && hasMixedCrownedPieces(selected.index) && (
+            <button
+              onClick={() => {
+                setMobileCrownedToggle(prev => !prev);
+                // Re-select with the other piece type
+                const pp = state.board[selected.index].filter(p => p.owner === state.currentPlayer);
+                const next = !mobileCrownedToggle
+                  ? pp.find(p => p.crowned)
+                  : pp.find(p => !p.crowned);
+                if (next) setSelected({ type: 'board', index: selected.index, pieceId: next.id });
+              }}
+              className="px-3 py-0.5 rounded text-[10px] font-heading uppercase tracking-wider
+                         bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all cursor-pointer"
+            >
+              {mobileCrownedToggle ? 'Move Regular' : 'Move Crowned'}
+            </button>
+          )}
         </div>
       )}
 
