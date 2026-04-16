@@ -71,8 +71,15 @@ export function useOnlineGame() {
 
   async function getMyPlayerId(): Promise<string | null> {
     const token = localStorage.getItem('stone_device_token');
-    if (!token) return null;
-    const { data } = await supabase.from('players').select('id').eq('device_token', token).single();
+    if (!token) {
+      console.warn('[STONE] No device token in localStorage');
+      return null;
+    }
+    const { data, error } = await supabase.from('players').select('id').eq('device_token', token).single();
+    if (error) {
+      console.warn('[STONE] Failed to get player ID:', error.message);
+      return null;
+    }
     return data?.id || null;
   }
 
@@ -216,20 +223,32 @@ export function useOnlineGame() {
 
     // Find game in DB and join
     const myId = await getMyPlayerId();
+
     const { data: game } = await supabase
       .from('games')
       .select('id, state')
       .eq('room_code', upperCode)
       .in('status', ['waiting', 'active'])
-      .single();
+      .maybeSingle();
 
     if (game) {
       gameDbId.current = game.id;
-      await supabase.from('games').update({
-        player2_id: myId,
-        status: 'active',
-        updated_at: new Date().toISOString(),
-      }).eq('id', game.id);
+
+      // Update player2 — retry if myId is null (race condition with player creation)
+      let playerId = myId;
+      if (!playerId) {
+        // Retry once after a short delay
+        await new Promise(r => setTimeout(r, 500));
+        playerId = await getMyPlayerId();
+      }
+
+      if (playerId) {
+        await supabase.from('games').update({
+          player2_id: playerId,
+          status: 'active',
+          updated_at: new Date().toISOString(),
+        }).eq('id', game.id);
+      }
 
       // Load saved state if it exists
       if (game.state) {
@@ -240,6 +259,7 @@ export function useOnlineGame() {
       }
     }
 
+    // Always connect to the channel even if game not in DB yet
     joinChannel(upperCode, 2);
   }, []);
 
