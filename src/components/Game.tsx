@@ -23,7 +23,7 @@ export default function Game({ onPlayOnline }: GameProps) {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1" style={{ height: '100dvh' }}>
+    <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-hidden">
       {/* Logo */}
       <header className="shrink-0">
         <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain" />
@@ -56,7 +56,7 @@ export default function Game({ onPlayOnline }: GameProps) {
       </div>
 
       {/* Main layout: sidebar + board + sidebar — this section shrinks */}
-      <div className="flex gap-3 items-start w-full max-w-[1250px] justify-center flex-1 min-h-0 overflow-hidden">
+      <div className="flex gap-3 items-start w-full max-w-[1250px] justify-center flex-1 min-h-0 overflow-auto">
         {/* Left sidebar (desktop) */}
         <div className="hidden lg:flex flex-col gap-3 w-[200px] shrink-0">
           <MoveLog entries={state.moveLog} />
