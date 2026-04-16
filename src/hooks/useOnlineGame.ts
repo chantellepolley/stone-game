@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import type { GameState, Move, PlayerId } from '../types/game';
+import type { GameState, GamePhase, Move, PlayerId } from '../types/game';
 import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
 import { isJoker } from '../engine/dice';
 import { GAME_CONFIG } from '../config/gameConfig';
@@ -140,12 +140,11 @@ export function useOnlineGame() {
     let newState: GameState = { ...state, dice, phase: 'moving' };
 
     if (!canPlayerMove(newState)) {
+      // Show the roll briefly before switching turns
       newState = {
         ...newState,
-        currentPlayer: newState.currentPlayer === 1 ? 2 : 1,
-        dice: { values: dice.values, remaining: [], hasRolled: false, pendingDoubleJoker: false },
-        phase: 'rolling',
-        turnCount: newState.turnCount + 1,
+        dice: { ...dice, remaining: [], hasRolled: true },
+        phase: 'no_moves' as GamePhase,
         moveLog: [
           ...newState.moveLog,
           {
@@ -156,6 +155,24 @@ export function useOnlineGame() {
           },
         ],
       };
+      // Auto-switch after delay
+      setState(newState);
+      broadcastState(newState);
+      setTimeout(() => {
+        setState(prev => {
+          if (prev.phase !== 'no_moves') return prev;
+          const switched: GameState = {
+            ...prev,
+            currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
+            dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJoker: false },
+            phase: 'rolling',
+            turnCount: prev.turnCount + 1,
+          };
+          broadcastState(switched);
+          return switched;
+        });
+      }, 2500);
+      return;
     } else {
       const d1J = isJoker(dice.values[0]), d2J = isJoker(dice.values[1]);
       let note = '';

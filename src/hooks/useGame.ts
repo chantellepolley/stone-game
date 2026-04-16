@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import type { GameState, Move, GameMode, AIDifficulty } from '../types/game';
+import type { GameState, GamePhase, Move, GameMode, AIDifficulty } from '../types/game';
 import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
 import { isJoker } from '../engine/dice';
 import { chooseBestMove, chooseBestJokerValue } from '../engine/ai';
@@ -12,12 +12,11 @@ function applyRoll(prev: GameState): GameState {
   const newState: GameState = { ...prev, dice, phase: 'moving' };
 
   if (!canPlayerMove(newState)) {
+    // Keep dice visible (hasRolled: true) so the roll is shown briefly
     return {
       ...newState,
-      currentPlayer: newState.currentPlayer === 1 ? 2 : 1,
-      dice: { values: dice.values, remaining: [], hasRolled: false, pendingDoubleJoker: false },
-      phase: 'rolling',
-      turnCount: newState.turnCount + 1,
+      dice: { ...dice, remaining: [], hasRolled: true },
+      phase: 'no_moves' as GamePhase, // temporary phase — will auto-switch
       moveLog: [
         ...newState.moveLog,
         {
@@ -108,7 +107,22 @@ export function useGame() {
   const aiTimerRef = useRef<number | null>(null);
   const [pendingAIMove, setPendingAIMove] = useState<Move | null>(null);
 
-  const isAITurn = state.gameMode === 'ai' && state.currentPlayer === 2 && state.phase !== 'not_started' && state.phase !== 'game_over';
+  const isAITurn = state.gameMode === 'ai' && state.currentPlayer === 2 && state.phase !== 'not_started' && state.phase !== 'game_over' && state.phase !== 'no_moves';
+
+  // ── Auto-switch after "no valid moves" display ──
+  useEffect(() => {
+    if (state.phase !== 'no_moves') return;
+    const timer = setTimeout(() => {
+      setState(prev => ({
+        ...prev,
+        currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
+        dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJoker: false },
+        phase: 'rolling',
+        turnCount: prev.turnCount + 1,
+      }));
+    }, 2500); // Show the roll for 2.5 seconds
+    return () => clearTimeout(timer);
+  }, [state.phase]);
 
   // ── Human actions ──
 

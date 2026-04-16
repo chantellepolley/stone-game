@@ -22,7 +22,9 @@ export default function TurnIndicator({ currentPlayer, phase, winner }: TurnIndi
   }
 
   const name = GAME_CONFIG.PLAYER_NAMES[currentPlayer];
-  const phaseText = phase === 'rolling' ? 'Roll the dice' : 'Select a move';
+  const phaseText = phase === 'rolling' ? 'Roll the dice'
+    : phase === 'no_moves' ? 'No valid moves!'
+    : 'Select a move';
 
   return (
     <div className="flex items-center justify-center gap-3 py-1">

@@ -8,7 +8,7 @@ export interface Piece {
   routePos: number;
 }
 
-export type GamePhase = 'not_started' | 'rolling' | 'moving' | 'game_over';
+export type GamePhase = 'not_started' | 'rolling' | 'moving' | 'no_moves' | 'game_over';
 export type GameMode = 'pvp' | 'ai';
 export type AIDifficulty = 'easy' | 'medium' | 'hard';
 
