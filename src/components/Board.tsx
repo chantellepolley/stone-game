@@ -11,6 +11,7 @@ interface BoardProps {
   validMoves: Move[];
   onSelectMove: (move: Move) => void;
   pendingAIMove?: Move | null;
+  hintsEnabled?: boolean;
 }
 
 type SelectedSource =
@@ -35,13 +36,14 @@ interface DragState {
 
 const ANIM_MS = 350;
 
-export default function Board({ state, validMoves, onSelectMove, pendingAIMove }: BoardProps) {
+export default function Board({ state, validMoves, onSelectMove, pendingAIMove, hintsEnabled = true }: BoardProps) {
   const [selected, setSelected] = useState<SelectedSource>(null);
   const [anim, setAnim] = useState<AnimState | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
   const pendingMove = useRef<Move | null>(null);
+  const selectionTime = useRef<number>(0); // debounce guard for mobile double-tap
 
   const setRef = useCallback((key: string, el: HTMLDivElement | null) => { refs.current[key] = el; }, []);
 
@@ -200,11 +202,12 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
   const handleClickSpace = (index: number) => {
     if (busy) return;
     // Click a target → execute move
-    // BUT: if the target is the same as the source space, don't auto-execute
-    // (this happens with wrap-around moves like 4×5=20). Require explicit confirmation.
+    // BUT: if the target is the same as the source space, don't auto-execute.
+    // Also block if selection just happened (mobile double-tap guard, 300ms).
     if (selected && targetSpaces.has(index)) {
       const isSameSpace = selected.type === 'board' && selected.index === index;
-      if (!isSameSpace) {
+      const tooSoon = Date.now() - selectionTime.current < 300;
+      if (!isSameSpace && !tooSoon) {
         const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
         if (move) { animateMove(move); setSelected(null); return; }
       }
@@ -215,6 +218,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
       if (playerPieces.length > 0) {
         const topPiece = playerPieces[playerPieces.length - 1];
         setSelected({ type: 'board', index, pieceId: topPiece.id });
+        selectionTime.current = Date.now();
         return;
       }
     }
@@ -227,10 +231,15 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
     if (spaceIdx === -1) return;
 
     // If this piece is already selected AND the same space is a target (wrap-around),
-    // clicking the selected piece confirms the same-space move
+    // clicking the selected piece confirms the same-space move.
+    // But only if enough time has passed since selection (mobile guard).
     if (selected?.type === 'board' && selected.pieceId === pieceId && targetSpaces.has(spaceIdx)) {
-      const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === spaceIdx);
-      if (move) { animateMove(move); setSelected(null); return; }
+      const tooSoon = Date.now() - selectionTime.current < 400;
+      if (!tooSoon) {
+        const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === spaceIdx);
+        if (move) { animateMove(move); setSelected(null); return; }
+      }
+      return; // Don't deselect, just wait for a real second tap
     }
 
     // If this piece is already selected, deselect
@@ -244,6 +253,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
       const piece = state.board[spaceIdx].find(p => p.id === pieceId);
       if (piece && piece.owner === state.currentPlayer) {
         setSelected({ type: 'board', index: spaceIdx, pieceId });
+        selectionTime.current = Date.now();
         return;
       }
     }
@@ -278,8 +288,8 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
           index={idx}
           pieces={state.board[idx]}
           variant={getSpaceVariant(idx)}
-          isValidSource={!selected && !busy && validSourceSpaces.has(idx)}
-          isValidTarget={targetSpaces.has(idx)}
+          isValidSource={hintsEnabled && !selected && !busy && validSourceSpaces.has(idx)}
+          isValidTarget={hintsEnabled && targetSpaces.has(idx)}
           isSelected={selected?.type === 'board' && selected.index === idx}
           selectedPieceId={selected?.type === 'board' && selected.index === idx ? selected.pieceId : null}
           currentPlayer={state.currentPlayer}

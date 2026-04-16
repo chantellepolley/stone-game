@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGame } from '../hooks/useGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import Board from './Board';
@@ -10,6 +11,8 @@ import StartScreen from './StartScreen';
 
 export default function Game() {
   const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove } = useGame();
+  const [hintsEnabled, setHintsEnabled] = useState(true);
+  const [showMobileLog, setShowMobileLog] = useState(false);
 
   if (state.phase === 'not_started') {
     return <StartScreen onStart={startGame} />;
@@ -49,7 +52,7 @@ export default function Game() {
 
       {/* Main layout: sidebar + board + sidebar */}
       <div className="flex gap-3 items-start w-full max-w-[1250px] justify-center flex-1 min-h-0">
-        {/* Left sidebar: Move Log + Rules + New Game */}
+        {/* Left sidebar: Move Log + Rules + New Game (desktop) */}
         <div className="hidden lg:flex flex-col gap-3 w-[200px] shrink-0">
           <MoveLog entries={state.moveLog} />
           <RulesPanel />
@@ -63,10 +66,11 @@ export default function Game() {
             validMoves={isAITurn ? [] : validMoves}
             onSelectMove={selectMove}
             pendingAIMove={pendingAIMove}
+            hintsEnabled={hintsEnabled}
           />
         </div>
 
-        {/* Right sidebar: Dice + Undo (desktop only) */}
+        {/* Right sidebar: Dice + Undo + Hints toggle (desktop) */}
         <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center">
           <DiceArea
             dice={state.dice}
@@ -80,13 +84,44 @@ export default function Game() {
           {canUndo && (
             <GameControls onUndo={undo} canUndo={canUndo} />
           )}
+          {/* Hints toggle */}
+          <button
+            onClick={() => setHintsEnabled(h => !h)}
+            className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer"
+          >
+            Hints: {hintsEnabled ? 'ON' : 'OFF'}
+          </button>
         </div>
       </div>
 
       {/* Mobile: controls below board */}
-      <div className="lg:hidden flex items-center gap-2 py-1">
-        <GameControls onRestart={restart} onUndo={undo} canUndo={canUndo} />
+      <div className="lg:hidden flex items-center gap-2 py-1 flex-wrap justify-center">
+        {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
+        <GameControls onRestart={restart} />
+        <button
+          onClick={() => setHintsEnabled(h => !h)}
+          className="px-3 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55]
+                     transition-all cursor-pointer shadow-md"
+        >
+          Hints: {hintsEnabled ? 'ON' : 'OFF'}
+        </button>
+        <button
+          onClick={() => setShowMobileLog(v => !v)}
+          className="px-3 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55]
+                     transition-all cursor-pointer shadow-md"
+        >
+          {showMobileLog ? 'Hide Log' : 'Show Log'}
+        </button>
       </div>
+
+      {/* Mobile: move log (toggleable) */}
+      {showMobileLog && (
+        <div className="lg:hidden w-full max-w-[500px] pb-2">
+          <MoveLog entries={state.moveLog} />
+        </div>
+      )}
 
       {/* Victory overlay */}
       {state.winner && (
