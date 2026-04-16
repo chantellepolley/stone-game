@@ -81,7 +81,7 @@ export default function BoardSpace({
         )}
         {visiblePieces.map((piece, i) => {
           const isThisPieceSelected = selectedPieceId === piece.id;
-          const canSelect = isValidSource || (isSelected && piece.owner === currentPlayer);
+          const canSelect = isValidSource || isValidTarget || (isSelected && piece.owner === currentPlayer);
           return (
             <div
               key={piece.id}

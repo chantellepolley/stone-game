@@ -317,7 +317,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       <div className="flex gap-1 items-stretch" style={{ height: 'clamp(120px, 25vw, 220px)' }}>
         <div ref={el => setRef('bench-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.bench[1]} label="Start"
-            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 1}
+            interactive={hintsEnabled && !selected && !busy && hasBenchMoves && state.currentPlayer === 1}
             currentPlayer={state.currentPlayer}
             onClick={() => handleClickBench(1)}
             isSelected={selected?.type === 'bench' && selected.player === 1}
@@ -335,8 +335,8 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
         <div ref={el => setRef('home-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.home[1]} label="Home"
-            interactive={!busy && canBearOff && state.currentPlayer === 1}
-            hinting={anyBearOffP1} currentPlayer={state.currentPlayer}
+            interactive={hintsEnabled && !busy && canBearOff && state.currentPlayer === 1}
+            hinting={hintsEnabled && anyBearOffP1} currentPlayer={state.currentPlayer}
             onClick={() => handleBearOff(1)}
           />
         </div>
@@ -354,7 +354,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       <div className="flex gap-1 items-stretch" style={{ height: 'clamp(120px, 25vw, 220px)' }}>
         <div ref={el => setRef('bench-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.bench[2]} label="Start"
-            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 2}
+            interactive={hintsEnabled && !selected && !busy && hasBenchMoves && state.currentPlayer === 2}
             currentPlayer={state.currentPlayer}
             onClick={() => handleClickBench(2)}
             isSelected={selected?.type === 'bench' && selected.player === 2}
@@ -372,8 +372,8 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
         <div ref={el => setRef('home-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.home[2]} label="Home"
-            interactive={!busy && canBearOff && state.currentPlayer === 2}
-            hinting={anyBearOffP2} currentPlayer={state.currentPlayer}
+            interactive={hintsEnabled && !busy && canBearOff && state.currentPlayer === 2}
+            hinting={hintsEnabled && anyBearOffP2} currentPlayer={state.currentPlayer}
             onClick={() => handleBearOff(2)}
           />
         </div>
