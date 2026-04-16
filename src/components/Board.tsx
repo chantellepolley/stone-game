@@ -242,47 +242,19 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     setSelected(null);
   };
 
+  // handleClickPiece is ONLY called for mixed crowned/uncrowned piece selection.
+  // All other clicks bubble to handleClickSpace.
   const handleClickPiece = (pieceId: string) => {
     if (busy) return;
     const spaceIdx = state.board.findIndex(sp => sp.some(p => p.id === pieceId));
     if (spaceIdx === -1) return;
 
-    // Wrap-around confirmation (same space is both source and target)
-    if (selected?.type === 'board' && selected.pieceId === pieceId && targetSpaces.has(spaceIdx)) {
-      const tooSoon = Date.now() - selectionTime.current < 400;
-      if (!tooSoon) {
-        const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === spaceIdx);
-        if (move) { animateMove(move); setSelected(null); return; }
-      }
-      return;
+    // Switch selection to this specific piece (only happens for mixed crowned/uncrowned)
+    const piece = state.board[spaceIdx].find(p => p.id === pieceId);
+    if (piece && piece.owner === state.currentPlayer) {
+      setSelected({ type: 'board', index: spaceIdx, pieceId });
+      selectionTime.current = Date.now();
     }
-
-    // Only allow switching between pieces if the space has mixed crowned/uncrowned
-    if (selected?.type === 'board' && selected.index === spaceIdx && hasMixedCrownedPieces(spaceIdx)) {
-      const piece = state.board[spaceIdx].find(p => p.id === pieceId);
-      if (piece && piece.owner === state.currentPlayer) {
-        setSelected({ type: 'board', index: spaceIdx, pieceId });
-        selectionTime.current = Date.now();
-        return;
-      }
-    }
-
-    // If already selected, deselect
-    if (selected?.type === 'board' && selected.pieceId === pieceId) {
-      setSelected(null);
-      return;
-    }
-
-    // Normal selection
-    if (validSourceSpaces.has(spaceIdx)) {
-      const piece = state.board[spaceIdx].find(p => p.id === pieceId);
-      if (piece && piece.owner === state.currentPlayer) {
-        setSelected({ type: 'board', index: spaceIdx, pieceId });
-        selectionTime.current = Date.now();
-        return;
-      }
-    }
-    setSelected(null);
   };
 
   const handleClickJailPiece = (pieceId: string) => {

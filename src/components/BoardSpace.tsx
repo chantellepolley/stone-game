@@ -89,14 +89,18 @@ export default function BoardSpace({
         )}
         {visiblePieces.map((piece, i) => {
           const isThisPieceSelected = selectedPieceId === piece.id;
-          // Clickable: always when source or selected. Highlighted glow: only with hints.
-          const canInteract = isValidSource || isValidTarget || (isSelected && piece.owner === currentPlayer);
+          const isPlayerPiece = piece.owner === currentPlayer;
+          const canInteract = isValidSource || isValidTarget || (isSelected && isPlayerPiece);
           const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
+
+          // Only allow individual piece click/drag when mixed crowned/uncrowned
+          const allowIndividualSelect = hasMultipleSelectable && isPlayerPiece;
+
           return (
             <div
               key={piece.id}
               style={{ marginTop: i === 0 ? 0 : hasMultipleSelectable ? 2 : -4 }}
-              onPointerDown={canInteract && onDragStart ? (e) => {
+              onPointerDown={allowIndividualSelect && onDragStart ? (e) => {
                 e.stopPropagation();
                 onDragStart(piece.id, e);
               } : undefined}
@@ -106,7 +110,7 @@ export default function BoardSpace({
                 size="sm"
                 highlighted={showGlow}
                 selected={isThisPieceSelected}
-                onClick={canInteract ? (e?: React.MouseEvent) => {
+                onClick={allowIndividualSelect ? (e?: React.MouseEvent) => {
                   if (e) e.stopPropagation();
                   onClickPiece(piece.id);
                 } : undefined}
