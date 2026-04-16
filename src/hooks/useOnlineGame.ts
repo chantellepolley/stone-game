@@ -102,11 +102,18 @@ export function useOnlineGame() {
             // Retry join announcement and request state every 1.5s
             let retries = 0;
             const retryInterval = setInterval(async () => {
-              if (stateReceivedRef.current || retries > 10) {
+              if (stateReceivedRef.current) {
                 clearInterval(retryInterval);
                 return;
               }
               retries++;
+              if (retries > 7) {
+                // ~10 seconds with no response — game doesn't exist
+                clearInterval(retryInterval);
+                setOnlinePhase('error');
+                setError('Game not found or host has left. Try a different code.');
+                return;
+              }
               await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
               await channel.send({ type: 'broadcast', event: 'ping', payload: { needState: true } });
             }, 1500);

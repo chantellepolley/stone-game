@@ -53,6 +53,26 @@ export default function OnlineLobby({
     }
   };
 
+  if (onlinePhase === 'error') {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
+        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+        <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
+          <p className="text-red-400 text-sm font-heading text-center">{error || 'Something went wrong'}</p>
+          <button
+            onClick={onBack}
+            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                       bg-[#504840] text-white border-2 border-[#6b5f55]
+                       hover:bg-[#5e5549] hover:scale-105 active:scale-95
+                       transition-all cursor-pointer shadow-lg"
+          >
+            Back to Menu
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (onlinePhase === 'connecting') {
     return (
       <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
