@@ -19,7 +19,7 @@ export default function Game() {
   }
 
   return (
-    <div className="min-h-screen lg:h-screen flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-1 lg:overflow-hidden">
+    <div className="h-screen flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-hidden">
       {/* Logo */}
       <header>
         <img src="/logo.png" alt="STONE" className="h-16 sm:h-20 lg:h-28 object-contain" />
@@ -60,7 +60,7 @@ export default function Game() {
         </div>
 
         {/* Board */}
-        <div className="flex-1 max-w-[1050px] w-full">
+        <div className="flex-1 max-w-[1050px] w-full min-h-0">
           <Board
             state={state}
             validMoves={isAITurn ? [] : validMoves}
@@ -94,31 +94,31 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Mobile: controls below board */}
-      <div className="lg:hidden flex items-center gap-2 py-1 flex-wrap justify-center">
+      {/* Mobile: controls - always at bottom */}
+      <div className="lg:hidden flex items-center gap-1.5 py-1 shrink-0">
         {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
         <GameControls onRestart={restart} />
         <button
           onClick={() => setHintsEnabled(h => !h)}
-          className="px-3 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
                      bg-[#504840] text-white border border-[#6b5f55]
-                     transition-all cursor-pointer shadow-md"
+                     transition-all cursor-pointer shadow-md whitespace-nowrap"
         >
-          Hints: {hintsEnabled ? 'ON' : 'OFF'}
+          Hints {hintsEnabled ? 'ON' : 'OFF'}
         </button>
         <button
           onClick={() => setShowMobileLog(v => !v)}
-          className="px-3 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
                      bg-[#504840] text-white border border-[#6b5f55]
-                     transition-all cursor-pointer shadow-md"
+                     transition-all cursor-pointer shadow-md whitespace-nowrap"
         >
-          {showMobileLog ? 'Hide Log' : 'Show Log'}
+          {showMobileLog ? 'Hide Log' : 'Log'}
         </button>
       </div>
 
-      {/* Mobile: move log (toggleable) */}
+      {/* Mobile: move log overlay */}
       {showMobileLog && (
-        <div className="lg:hidden w-full max-w-[500px] pb-2">
+        <div className="lg:hidden fixed bottom-12 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
           <MoveLog entries={state.moveLog} />
         </div>
       )}
