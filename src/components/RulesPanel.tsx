@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-export default function RulesPanel() {
-  const [open, setOpen] = useState(false);
+export default function RulesPanel({ defaultOpen = false }: { defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <div className="rounded-xl border border-[#6b5f55] bg-[#504840] overflow-hidden shadow-md">

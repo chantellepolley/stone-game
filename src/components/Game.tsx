@@ -17,6 +17,7 @@ export default function Game({ onPlayOnline }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling } = useGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
+  const [showMobileRules, setShowMobileRules] = useState(false);
 
   if (state.phase === 'not_started') {
     return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} />;
@@ -112,12 +113,20 @@ export default function Game({ onPlayOnline }: GameProps) {
           Hints {hintsEnabled ? 'ON' : 'OFF'}
         </button>
         <button
-          onClick={() => setShowMobileLog(v => !v)}
+          onClick={() => { setShowMobileLog(v => !v); setShowMobileRules(false); }}
           className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
                      bg-[#504840] text-white border border-[#6b5f55]
                      transition-all cursor-pointer shadow-md whitespace-nowrap"
         >
           {showMobileLog ? 'Hide Log' : 'Log'}
+        </button>
+        <button
+          onClick={() => { setShowMobileRules(v => !v); setShowMobileLog(false); }}
+          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55]
+                     transition-all cursor-pointer shadow-md whitespace-nowrap"
+        >
+          {showMobileRules ? 'Hide Rules' : 'Rules'}
         </button>
       </div>
 
@@ -125,6 +134,13 @@ export default function Game({ onPlayOnline }: GameProps) {
       {showMobileLog && (
         <div className="lg:hidden fixed bottom-10 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
           <MoveLog entries={state.moveLog} />
+        </div>
+      )}
+
+      {/* Mobile: rules overlay */}
+      {showMobileRules && (
+        <div className="lg:hidden fixed bottom-10 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
+          <RulesPanel defaultOpen />
         </div>
       )}
 
