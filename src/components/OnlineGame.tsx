@@ -17,7 +17,7 @@ export default function OnlineGame({ onBack }: OnlineGameProps) {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJokerChoice, chooseJokerDoubles,
     onlinePhase, roomCode, myPlayer, opponentConnected,
-    error, createRoom, joinRoom, leave, isMyTurn,
+    error, createRoom, joinRoom, leave, isMyTurn, pendingOpponentMove,
   } = useOnlineGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
@@ -89,6 +89,7 @@ export default function OnlineGame({ onBack }: OnlineGameProps) {
             state={state}
             validMoves={isMyTurn ? validMoves : []}
             onSelectMove={selectMove}
+            pendingAIMove={pendingOpponentMove}
             hintsEnabled={hintsEnabled}
           />
         </div>

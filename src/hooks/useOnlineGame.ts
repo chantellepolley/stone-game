@@ -26,6 +26,7 @@ export function useOnlineGame() {
   const [myPlayer, setMyPlayer] = useState<PlayerId | null>(null);
   const [error, setError] = useState('');
   const [opponentConnected, setOpponentConnected] = useState(false);
+  const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const undoStack = useRef<GameState[]>([]);
 
@@ -50,7 +51,19 @@ export function useOnlineGame() {
 
     channel
       .on('broadcast', { event: 'state_update' }, ({ payload }) => {
-        if (payload.state) {
+        if (payload.move) {
+          // Opponent made a move — animate it first, then apply state
+          const move = payload.move as Move;
+          if (move.bearsOff) playHomeSound();
+          else if (move.captures) playJailedSound();
+          else if (move.crowns) playCrownedSound();
+
+          setPendingOpponentMove(move);
+          setTimeout(() => {
+            setPendingOpponentMove(null);
+            if (payload.state) setState(payload.state as GameState);
+          }, 500);
+        } else if (payload.state) {
           setState(payload.state as GameState);
         }
       })
@@ -77,13 +90,13 @@ export function useOnlineGame() {
     channelRef.current = channel;
   }
 
-  // Broadcast state to opponent
-  function broadcastState(newState: GameState) {
+  // Broadcast state to opponent, optionally with a move for animation
+  function broadcastState(newState: GameState, move?: Move) {
     if (channelRef.current) {
       channelRef.current.send({
         type: 'broadcast',
         event: 'state_update',
-        payload: { state: newState },
+        payload: { state: newState, move: move || null },
       });
     }
   }
@@ -183,7 +196,7 @@ export function useOnlineGame() {
     if (newState.currentPlayer !== state.currentPlayer) undoStack.current = [];
 
     setState(newState);
-    broadcastState(newState);
+    broadcastState(newState, move);
   }, [isMyTurn, state]);
 
   const chooseJokerDoubles = useCallback((value: number) => {
@@ -281,6 +294,6 @@ export function useOnlineGame() {
     awaitingJokerChoice, chooseJokerDoubles,
     onlinePhase, roomCode, myPlayer, opponentConnected, error,
     createRoom, joinRoom, leave,
-    isMyTurn,
+    isMyTurn, pendingOpponentMove,
   };
 }
