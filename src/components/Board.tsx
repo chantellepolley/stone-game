@@ -283,7 +283,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
   function renderSpace(idx: number) {
     return (
-      <div key={idx} ref={el => setRef(`space-${idx}`, el)}>
+      <div key={idx} ref={el => setRef(`space-${idx}`, el)} className="min-w-0 h-full">
         <BoardSpace
           index={idx}
           pieces={state.board[idx]}
@@ -325,7 +325,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           />
         </div>
 
-        <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
+        <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
           {topIndices.map(idx =>
             idx === 5
               ? [<div key="div-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx)]
@@ -362,7 +362,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           />
         </div>
 
-        <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
+        <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
           {bottomIndices.map((idx, i) =>
             i === 5
               ? [<div key="div-bot" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx)]

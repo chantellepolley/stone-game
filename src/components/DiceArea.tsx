@@ -107,20 +107,25 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
   };
 
   // Track which dice values have been used
-  const remainingCopy = [...dice.remaining];
-  const diceUsed = dice.values.map((v) => {
-    // For joker rolls, the remaining values differ from the face values.
-    // A joker die is "used" once all remaining moves are consumed.
-    const effectiveValue = isJoker(v)
-      ? dice.remaining.length > 0 ? dice.remaining[0] : v
-      : v;
-    const idx = remainingCopy.indexOf(effectiveValue);
-    if (idx !== -1) {
-      remainingCopy.splice(idx, 1);
-      return false;
-    }
-    return true;
-  });
+  const bothJokersRolled = isJoker(dice.values[0]) && isJoker(dice.values[1]);
+  let diceUsed: boolean[];
+  if (bothJokersRolled) {
+    // Double jokers: both stay visible (not "used") throughout the turn
+    diceUsed = [false, false];
+  } else {
+    const remainingCopy = [...dice.remaining];
+    diceUsed = dice.values.map((v) => {
+      const effectiveValue = isJoker(v)
+        ? dice.remaining.length > 0 ? dice.remaining[0] : v
+        : v;
+      const idx = remainingCopy.indexOf(effectiveValue);
+      if (idx !== -1) {
+        remainingCopy.splice(idx, 1);
+        return false;
+      }
+      return true;
+    });
+  }
 
   // Describe what the joker did
   const hasJoker = dice.hasRolled && (isJoker(dice.values[0]) || isJoker(dice.values[1]));
