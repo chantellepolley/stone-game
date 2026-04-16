@@ -14,12 +14,12 @@ function generateRoomCode(): string {
   return code;
 }
 
-type OnlinePhase = 'idle' | 'creating' | 'waiting' | 'joining' | 'playing' | 'error';
+type OnlinePhase = 'idle' | 'waiting' | 'connecting' | 'playing' | 'error';
 
 export function useOnlineGame() {
   const [state, setState] = useState<GameState>(() => {
     const s = createInitialState();
-    return { ...s, phase: 'not_started', gameMode: 'pvp' as const };
+    return { ...s, phase: 'not_started' as GamePhase, gameMode: 'pvp' as const };
   });
   const [onlinePhase, setOnlinePhase] = useState<OnlinePhase>('idle');
   const [roomCode, setRoomCode] = useState('');
@@ -29,21 +29,22 @@ export function useOnlineGame() {
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const undoStack = useRef<GameState[]>([]);
+  const pingRef = useRef<number | null>(null);
+  const stateReceivedRef = useRef(false);
 
-  const isMyTurn = myPlayer !== null && state.currentPlayer === myPlayer && state.phase !== 'game_over';
+  const isMyTurn = myPlayer !== null && state.currentPlayer === myPlayer && state.phase !== 'game_over' && state.phase !== 'not_started';
 
-  // Clean up channel on unmount
   useEffect(() => {
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+      if (pingRef.current) clearInterval(pingRef.current);
     };
   }, []);
 
-  // Subscribe to a room channel
   function joinChannel(code: string, player: PlayerId) {
     if (channelRef.current) supabase.removeChannel(channelRef.current);
+    if (pingRef.current) clearInterval(pingRef.current);
+    stateReceivedRef.current = false;
 
     const channel = supabase.channel(`stone-game-${code}`, {
       config: { broadcast: { self: false } },
@@ -52,12 +53,10 @@ export function useOnlineGame() {
     channel
       .on('broadcast', { event: 'state_update' }, ({ payload }) => {
         if (payload.move) {
-          // Opponent made a move — animate it first, then apply state
           const move = payload.move as Move;
           if (move.bearsOff) playHomeSound();
           else if (move.captures) playJailedSound();
           else if (move.crowns) playCrownedSound();
-
           setPendingOpponentMove(move);
           setTimeout(() => {
             setPendingOpponentMove(null);
@@ -66,31 +65,63 @@ export function useOnlineGame() {
         } else if (payload.state) {
           setState(payload.state as GameState);
         }
+        // Mark that we've received state — game is live
+        if (!stateReceivedRef.current) {
+          stateReceivedRef.current = true;
+          setOnlinePhase('playing');
+          setOpponentConnected(true);
+        }
+      })
+      .on('broadcast', { event: 'ping' }, ({ payload }) => {
+        // Opponent is alive
+        setOpponentConnected(true);
+        if (payload.needState && player === 1) {
+          // Guest is requesting state — send it
+          channel.send({ type: 'broadcast', event: 'state_update', payload: { state } });
+        }
       })
       .on('broadcast', { event: 'player_joined' }, () => {
         setOpponentConnected(true);
-        setOnlinePhase('playing');
+        if (player === 1) {
+          // Host: send state immediately and switch to playing
+          setOnlinePhase('playing');
+          setTimeout(() => {
+            channel.send({ type: 'broadcast', event: 'state_update', payload: { state } });
+          }, 200);
+        }
       })
       .on('broadcast', { event: 'player_left' }, () => {
         setOpponentConnected(false);
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // If joining as player 2, announce presence
           if (player === 2) {
-            await channel.send({
-              type: 'broadcast',
-              event: 'player_joined',
-              payload: {},
-            });
+            // Guest: announce join, then ping repeatedly until state is received
+            await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
+
+            // Retry join announcement and request state every 1.5s
+            let retries = 0;
+            const retryInterval = setInterval(async () => {
+              if (stateReceivedRef.current || retries > 10) {
+                clearInterval(retryInterval);
+                return;
+              }
+              retries++;
+              await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
+              await channel.send({ type: 'broadcast', event: 'ping', payload: { needState: true } });
+            }, 1500);
           }
+
+          // Both sides: periodic ping to maintain connection awareness
+          pingRef.current = window.setInterval(() => {
+            channel.send({ type: 'broadcast', event: 'ping', payload: { needState: false } });
+          }, 5000);
         }
       });
 
     channelRef.current = channel;
   }
 
-  // Broadcast state to opponent, optionally with a move for animation
   function broadcastState(newState: GameState, move?: Move) {
     if (channelRef.current) {
       channelRef.current.send({
@@ -108,7 +139,6 @@ export function useOnlineGame() {
     setRoomCode(code);
     setMyPlayer(1);
     setOnlinePhase('waiting');
-
     const initialState: GameState = {
       ...createInitialState(),
       phase: 'rolling',
@@ -126,10 +156,8 @@ export function useOnlineGame() {
     }
     setRoomCode(upperCode);
     setMyPlayer(2);
-    setOnlinePhase('playing');
+    setOnlinePhase('connecting'); // Show "Connecting..." not "playing"
     joinChannel(upperCode, 2);
-
-    // Request current state from host (host will see player_joined and send state)
   }, []);
 
   const roll = useCallback(() => {
@@ -140,7 +168,6 @@ export function useOnlineGame() {
     let newState: GameState = { ...state, dice, phase: 'moving' };
 
     if (!canPlayerMove(newState)) {
-      // Show the roll briefly before switching turns
       newState = {
         ...newState,
         dice: { ...dice, remaining: [], hasRolled: true },
@@ -155,7 +182,6 @@ export function useOnlineGame() {
           },
         ],
       };
-      // Auto-switch after delay
       setState(newState);
       broadcastState(newState);
       setTimeout(() => {
@@ -209,7 +235,6 @@ export function useOnlineGame() {
     let newState = executeMove(state, move);
     const winner = checkWinCondition(newState);
     if (winner) newState = { ...newState, winner, phase: 'game_over' };
-
     if (newState.currentPlayer !== state.currentPlayer) undoStack.current = [];
 
     setState(newState);
@@ -261,29 +286,18 @@ export function useOnlineGame() {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
+    if (pingRef.current) clearInterval(pingRef.current);
     setOnlinePhase('idle');
     setMyPlayer(null);
     setOpponentConnected(false);
     setRoomCode('');
+    stateReceivedRef.current = false;
     setState(() => {
       const s = createInitialState();
-      return { ...s, phase: 'not_started', gameMode: 'pvp' as const };
+      return { ...s, phase: 'not_started' as GamePhase, gameMode: 'pvp' as const };
     });
   }, []);
 
-  // When opponent joins, host sends current state
-  useEffect(() => {
-    if (opponentConnected && myPlayer === 1 && channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'state_update',
-        payload: { state },
-      });
-      setOnlinePhase('playing');
-    }
-  }, [opponentConnected, myPlayer, state]);
-
-  // Compute valid moves
   const awaitingJokerChoice = state.dice.pendingDoubleJoker && state.dice.remaining.length === 0 && state.phase === 'moving';
 
   const validMoves = (() => {

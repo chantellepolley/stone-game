@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 interface OnlineLobbyProps {
-  onlinePhase: 'idle' | 'creating' | 'waiting' | 'joining' | 'playing' | 'error';
+  onlinePhase: 'idle' | 'waiting' | 'connecting' | 'playing' | 'error';
   roomCode: string;
   opponentConnected: boolean;
   error: string;
@@ -52,6 +52,29 @@ export default function OnlineLobby({
       setTimeout(() => setShareStatus('idle'), 2000);
     }
   };
+
+  if (onlinePhase === 'connecting') {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
+        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+        <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
+          <p className="text-white text-sm font-heading">Connecting to game...</p>
+          <div className="flex gap-1">
+            <div className="w-3 h-3 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-3 h-3 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-3 h-3 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+          <p className="text-white/40 text-[10px]">Room: {roomCode}</p>
+          <button
+            onClick={onBack}
+            className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-2"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (onlinePhase === 'waiting') {
     return (
