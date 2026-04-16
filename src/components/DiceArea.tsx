@@ -107,18 +107,16 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
   };
 
   // Track which dice values have been used
-  const bothJokersRolled = isJoker(dice.values[0]) && isJoker(dice.values[1]);
+  const hasAnyJoker = isJoker(dice.values[0]) || isJoker(dice.values[1]);
   let diceUsed: boolean[];
-  if (bothJokersRolled) {
-    // Double jokers: both stay visible (not "used") throughout the turn
-    diceUsed = [false, false];
+  if (hasAnyJoker) {
+    // Any joker roll: both dice stay visible as long as moves remain
+    const allUsed = dice.remaining.length === 0 && !dice.pendingDoubleJoker;
+    diceUsed = [allUsed, allUsed];
   } else {
     const remainingCopy = [...dice.remaining];
     diceUsed = dice.values.map((v) => {
-      const effectiveValue = isJoker(v)
-        ? dice.remaining.length > 0 ? dice.remaining[0] : v
-        : v;
-      const idx = remainingCopy.indexOf(effectiveValue);
+      const idx = remainingCopy.indexOf(v);
       if (idx !== -1) {
         remainingCopy.splice(idx, 1);
         return false;
