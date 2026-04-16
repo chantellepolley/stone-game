@@ -85,20 +85,32 @@ body {
 
 /* Pulse for valid move targets — gold (P1) */
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 8px rgba(255, 180, 50, 0.5); }
-  50% { box-shadow: 0 0 24px rgba(255, 180, 50, 1); }
+  0%, 100% { box-shadow: 0 0 3px rgba(255, 180, 50, 0.4); }
+  50% { box-shadow: 0 0 8px rgba(255, 180, 50, 0.8); }
 }
 .pulse-gold {
-  animation: pulse-gold 1.2s ease-in-out infinite;
+  animation: pulse-gold 1.5s ease-in-out infinite;
 }
 
 /* Pulse for valid move targets — blue (P2) */
 @keyframes pulse-blue {
-  0%, 100% { box-shadow: 0 0 8px rgba(100, 180, 255, 0.5); }
-  50% { box-shadow: 0 0 24px rgba(100, 180, 255, 1); }
+  0%, 100% { box-shadow: 0 0 3px rgba(100, 180, 255, 0.4); }
+  50% { box-shadow: 0 0 8px rgba(100, 180, 255, 0.8); }
 }
 .pulse-blue {
-  animation: pulse-blue 1.2s ease-in-out infinite;
+  animation: pulse-blue 1.5s ease-in-out infinite;
+}
+
+/* Desktop: slightly stronger glow */
+@media (min-width: 1024px) {
+  @keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 6px rgba(255, 180, 50, 0.4); }
+    50% { box-shadow: 0 0 16px rgba(255, 180, 50, 0.9); }
+  }
+  @keyframes pulse-blue {
+    0%, 100% { box-shadow: 0 0 6px rgba(100, 180, 255, 0.4); }
+    50% { box-shadow: 0 0 16px rgba(100, 180, 255, 0.9); }
+  }
 }
 
 /* Dice roll animation — dramatic shake */

@@ -40,19 +40,20 @@ export default function BoardSpace({
   const pulseClass = isP1 ? 'pulse-gold' : 'pulse-blue';
 
   // Visual glow: selected always shows, source/target only when hints on
+  // Thinner rings on mobile (ring-2), thicker on desktop (lg:ring-3)
   const borderHighlight = isSelected
-    ? `ring-3 ${ringColor} ${pulseClass} brightness-125`
+    ? `ring-2 lg:ring-3 ${ringColor} ${pulseClass} brightness-115 lg:brightness-125`
     : isValidTarget && hintsEnabled
-    ? `ring-3 ${ringColor} cursor-pointer ${pulseClass} brightness-115`
+    ? `ring-2 lg:ring-3 ${ringColor} cursor-pointer ${pulseClass} brightness-110 lg:brightness-115`
     : isValidTarget && !hintsEnabled
     ? 'cursor-pointer'
     : isValidSource && hintsEnabled
-    ? `ring-2 ${ringColor}/70 ${pulseClass} cursor-pointer brightness-110`
+    ? `ring-1 lg:ring-2 ${ringColor}/60 ${pulseClass} cursor-pointer brightness-105 lg:brightness-110`
     : isValidSource && !hintsEnabled
     ? 'cursor-pointer'
     : '';
 
-  const maxVisible = 5;
+  const maxVisible = 3;
   const visiblePieces = pieces.slice(-maxVisible);
   const hiddenCount = Math.max(0, pieces.length - maxVisible);
 
@@ -99,7 +100,7 @@ export default function BoardSpace({
           return (
             <div
               key={piece.id}
-              style={{ marginTop: i === 0 ? 0 : hasMultipleSelectable ? 2 : -4 }}
+              style={{ marginTop: i === 0 ? 0 : hasMultipleSelectable ? 1 : -6 }}
               onPointerDown={allowIndividualSelect && onDragStart ? (e) => {
                 e.stopPropagation();
                 onDragStart(piece.id, e);
