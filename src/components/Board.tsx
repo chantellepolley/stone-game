@@ -199,11 +199,19 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
   // ── Click handlers ──
   const busy = !!anim || !!drag;
 
+  /** Does this space have a mix of crowned and uncrowned player pieces? */
+  function hasMixedCrownedPieces(index: number): boolean {
+    const pp = state.board[index].filter(p => p.owner === state.currentPlayer);
+    if (pp.length < 2) return false;
+    const hasCrowned = pp.some(p => p.crowned);
+    const hasUncrowned = pp.some(p => !p.crowned);
+    return hasCrowned && hasUncrowned;
+  }
+
   const handleClickSpace = (index: number) => {
     if (busy) return;
+
     // Click a target → execute move
-    // BUT: if the target is the same as the source space, don't auto-execute.
-    // Also block if selection just happened (mobile double-tap guard, 300ms).
     if (selected && targetSpaces.has(index)) {
       const isSameSpace = selected.type === 'board' && selected.index === index;
       const tooSoon = Date.now() - selectionTime.current < 300;
@@ -212,13 +220,22 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         if (move) { animateMove(move); setSelected(null); return; }
       }
     }
-    // Click a source space → select the top movable piece
+
+    // Click a source space
     if (validSourceSpaces.has(index)) {
       const playerPieces = state.board[index].filter(p => p.owner === state.currentPlayer);
       if (playerPieces.length > 0) {
-        const topPiece = playerPieces[playerPieces.length - 1];
-        setSelected({ type: 'board', index, pieceId: topPiece.id });
-        selectionTime.current = Date.now();
+        // Only show piece chooser if mixed crowned/uncrowned
+        if (hasMixedCrownedPieces(index)) {
+          const topPiece = playerPieces[playerPieces.length - 1];
+          setSelected({ type: 'board', index, pieceId: topPiece.id });
+          selectionTime.current = Date.now();
+        } else {
+          // Auto-select the top piece
+          const topPiece = playerPieces[playerPieces.length - 1];
+          setSelected({ type: 'board', index, pieceId: topPiece.id });
+          selectionTime.current = Date.now();
+        }
         return;
       }
     }
@@ -230,25 +247,33 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     const spaceIdx = state.board.findIndex(sp => sp.some(p => p.id === pieceId));
     if (spaceIdx === -1) return;
 
-    // If this piece is already selected AND the same space is a target (wrap-around),
-    // clicking the selected piece confirms the same-space move.
-    // But only if enough time has passed since selection (mobile guard).
+    // Wrap-around confirmation (same space is both source and target)
     if (selected?.type === 'board' && selected.pieceId === pieceId && targetSpaces.has(spaceIdx)) {
       const tooSoon = Date.now() - selectionTime.current < 400;
       if (!tooSoon) {
         const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === spaceIdx);
         if (move) { animateMove(move); setSelected(null); return; }
       }
-      return; // Don't deselect, just wait for a real second tap
+      return;
     }
 
-    // If this piece is already selected, deselect
+    // Only allow switching between pieces if the space has mixed crowned/uncrowned
+    if (selected?.type === 'board' && selected.index === spaceIdx && hasMixedCrownedPieces(spaceIdx)) {
+      const piece = state.board[spaceIdx].find(p => p.id === pieceId);
+      if (piece && piece.owner === state.currentPlayer) {
+        setSelected({ type: 'board', index: spaceIdx, pieceId });
+        selectionTime.current = Date.now();
+        return;
+      }
+    }
+
+    // If already selected, deselect
     if (selected?.type === 'board' && selected.pieceId === pieceId) {
       setSelected(null);
       return;
     }
 
-    // If this space is a valid source, select this specific piece
+    // Normal selection
     if (validSourceSpaces.has(spaceIdx)) {
       const piece = state.board[spaceIdx].find(p => p.id === pieceId);
       if (piece && piece.owner === state.currentPlayer) {
@@ -315,7 +340,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       onPointerUp={handleDragEnd}
     >
       {/* Top row */}
-      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18vh, 220px)' }}>
+      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
         <div ref={el => setRef('bench-1', el)} className="h-full">
           <StoneBox player={1} pieces={state.bench[1]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 1}
@@ -352,7 +377,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       </div>
 
       {/* Bottom row */}
-      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18vh, 220px)' }}>
+      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
         <div ref={el => setRef('bench-2', el)} className="h-full">
           <StoneBox player={2} pieces={state.bench[2]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 2}

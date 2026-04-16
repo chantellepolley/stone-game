@@ -56,8 +56,11 @@ export default function BoardSpace({
   const visiblePieces = pieces.slice(-maxVisible);
   const hiddenCount = Math.max(0, pieces.length - maxVisible);
 
+  // Only spread pieces for selection when mixed crowned/uncrowned
   const playerPieces = pieces.filter(p => p.owner === currentPlayer);
-  const hasMultipleSelectable = isSelected && playerPieces.length > 1;
+  const hasMixed = isSelected && playerPieces.length > 1 &&
+    playerPieces.some(p => p.crowned) && playerPieces.some(p => !p.crowned);
+  const hasMultipleSelectable = hasMixed;
 
   return (
     <div

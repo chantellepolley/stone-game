@@ -23,7 +23,7 @@ export default function Game({ onPlayOnline }: GameProps) {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1">
+    <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1" style={{ height: '100dvh' }}>
       {/* Logo */}
       <header className="shrink-0">
         <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain" />
@@ -51,6 +51,7 @@ export default function Game({ onPlayOnline }: GameProps) {
           awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
           onChooseJokerDoubles={chooseJokerDoubles}
           isAITurn={isAITurn}
+          externalRolling={aiRolling}
         />
       </div>
 
