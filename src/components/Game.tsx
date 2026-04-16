@@ -63,6 +63,9 @@ export default function Game({ onPlayOnline }: GameProps) {
           <MoveLog entries={state.moveLog} />
           <RulesPanel />
           <GameControls onRestart={restart} />
+          <div className="text-[9px] text-white/30 text-center mt-auto">
+            © 2026 Stone The Game. All rights reserved.
+          </div>
         </div>
 
         {/* Board — shrinks to fit */}
@@ -128,6 +131,11 @@ export default function Game({ onPlayOnline }: GameProps) {
         >
           {showMobileRules ? 'Hide Rules' : 'Rules'}
         </button>
+      </div>
+
+      {/* Copyright — mobile */}
+      <div className="lg:hidden text-[8px] text-white/30 shrink-0">
+        © 2026 Stone The Game. All rights reserved.
       </div>
 
       {/* Mobile: move log overlay */}
