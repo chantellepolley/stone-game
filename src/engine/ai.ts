@@ -231,23 +231,163 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
 }
 
 /**
+ * Evaluate the overall board state quality for a player.
+ * Used by Hard AI to compare end-states of different move sequences.
+ */
+function evaluateBoard(state: GameState, player: PlayerId): number {
+  let score = 0;
+  const opponent: PlayerId = player === 1 ? 2 : 1;
+
+  // Pieces borne off = great
+  score += state.home[player].length * 500;
+
+  // Pieces in jail = bad
+  score -= state.jail[player].length * 200;
+
+  // Opponent in jail = good
+  score += state.jail[opponent].length * 150;
+
+  // Pieces still on bench = slightly bad (want them in play)
+  score -= state.bench[player].length * 30;
+
+  for (let i = 0; i < NUM_SPACES; i++) {
+    const friendly = state.board[i].filter(p => p.owner === player);
+    if (friendly.length === 0) continue;
+
+    // Safe stacks (2+) = good
+    if (friendly.length >= 2) score += 120;
+
+    // Lone pieces = bad, especially with threats
+    if (friendly.length === 1) {
+      const p = friendly[0];
+      const threats = countThreats(state, p.routePos, player);
+      score -= 60 + threats * 50;
+      // Worse if far from home
+      const distFromHome = ROUTE_LENGTH - p.routePos;
+      if (distFromHome > 15) score -= 40;
+    }
+
+    // Advance bonus
+    for (const p of friendly) {
+      score += p.routePos * 3;
+      if (p.crowned) score += 80;
+    }
+  }
+
+  return score;
+}
+
+/**
  * Choose the best move for the AI.
+ * Hard difficulty: looks ahead at move pairs to find combinations that
+ * create safe positions (e.g., two pieces from different stacks landing together).
  */
 export function chooseBestMove(state: GameState, validMoves: Move[], difficulty: AIDifficulty): Move | null {
   if (validMoves.length === 0) return null;
 
-  let bestMove = validMoves[0];
-  let bestScore = -Infinity;
+  // Easy/Medium: just pick the best single move
+  if (difficulty !== 'hard') {
+    let bestMove = validMoves[0];
+    let bestScore = -Infinity;
+    for (const move of validMoves) {
+      const score = scoreMove(state, move, difficulty);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+    }
+    return bestMove;
+  }
 
-  for (const move of validMoves) {
-    const score = scoreMove(state, move, difficulty);
-    if (score > bestScore) {
-      bestScore = score;
-      bestMove = move;
+  // Hard: evaluate move pairs (look-ahead within the turn)
+  const remaining = state.dice.remaining;
+  const hasTwoMoves = remaining.length >= 2;
+
+  if (!hasTwoMoves) {
+    // Only one die left — just pick the best single move
+    let bestMove = validMoves[0];
+    let bestScore = -Infinity;
+    for (const move of validMoves) {
+      const score = scoreMove(state, move, difficulty);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = move;
+      }
+    }
+    return bestMove;
+  }
+
+  // Try each first move, simulate it, then find the best second move.
+  // Score the resulting board state after both moves.
+  let bestFirstMove = validMoves[0];
+  let bestPairScore = -Infinity;
+  const player = state.currentPlayer;
+
+  // Only check single-die moves as the first move (not combined)
+  // so there's a die left for the second move
+  const singleDieMoves = validMoves.filter(m => m.diceCount === 1);
+
+  for (const firstMove of singleDieMoves) {
+    const stateAfterFirst = executeMove(state, firstMove);
+
+    // If turn switched (all dice used), evaluate this state
+    if (stateAfterFirst.currentPlayer !== player) {
+      const boardScore = evaluateBoard(stateAfterFirst, player);
+      if (boardScore > bestPairScore) {
+        bestPairScore = boardScore;
+        bestFirstMove = firstMove;
+      }
+      continue;
+    }
+
+    // Find valid moves for the second die
+    const secondMoves: Move[] = [];
+    const seen = new Set<string>();
+    for (const dv of stateAfterFirst.dice.remaining) {
+      for (const m of getValidMoves(stateAfterFirst, dv)) {
+        const key = `${m.pieceId}:${m.to.type === 'home' ? 'H' : m.to.index}:${m.diceValue}`;
+        if (!seen.has(key)) { seen.add(key); secondMoves.push(m); }
+      }
+    }
+    // Also include multi-step for second move
+    for (const m of getMultiStepMoves(stateAfterFirst)) {
+      const key = `${m.pieceId}:${m.to.type === 'home' ? 'H' : m.to.index}:${m.diceValue}`;
+      if (!seen.has(key)) { seen.add(key); secondMoves.push(m); }
+    }
+
+    if (secondMoves.length === 0) {
+      // No second move possible — evaluate state after first move only
+      const boardScore = evaluateBoard(stateAfterFirst, player);
+      if (boardScore > bestPairScore) {
+        bestPairScore = boardScore;
+        bestFirstMove = firstMove;
+      }
+      continue;
+    }
+
+    // Find the best second move
+    for (const secondMove of secondMoves) {
+      const stateAfterBoth = executeMove(stateAfterFirst, secondMove);
+      const boardScore = evaluateBoard(stateAfterBoth, player);
+      if (boardScore > bestPairScore) {
+        bestPairScore = boardScore;
+        bestFirstMove = firstMove;
+      }
     }
   }
 
-  return bestMove;
+  // Also consider combined moves (using both dice at once) as alternatives
+  const combinedMoves = validMoves.filter(m => m.diceCount >= 2);
+  for (const combined of combinedMoves) {
+    const stateAfter = executeMove(state, combined);
+    const boardScore = evaluateBoard(stateAfter, player);
+    if (boardScore > bestPairScore) {
+      bestPairScore = boardScore;
+      bestFirstMove = combined;
+    }
+  }
+
+  return bestFirstMove;
 }
 
 /**
