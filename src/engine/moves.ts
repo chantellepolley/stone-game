@@ -303,12 +303,90 @@ export function executeMove(state: GameState, move: Move): GameState {
     piece.routePos = piece.routePos + move.diceValue;
   }
 
-  // 3. Handle capture
+  // 3. Handle intermediate captures (multi-step moves capture along the way)
+  if (move.diceCount > 1 && move.from.type === 'board') {
+    const startRoutePos = piece.routePos - move.diceValue; // original position before step 2 updated it
+    // Compute all intermediate landing positions from the dice consumed
+    // For same-value [4,4,4]: intermediates at +4, +8 (not the final +12)
+    // For mixed [5,2]: intermediates at +5 and +2 (both orderings)
+    const intermediatePositions = new Set<number>();
+
+    if (move.diceConsumed.every(d => d === move.diceConsumed[0])) {
+      // Same-value: intermediates at step, 2*step, ... (n-1)*step
+      const step = move.diceConsumed[0];
+      for (let i = 1; i < move.diceCount; i++) {
+        const pos = startRoutePos + step * i;
+        if (pos < ROUTE_LENGTH) intermediatePositions.add(pos);
+      }
+    } else {
+      // Mixed values: add each individual die value as a possible intermediate
+      for (const d of move.diceConsumed) {
+        const pos = startRoutePos + d;
+        if (pos < ROUTE_LENGTH) intermediatePositions.add(pos);
+      }
+    }
+
+    // Capture lone opponents at each intermediate
+    for (const intPos of intermediatePositions) {
+      const intSpace = GAME_CONFIG.PLAYER_ROUTE[player][intPos];
+      const occupants = s.board[intSpace];
+      if (occupants.length === 1 && occupants[0].owner !== player) {
+        const captured = occupants.splice(0, 1);
+        captured.forEach(cp => {
+          if (GAME_CONFIG.CAPTURE_REMOVES_CROWN) cp.crowned = false;
+          cp.routePos = -1;
+          s.jail[cp.owner].push(cp);
+          s.moveLog.push({
+            turn: s.turnCount, player,
+            action: `${GAME_CONFIG.PLAYER_NAMES[player]} captured en passant at space ${intSpace}!`,
+            timestamp: Date.now(),
+          });
+        });
+      }
+    }
+  }
+
+  // Also handle intermediate captures for bench/jail multi-step entry
+  if (move.diceCount > 1 && (move.from.type === 'bench' || move.from.type === 'jail')) {
+    const intermediatePositions = new Set<number>();
+    if (move.diceConsumed.every(d => d === move.diceConsumed[0])) {
+      const step = move.diceConsumed[0];
+      for (let i = 1; i < move.diceCount; i++) {
+        const pos = step * i - 1; // bench entry: route position = total - 1
+        if (pos >= 0 && pos < ROUTE_LENGTH) intermediatePositions.add(pos);
+      }
+    } else {
+      for (const d of move.diceConsumed) {
+        const pos = d - 1;
+        if (pos >= 0 && pos < ROUTE_LENGTH) intermediatePositions.add(pos);
+      }
+    }
+
+    for (const intPos of intermediatePositions) {
+      const intSpace = GAME_CONFIG.PLAYER_ROUTE[player][intPos];
+      const occupants = s.board[intSpace];
+      if (occupants.length === 1 && occupants[0].owner !== player) {
+        const captured = occupants.splice(0, 1);
+        captured.forEach(cp => {
+          if (GAME_CONFIG.CAPTURE_REMOVES_CROWN) cp.crowned = false;
+          cp.routePos = -1;
+          s.jail[cp.owner].push(cp);
+          s.moveLog.push({
+            turn: s.turnCount, player,
+            action: `${GAME_CONFIG.PLAYER_NAMES[player]} captured en passant at space ${intSpace}!`,
+            timestamp: Date.now(),
+          });
+        });
+      }
+    }
+  }
+
+  // 3b. Handle capture at final destination
   if (move.captures && move.to.type === 'board') {
     const captured = s.board[move.to.index].splice(0, s.board[move.to.index].length);
     captured.forEach(cp => {
       if (GAME_CONFIG.CAPTURE_REMOVES_CROWN) cp.crowned = false;
-      cp.routePos = -1; // reset progress
+      cp.routePos = -1;
       s.jail[cp.owner].push(cp);
     });
   }

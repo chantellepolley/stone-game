@@ -61,9 +61,14 @@ function applyMove(prev: GameState, move: Move): GameState {
   if (prev.phase !== 'moving') return prev;
   const newState = executeMove(prev, move);
 
-  // Play sound effects
+  // Play sound effects — check for intermediate captures too
+  const opponent = prev.currentPlayer === 1 ? 2 : 1;
+  const prevJailCount = prev.jail[opponent as 1 | 2].length;
+  const newJailCount = newState.jail[opponent as 1 | 2].length;
+  const anyCaptured = newJailCount > prevJailCount;
+
   if (move.bearsOff) playHomeSound();
-  else if (move.captures) playJailedSound();
+  else if (anyCaptured) playJailedSound();
   else if (move.crowns) playCrownedSound();
 
 
