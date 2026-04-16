@@ -62,8 +62,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
 
   return (
     <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
-      {/* Header */}
-      <header className="shrink-0">
+      {/* Header — click to go home */}
+      <header className="shrink-0 cursor-pointer" onClick={() => { leave(); onBack(); }}>
         <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain" />
       </header>
 
