@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { DiceState, GamePhase, PlayerId } from '../types/game';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { isJoker } from '../engine/dice';
+import { playDiceRattle, playDiceSlam } from '../utils/sounds';
 
 interface DiceAreaProps {
   dice: DiceState;
@@ -94,16 +95,36 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
 
 export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJokerChoice, onChooseJokerDoubles, isAITurn }: DiceAreaProps) {
   const [rolling, setRolling] = useState(false);
+  const [rollFaces, setRollFaces] = useState<[number, number]>([1, 1]);
   const canRoll = phase === 'rolling' && !isAITurn;
   const playerName = GAME_CONFIG.PLAYER_NAMES[currentPlayer];
 
   const handleRoll = () => {
     if (!canRoll) return;
     setRolling(true);
-    setTimeout(() => {
-      setRolling(false);
-      onRoll();
-    }, 400);
+
+    // Play dice rattle sound
+    playDiceRattle();
+
+    // Rapidly cycle random faces for dramatic effect
+    let count = 0;
+    const totalCycles = 12;
+    const interval = setInterval(() => {
+      setRollFaces([
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+      ]);
+      count++;
+      if (count >= totalCycles) {
+        clearInterval(interval);
+        // Slam stop — brief pause then reveal
+        setTimeout(() => {
+          setRolling(false);
+          playDiceSlam();
+          onRoll();
+        }, 150);
+      }
+    }, 80); // 80ms per cycle × 12 = ~960ms of rolling
   };
 
   // Track which dice values have been used
@@ -132,10 +153,20 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
   return (
     <div className="flex flex-col items-center gap-3">
       {/* Dice display */}
-      {dice.hasRolled && (
+      {(dice.hasRolled || rolling) && (
         <div className="flex gap-3">
-          <DieFace value={dice.values[0]} used={diceUsed[0]} rolling={rolling} player={currentPlayer} />
-          <DieFace value={dice.values[1]} used={diceUsed[1]} rolling={rolling} player={currentPlayer} />
+          <DieFace
+            value={rolling ? rollFaces[0] : dice.values[0]}
+            used={rolling ? false : diceUsed[0]}
+            rolling={rolling}
+            player={currentPlayer}
+          />
+          <DieFace
+            value={rolling ? rollFaces[1] : dice.values[1]}
+            used={rolling ? false : diceUsed[1]}
+            rolling={rolling}
+            player={currentPlayer}
+          />
         </div>
       )}
 

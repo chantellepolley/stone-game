@@ -169,3 +169,78 @@ export function playJailedSound() {
   rumble.start(now + 0.1);
   rumble.stop(now + 0.9);
 }
+
+/**
+ * Dice rattle — stone dice tumbling on a carved slab.
+ * Series of rapid clicks with filtered noise, like pebbles shaking.
+ */
+export function playDiceRattle() {
+  const ctx = getCtx();
+  const now = ctx.currentTime;
+
+  // Rapid clicking stones
+  for (let i = 0; i < 8; i++) {
+    const t = now + i * 0.1 + Math.random() * 0.05;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 800 + Math.random() * 600;
+    gain.gain.setValueAtTime(0.04 + Math.random() * 0.03, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.05);
+  }
+
+  // Shaking noise bed
+  const bufSize = ctx.sampleRate * 0.8;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1);
+  const noise = ctx.createBufferSource();
+  const nGain = ctx.createGain();
+  const nFilter = ctx.createBiquadFilter();
+  noise.buffer = buf;
+  nFilter.type = 'bandpass';
+  nFilter.frequency.value = 2000;
+  nFilter.Q.value = 2;
+  nGain.gain.setValueAtTime(0.06, now);
+  nGain.gain.linearRampToValueAtTime(0.08, now + 0.3);
+  nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+  noise.connect(nFilter).connect(nGain).connect(ctx.destination);
+  noise.start(now);
+}
+
+/**
+ * Dice slam — stones landing hard on the board.
+ * Sharp impact with a low thud.
+ */
+export function playDiceSlam() {
+  const ctx = getCtx();
+  const now = ctx.currentTime;
+
+  // Two stone impacts (one per die)
+  [0, 0.06].forEach(offset => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150, now + offset);
+    osc.frequency.exponentialRampToValueAtTime(60, now + offset + 0.15);
+    gain.gain.setValueAtTime(0.2, now + offset);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + offset);
+    osc.stop(now + offset + 0.2);
+
+    // Click
+    const click = ctx.createOscillator();
+    const cGain = ctx.createGain();
+    click.type = 'square';
+    click.frequency.value = 1200;
+    cGain.gain.setValueAtTime(0.08, now + offset);
+    cGain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.02);
+    click.connect(cGain).connect(ctx.destination);
+    click.start(now + offset);
+    click.stop(now + offset + 0.03);
+  });
+}
