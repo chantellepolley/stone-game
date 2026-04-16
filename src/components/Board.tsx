@@ -200,9 +200,14 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
   const handleClickSpace = (index: number) => {
     if (busy) return;
     // Click a target → execute move
+    // BUT: if the target is the same as the source space, don't auto-execute
+    // (this happens with wrap-around moves like 4×5=20). Require explicit confirmation.
     if (selected && targetSpaces.has(index)) {
-      const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
-      if (move) { animateMove(move); setSelected(null); return; }
+      const isSameSpace = selected.type === 'board' && selected.index === index;
+      if (!isSameSpace) {
+        const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
+        if (move) { animateMove(move); setSelected(null); return; }
+      }
     }
     // Click a source space → select the top movable piece
     if (validSourceSpaces.has(index)) {
@@ -220,6 +225,13 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove }
     if (busy) return;
     const spaceIdx = state.board.findIndex(sp => sp.some(p => p.id === pieceId));
     if (spaceIdx === -1) return;
+
+    // If this piece is already selected AND the same space is a target (wrap-around),
+    // clicking the selected piece confirms the same-space move
+    if (selected?.type === 'board' && selected.pieceId === pieceId && targetSpaces.has(spaceIdx)) {
+      const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === spaceIdx);
+      if (move) { animateMove(move); setSelected(null); return; }
+    }
 
     // If this piece is already selected, deselect
     if (selected?.type === 'board' && selected.pieceId === pieceId) {
