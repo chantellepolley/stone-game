@@ -6,33 +6,41 @@ interface TurnIndicatorProps {
   currentPlayer: PlayerId;
   phase: GamePhase;
   winner: PlayerId | null;
+  player1Name?: string;
+  player2Name?: string;
 }
 
-export default function TurnIndicator({ currentPlayer, phase, winner }: TurnIndicatorProps) {
+export default function TurnIndicator({ currentPlayer, phase, winner, player1Name, player2Name }: TurnIndicatorProps) {
   const dummyPiece = { id: 'indicator', owner: currentPlayer, crowned: false, routePos: -1 };
+
+  const getDisplayName = (player: PlayerId) => {
+    const teamName = GAME_CONFIG.PLAYER_NAMES[player];
+    const username = player === 1 ? player1Name : player2Name;
+    if (username) return `${teamName} (${username})`;
+    return teamName;
+  };
 
   if (winner) {
     return (
       <div className="text-center py-1">
         <span className="font-heading text-xl text-highlight-selected">
-          {GAME_CONFIG.PLAYER_NAMES[winner]} Wins!
+          {getDisplayName(winner)} Wins!
         </span>
       </div>
     );
   }
 
-  const name = GAME_CONFIG.PLAYER_NAMES[currentPlayer];
   const phaseText = phase === 'rolling' ? 'Roll the dice'
     : phase === 'no_moves' ? 'No valid moves!'
     : 'Select a move';
 
   return (
-    <div className="flex items-center justify-center gap-3 py-1">
+    <div className="flex items-center justify-center gap-2 py-1 flex-wrap">
       <Piece piece={dummyPiece} size="sm" />
-      <span className="font-heading text-lg text-white">
-        {name}
+      <span className="font-heading text-base lg:text-lg text-white">
+        {getDisplayName(currentPlayer)}
       </span>
-      <span className="text-sm text-white/50">
+      <span className="text-xs lg:text-sm text-white/50">
         — {phaseText}
       </span>
     </div>

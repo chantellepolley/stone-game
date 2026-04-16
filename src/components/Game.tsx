@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../hooks/useGame';
 import { GAME_CONFIG } from '../config/gameConfig';
+import { usePlayerContext } from '../contexts/PlayerContext';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -18,6 +19,7 @@ interface GameProps {
 
 export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling } = useGame();
+  const { player } = usePlayerContext();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [showMobileRules, setShowMobileRules] = useState(false);
@@ -39,6 +41,8 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
           currentPlayer={state.currentPlayer}
           phase={state.phase}
           winner={state.winner}
+          player1Name={player?.username}
+          player2Name={state.gameMode === 'ai' ? 'Computer' : undefined}
         />
         {isAITurn && (
           <span className="text-[10px] lg:text-xs text-white/40 animate-pulse">AI thinking...</span>

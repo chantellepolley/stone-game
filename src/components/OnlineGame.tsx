@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
+import { usePlayerContext } from '../contexts/PlayerContext';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -23,6 +24,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   } = useOnlineGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [showMobileLog, setShowMobileLog] = useState(false);
+  const { player } = usePlayerContext();
+
+  const myName = player?.username;
+  const p1Name = myPlayer === 1 ? myName : undefined;
+  const p2Name = myPlayer === 2 ? myName : undefined;
 
   // Auto-join from URL or resume from My Games
   const [autoJoined, setAutoJoined] = useState(false);
@@ -63,7 +69,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
 
       {/* Turn + online info */}
       <div className="flex items-center gap-2 shrink-0">
-        <TurnIndicator currentPlayer={state.currentPlayer} phase={state.phase} winner={state.winner} />
+        <TurnIndicator currentPlayer={state.currentPlayer} phase={state.phase} winner={state.winner} player1Name={p1Name} player2Name={p2Name} />
         {waitingForOpponent && (
           <span className="text-[10px] lg:text-xs text-white/40 animate-pulse">Opponent's turn...</span>
         )}
