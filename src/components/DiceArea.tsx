@@ -53,12 +53,18 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
       ${used
         ? 'bg-stone-dark border-stone-accent/40 opacity-50'
         : jester
-          ? 'bg-amber-50 border-amber-600 shadow-lg'
+          ? 'border-amber-600 shadow-lg'
           : normalBg
       }
       ${rolling ? 'dice-rolling' : ''}
       transition-opacity duration-300
-    `}>
+    `}
+    style={jester && !used ? {
+      backgroundImage: "url('/stone-bg.jpg')",
+      backgroundSize: '80px',
+      filter: 'brightness(1.2) contrast(1.1)',
+    } : undefined}
+    >
       {jester ? (
         <JesterFaceImage faded={used} />
       ) : (
