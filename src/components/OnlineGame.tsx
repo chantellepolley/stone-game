@@ -68,6 +68,20 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     );
   }
 
+  // Safety: if we're "playing" but state is not_started (blank), show reconnecting
+  if (onlinePhase === 'playing' && state.phase === 'not_started') {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-4">
+        <img src="/logo.png" alt="STONE" className="h-32 object-contain" />
+        <p className="text-white/50 text-sm animate-pulse">Reconnecting...</p>
+        <button onClick={() => { leave(); onBack(); }}
+          className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-4">
+          Back to Menu
+        </button>
+      </div>
+    );
+  }
+
   const playerLabel = myPlayer === 1 ? 'Sunstone' : 'Moonstone';
   const waitingForOpponent = !isMyTurn && state.phase !== 'game_over';
 

@@ -38,12 +38,72 @@ export function useOnlineGame() {
 
   const isMyTurn = myPlayer !== null && state.currentPlayer === myPlayer && state.phase !== 'game_over' && state.phase !== 'not_started';
 
+  // Persist active game info to localStorage for recovery
   useEffect(() => {
+    if (gameDbId.current && roomCode && myPlayer) {
+      localStorage.setItem('stone_active_game', JSON.stringify({
+        gameId: gameDbId.current, roomCode, myPlayer,
+      }));
+    }
+  }, [roomCode, myPlayer]);
+
+  useEffect(() => {
+    // Auto-recover active game on mount
+    const saved = localStorage.getItem('stone_active_game');
+    if (saved && onlinePhase === 'idle') {
+      try {
+        const { gameId, roomCode: code, myPlayer: player } = JSON.parse(saved);
+        if (gameId && code && player) {
+          resumeGameInternal(gameId, code, player);
+        }
+      } catch { /* ignore bad data */ }
+    }
+
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current);
       if (pingRef.current) clearInterval(pingRef.current);
     };
   }, []);
+
+  // ── Reconnect when app comes back from background ──
+  useEffect(() => {
+    const handleVisibility = async () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!gameDbId.current || !roomCode || myPlayer === null) return;
+
+      // Reload state from DB — this is the source of truth
+      const { data } = await supabase
+        .from('games')
+        .select('state, status')
+        .eq('id', gameDbId.current)
+        .single();
+
+      if (data?.state) {
+        setState(data.state as GameState);
+      }
+
+      // Reconnect the channel
+      if (channelRef.current) {
+        const status = channelRef.current.state;
+        if (status !== 'joined' && status !== 'joining') {
+          // Channel is dead — reconnect
+          joinChannel(roomCode, myPlayer);
+        }
+      } else {
+        joinChannel(roomCode, myPlayer);
+      }
+
+      // Announce we're back
+      setTimeout(() => {
+        if (channelRef.current) {
+          channelRef.current.send({ type: 'broadcast', event: 'player_joined', payload: {} });
+        }
+      }, 500);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [roomCode, myPlayer]);
 
   // ── Record stats when game ends ──
   useEffect(() => {
@@ -263,26 +323,30 @@ export function useOnlineGame() {
     joinChannel(upperCode, 2);
   }, []);
 
-  const resumeGame = useCallback(async (gameId: string, code: string, player: PlayerId) => {
+  async function resumeGameInternal(gameId: string, code: string, player: PlayerId) {
     setRoomCode(code);
     setMyPlayer(player);
     setOnlinePhase('connecting');
     statsRecorded.current = false;
     gameDbId.current = gameId;
 
-    // Load state from DB
     const { data: game } = await supabase
       .from('games')
-      .select('state')
+      .select('state, status')
       .eq('id', gameId)
       .single();
 
     if (game?.state) {
       setState(game.state as GameState);
       stateReceivedRef.current = true;
+      setOnlinePhase('playing');
     }
 
     joinChannel(code, player);
+  }
+
+  const resumeGame = useCallback(async (gameId: string, code: string, player: PlayerId) => {
+    await resumeGameInternal(gameId, code, player);
   }, []);
 
   const roll = useCallback(() => {
@@ -412,6 +476,7 @@ export function useOnlineGame() {
       channelRef.current = null;
     }
     if (pingRef.current) clearInterval(pingRef.current);
+    localStorage.removeItem('stone_active_game');
     setOnlinePhase('idle');
     setMyPlayer(null);
     setOpponentConnected(false);
