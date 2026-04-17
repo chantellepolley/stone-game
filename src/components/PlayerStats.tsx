@@ -38,6 +38,9 @@ export default function PlayerStats({ onBack }: { onBack: () => void }) {
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
 
       <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
+        {player?.avatarUrl && (
+          <img src={player.avatarUrl} alt="Avatar" className="w-14 h-14 rounded-full object-cover border-2 border-[#6b5f55]" />
+        )}
         <p className="text-white font-heading text-lg">{player?.username}'s Stats</p>
 
         {loading ? (

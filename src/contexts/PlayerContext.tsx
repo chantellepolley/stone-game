@@ -6,6 +6,7 @@ interface PlayerContextType {
   isLoading: boolean;
   createPlayer: (username: string) => Promise<boolean>;
   updateUsername: (username: string) => Promise<boolean>;
+  updateAvatar: (file: File) => Promise<boolean>;
 }
 
 export const PlayerContext = createContext<PlayerContextType>({
@@ -13,6 +14,7 @@ export const PlayerContext = createContext<PlayerContextType>({
   isLoading: true,
   createPlayer: async () => false,
   updateUsername: async () => false,
+  updateAvatar: async () => false,
 });
 
 export function usePlayerContext() {

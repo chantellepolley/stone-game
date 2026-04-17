@@ -5,6 +5,7 @@ export interface Player {
   id: string;
   username: string;
   deviceToken: string;
+  avatarUrl: string | null;
 }
 
 function generateDeviceToken(): string {
@@ -31,7 +32,7 @@ export function usePlayer() {
         .single();
 
       if (data && !error) {
-        setPlayer({ id: data.id, username: data.username, deviceToken: data.device_token });
+        setPlayer({ id: data.id, username: data.username, deviceToken: data.device_token, avatarUrl: data.avatar_url || null });
       } else {
         // Token exists but player not found — clear it
         localStorage.removeItem('stone_device_token');
@@ -53,7 +54,7 @@ export function usePlayer() {
 
     if (data && !error) {
       localStorage.setItem('stone_device_token', token);
-      setPlayer({ id: data.id, username: data.username, deviceToken: token });
+      setPlayer({ id: data.id, username: data.username, deviceToken: token, avatarUrl: null });
 
       // Create stats row
       await supabase.from('player_stats').insert({ player_id: data.id });
@@ -78,5 +79,47 @@ export function usePlayer() {
     return false;
   }, [player]);
 
-  return { player, isLoading, createPlayer, updateUsername };
+  const updateAvatar = useCallback(async (file: File): Promise<boolean> => {
+    if (!player) return false;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) return false;
+    if (file.size > 5 * 1024 * 1024) return false; // 5MB max
+
+    const ext = file.name.split('.').pop() || 'jpg';
+    const filePath = `${player.id}.${ext}`;
+
+    // Upload to Supabase Storage (overwrite if exists)
+    const { error: uploadErr } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadErr) {
+      console.error('[STONE] Avatar upload failed:', uploadErr.message);
+      return false;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    const avatarUrl = urlData.publicUrl + `?t=${Date.now()}`; // cache-bust
+
+    // Update player record
+    const { error: updateErr } = await supabase
+      .from('players')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', player.id);
+
+    if (updateErr) {
+      console.error('[STONE] Avatar URL update failed:', updateErr.message);
+      return false;
+    }
+
+    setPlayer(prev => prev ? { ...prev, avatarUrl } : null);
+    return true;
+  }, [player]);
+
+  return { player, isLoading, createPlayer, updateUsername, updateAvatar };
 }

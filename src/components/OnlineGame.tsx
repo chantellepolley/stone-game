@@ -122,13 +122,16 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
 
       {/* Online status bar */}
       <div className="flex items-center gap-2 shrink-0 text-[9px]">
-        <span className="text-white/40">Room: <span className="text-amber-400 font-heading tracking-wider">{roomCode}</span></span>
-        <span className="text-white/30">|</span>
-        <span className="text-white/40">You: {playerLabel}</span>
-        <span className="text-white/30">|</span>
-        <span className={opponentConnected ? 'text-green-400' : 'text-red-400'}>
-          {opponentConnected ? 'Connected' : 'Disconnected'}
+        <span className="text-white">Room: <span className="text-amber-400 font-heading tracking-wider">{roomCode}</span></span>
+        <span className="text-white/50">|</span>
+        <span className="text-white">You: {playerLabel}</span>
+        <span className="text-white/50">|</span>
+        <span className={opponentConnected ? 'text-white' : 'text-white/60 animate-pulse'}>
+          {opponentConnected
+            ? 'Opponent is live'
+            : `${opponentName || 'Opponent'} has stepped away`}
         </span>
+        <span className={`w-2 h-2 rounded-full ${opponentConnected ? 'bg-green-400' : 'bg-white/30'}`} />
       </div>
 
       {/* Mobile: dice */}

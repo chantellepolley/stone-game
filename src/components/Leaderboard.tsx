@@ -8,6 +8,7 @@ interface LeaderEntry {
   losses: number;
   games_played: number;
   username?: string;
+  avatar_url?: string | null;
 }
 
 export default function Leaderboard({ onBack }: { onBack: () => void }) {
@@ -31,13 +32,14 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
       const ids = stats.map(s => s.player_id);
       const { data: players } = await supabase
         .from('players')
-        .select('id, username')
+        .select('id, username, avatar_url')
         .in('id', ids);
 
       const nameMap: Record<string, string> = {};
-      players?.forEach(p => { nameMap[p.id] = p.username; });
+      const avatarMap: Record<string, string | null> = {};
+      players?.forEach(p => { nameMap[p.id] = p.username; avatarMap[p.id] = p.avatar_url; });
 
-      setEntries(stats.map(s => ({ ...s, username: nameMap[s.player_id] || 'Unknown' })));
+      setEntries(stats.map(s => ({ ...s, username: nameMap[s.player_id] || 'Unknown', avatar_url: avatarMap[s.player_id] || null })));
       setLoading(false);
     };
     load();
@@ -74,7 +76,18 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                     <tr key={e.player_id}
                       className={`border-b border-white/5 ${isMe ? 'text-amber-400' : 'text-white/80'}`}>
                       <td className="py-1.5 px-1 font-heading">{i + 1}</td>
-                      <td className="py-1.5 px-1 truncate max-w-[120px]">{e.username}{isMe ? ' (you)' : ''}</td>
+                      <td className="py-1.5 px-1 truncate max-w-[150px]">
+                        <div className="flex items-center gap-1.5">
+                          {e.avatar_url ? (
+                            <img src={e.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-[#3d3632] flex items-center justify-center shrink-0">
+                              <span className="text-[8px] font-heading text-white/40">{(e.username || '?')[0].toUpperCase()}</span>
+                            </div>
+                          )}
+                          <span className="truncate">{e.username}{isMe ? ' (you)' : ''}</span>
+                        </div>
+                      </td>
                       <td className="py-1.5 px-1 text-center">{e.wins}</td>
                       <td className="py-1.5 px-1 text-center">{e.losses}</td>
                       <td className="py-1.5 px-1 text-center">{pct}%</td>
