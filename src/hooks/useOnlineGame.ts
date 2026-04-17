@@ -362,12 +362,13 @@ export function useOnlineGame() {
         .eq('id', game.id)
         .single();
       if (chatData?.chat && Array.isArray(chatData.chat)) {
-        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number }>).map((m, i) => ({
+        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>).map((m, i) => ({
           id: `db-${i}-${m.timestamp}`,
           sender: m.sender,
           text: m.text,
           timestamp: m.timestamp,
           isMine: false,
+          avatarUrl: m.avatarUrl || null,
         }));
         if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
       }
@@ -412,12 +413,13 @@ export function useOnlineGame() {
         .eq('id', gameId)
         .single();
       if (chatData?.chat && Array.isArray(chatData.chat)) {
-        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number }>).map((m, i) => ({
+        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>).map((m, i) => ({
           id: `db-${i}-${m.timestamp}`,
           sender: m.sender,
           text: m.text,
           timestamp: m.timestamp,
           isMine: false,
+          avatarUrl: m.avatarUrl || null,
         }));
         if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
       }
@@ -608,14 +610,14 @@ export function useOnlineGame() {
 
     // Persist chat to DB
     if (gameDbId.current) {
-      const chatEntry = { sender: senderName, text, timestamp: msg.timestamp };
+      const chatEntry = { sender: senderName, text, timestamp: msg.timestamp, avatarUrl: senderAvatarUrl || null };
       supabase
         .from('games')
         .select('chat')
         .eq('id', gameDbId.current)
         .single()
         .then(({ data }) => {
-          const existing = (data?.chat as Array<{ sender: string; text: string; timestamp: number }>) || [];
+          const existing = (data?.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>) || [];
           existing.push(chatEntry);
           supabase.from('games').update({ chat: existing }).eq('id', gameDbId.current!).then(() => {});
         });
