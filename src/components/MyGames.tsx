@@ -81,9 +81,12 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           if (g.winner_id === player.id) winnerLabel = 'You won';
           else if (g.winner_id) winnerLabel = 'You lost';
           else {
+            // No winner_id — check if game ended naturally (state.winner) or was manually ended
+            const statePhase = (g.state as any)?.phase;
             const stateWinner = (g.state as any)?.winner;
-            if (stateWinner === myPlayer) winnerLabel = 'You won';
-            else if (stateWinner) winnerLabel = 'You lost';
+            if (statePhase === 'game_over' && stateWinner === myPlayer) winnerLabel = 'You won';
+            else if (statePhase === 'game_over' && stateWinner) winnerLabel = 'You lost';
+            else winnerLabel = 'Ended';
           }
         }
 
