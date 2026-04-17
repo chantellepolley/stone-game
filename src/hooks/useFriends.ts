@@ -157,6 +157,40 @@ export function useFriends() {
     return true;
   }, [player]);
 
+  const addFriendById = useCallback(async (targetId: string): Promise<string | true> => {
+    if (!player) return 'Not logged in';
+    if (targetId === player.id) return 'You cannot add yourself';
+
+    // Check if friendship already exists
+    const { data: existing } = await supabase
+      .from('friends')
+      .select('id, status')
+      .or(`and(player_id.eq.${player.id},friend_id.eq.${targetId}),and(player_id.eq.${targetId},friend_id.eq.${player.id})`);
+
+    if (existing && existing.length > 0) {
+      const f = existing[0];
+      if (f.status === 'accepted') return 'Already friends';
+      return 'Friend request already pending';
+    }
+
+    const { error } = await supabase
+      .from('friends')
+      .insert({ player_id: player.id, friend_id: targetId, status: 'pending' });
+
+    if (error) return error.message;
+    return true;
+  }, [player]);
+
+  const isFriend = useCallback(async (targetId: string): Promise<boolean> => {
+    if (!player) return false;
+    const { data } = await supabase
+      .from('friends')
+      .select('id')
+      .or(`and(player_id.eq.${player.id},friend_id.eq.${targetId}),and(player_id.eq.${targetId},friend_id.eq.${player.id})`)
+      .limit(1);
+    return (data?.length ?? 0) > 0;
+  }, [player]);
+
   const acceptFriend = useCallback(async (friendshipId: string): Promise<boolean> => {
     const { error } = await supabase
       .from('friends')
@@ -182,6 +216,8 @@ export function useFriends() {
     loadFriends,
     getPendingRequests,
     addFriend,
+    addFriendById,
+    isFriend,
     acceptFriend,
     getOnlineFriends,
   };

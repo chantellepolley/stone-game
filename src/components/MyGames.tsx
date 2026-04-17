@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { useFriends, type FriendRequest } from '../hooks/useFriends';
 
 interface GameRow {
   id: string;
@@ -32,10 +33,11 @@ interface MyGamesProps {
 
 export default function MyGames({ onResume, onBack }: MyGamesProps) {
   const { player } = usePlayerContext();
+  const { getPendingRequests, pendingRequests, acceptFriend } = useFriends();
   const [games, setGames] = useState<GameRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'invites' | 'active' | 'past'>('active');
+  const [tab, setTab] = useState<'active' | 'invites' | 'past'>('active');
 
   useEffect(() => {
     if (!player) return;
@@ -130,10 +132,18 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         })));
       }
 
+      // Load friend requests
+      await getPendingRequests();
+
       setLoading(false);
+
+      // Auto-switch to invites tab if there are pending invites/friend requests
+      if ((inviteData && inviteData.length > 0)) {
+        setTab('invites');
+      }
     };
     load();
-  }, [player]);
+  }, [player, getPendingRequests]);
 
   const handleAcceptInvite = async (invite: InviteRow) => {
     // Update invite status
@@ -166,6 +176,8 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
 
   const activeGames = games.filter(g => g.status !== 'completed');
   const pastGames = games.filter(g => g.status === 'completed');
+  const totalInvites = invites.length + pendingRequests.length;
+  const myTurnCount = activeGames.filter(g => g.is_my_turn).length;
 
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
@@ -180,16 +192,21 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
             className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer relative
               ${tab === 'invites' ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
             Invites
-            {invites.length > 0 && (
+            {totalInvites > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {invites.length}
+                {totalInvites}
               </span>
             )}
           </button>
           <button onClick={() => setTab('active')}
-            className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer
+            className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer relative
               ${tab === 'active' ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
             Active
+            {myTurnCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-amber-500 text-black text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {myTurnCount}
+              </span>
+            )}
           </button>
           <button onClick={() => setTab('past')}
             className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer
@@ -201,20 +218,27 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         {loading ? (
           <p className="text-white/40 text-sm">Loading...</p>
         ) : tab === 'invites' ? (
-          /* Game Invites tab */
-          invites.length === 0 ? (
+          /* Invites tab — game invites + friend requests */
+          totalInvites === 0 ? (
             <p className="text-white/40 text-sm">No pending invites</p>
           ) : (
-            <div className="w-full overflow-y-auto space-y-2">
+            <div className="w-full overflow-y-auto space-y-2 max-h-[45vh]">
+              {/* Game invites */}
+              {invites.length > 0 && (
+                <div className="text-[9px] text-amber-400/60 uppercase tracking-wider px-1">Game Invites</div>
+              )}
               {invites.map(inv => (
                 <div key={inv.id}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-black/20">
-                  <div>
-                    <div className="text-white text-sm">
-                      From <span className="font-heading text-amber-400">{inv.from_username}</span>
-                    </div>
-                    <div className="text-white/40 text-[10px]">
-                      Room: {inv.room_code} · {timeAgo(inv.created_at)}
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                    <div>
+                      <div className="text-white text-sm">
+                        Game invite from <span className="font-heading text-amber-400">{inv.from_username}</span>
+                      </div>
+                      <div className="text-white/40 text-[10px]">
+                        {timeAgo(inv.created_at)}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-1.5">
@@ -223,7 +247,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       className="px-3 py-1.5 rounded-lg text-[9px] font-heading uppercase tracking-wider
                                  bg-green-600/60 text-white hover:bg-green-600 cursor-pointer transition-colors"
                     >
-                      Accept
+                      Play
                     </button>
                     <button
                       onClick={() => handleDeclineInvite(inv.id)}
@@ -233,6 +257,38 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       Decline
                     </button>
                   </div>
+                </div>
+              ))}
+
+              {/* Friend requests */}
+              {pendingRequests.length > 0 && (
+                <div className="text-[9px] text-green-400/60 uppercase tracking-wider px-1 pt-1">Friend Requests</div>
+              )}
+              {pendingRequests.map(r => (
+                <div key={r.id}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-black/20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                    {r.avatarUrl ? (
+                      <img src={r.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-[#3d3632] flex items-center justify-center">
+                        <span className="text-[9px] text-white/40 font-heading">{r.username[0].toUpperCase()}</span>
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-white text-sm">
+                        <span className="font-heading">{r.username}</span> wants to be friends
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => { await acceptFriend(r.id); await getPendingRequests(); }}
+                    className="px-3 py-1.5 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                               bg-green-600/60 text-white hover:bg-green-600 cursor-pointer transition-colors"
+                  >
+                    Accept
+                  </button>
                 </div>
               ))}
             </div>
@@ -247,22 +303,26 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                 <button
                   key={g.id}
                   onClick={() => onResume(g.id, g.room_code, g.my_player, g.mode)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg
-                             bg-black/20 text-left transition-colors hover:bg-black/30 cursor-pointer"
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
+                             text-left transition-colors hover:bg-black/30 cursor-pointer
+                             ${g.is_my_turn ? 'bg-amber-900/20 border border-amber-600/30' : 'bg-black/20'}`}
                 >
-                  <div>
-                    <div className="text-white text-sm">
-                      vs <span className="font-heading">{g.opponent_name}</span>
-                      {g.mode === 'ai' && <span className="text-white/30 text-[10px] ml-1">(AI)</span>}
-                      {g.mode === 'local' && <span className="text-white/30 text-[10px] ml-1">(Local)</span>}
-                    </div>
-                    <div className="text-white/40 text-[10px]">
-                      {g.is_my_turn ? (
-                        <span className="text-amber-400">Your turn</span>
-                      ) : (
-                        <span>Opponent's turn</span>
-                      )}
-                      {' · '}{timeAgo(g.updated_at)}
+                  <div className="flex items-center gap-2">
+                    {g.is_my_turn && <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />}
+                    <div>
+                      <div className="text-white text-sm">
+                        vs <span className="font-heading">{g.opponent_name}</span>
+                        {g.mode === 'ai' && <span className="text-white/30 text-[10px] ml-1">(AI)</span>}
+                        {g.mode === 'local' && <span className="text-white/30 text-[10px] ml-1">(Local)</span>}
+                      </div>
+                      <div className="text-white/40 text-[10px]">
+                        {g.is_my_turn ? (
+                          <span className="text-amber-400 font-bold">Your turn!</span>
+                        ) : (
+                          <span>Opponent's turn</span>
+                        )}
+                        {' · '}{timeAgo(g.updated_at)}
+                      </div>
                     </div>
                   </div>
                   <div className="text-white/30 text-xs font-heading">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { useFriends } from '../hooks/useFriends';
 
 interface LeaderEntry {
   player_id: string;
@@ -13,8 +14,10 @@ interface LeaderEntry {
 
 export default function Leaderboard({ onBack }: { onBack: () => void }) {
   const { player } = usePlayerContext();
+  const { addFriendById } = useFriends();
   const [entries, setEntries] = useState<LeaderEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [friendAdded, setFriendAdded] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
@@ -66,6 +69,7 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                   <th className="text-center py-1 px-1">W</th>
                   <th className="text-center py-1 px-1">L</th>
                   <th className="text-center py-1 px-1">%</th>
+                  <th className="py-1 px-1"></th>
                 </tr>
               </thead>
               <tbody>
@@ -91,6 +95,25 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                       <td className="py-1.5 px-1 text-center">{e.wins}</td>
                       <td className="py-1.5 px-1 text-center">{e.losses}</td>
                       <td className="py-1.5 px-1 text-center">{pct}%</td>
+                      <td className="py-1.5 px-1">
+                        {!isMe && !friendAdded.has(e.player_id) && (
+                          <button
+                            onClick={async () => {
+                              const r = await addFriendById(e.player_id);
+                              if (r === true || r === 'Already friends' || r === 'Friend request already pending') {
+                                setFriendAdded(prev => new Set(prev).add(e.player_id));
+                              }
+                            }}
+                            className="text-[8px] text-amber-400/70 hover:text-amber-400 cursor-pointer transition-colors whitespace-nowrap"
+                            title="Add friend"
+                          >
+                            + Friend
+                          </button>
+                        )}
+                        {friendAdded.has(e.player_id) && (
+                          <span className="text-[8px] text-green-400/70">Sent</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}

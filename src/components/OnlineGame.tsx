@@ -5,6 +5,7 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
 import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
+import { useFriends } from '../hooks/useFriends';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -33,6 +34,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   const [chatOpen, setChatOpen] = useState(false);
   const [lastSeenMsgCount, setLastSeenMsgCount] = useState(0);
   const { player } = usePlayerContext();
+  const { addFriendById } = useFriends();
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
 
   const myName = player?.username;
   const p1Name = myPlayer === 1 ? myName : (opponentName || undefined);
@@ -135,6 +138,32 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             : `${opponentName || 'Opponent'} has stepped away`}
         </span>
         <span className={`w-2 h-2 rounded-full ${opponentConnected ? 'bg-green-400' : 'bg-white/30'}`} />
+        {opponentName && !friendRequestSent && (
+          <>
+            <span className="text-white/50">|</span>
+            <button
+              onClick={async () => {
+                // Get opponent's player ID from the game
+                const oppId = myPlayer === 1
+                  ? (await import('../lib/supabase').then(m => m.supabase.from('games').select('player2_id').eq('room_code', roomCode).single())).data?.player2_id
+                  : (await import('../lib/supabase').then(m => m.supabase.from('games').select('player1_id').eq('room_code', roomCode).single())).data?.player1_id;
+                if (oppId) {
+                  const r = await addFriendById(oppId);
+                  if (r === true || r === 'Already friends' || r === 'Friend request already pending') setFriendRequestSent(true);
+                }
+              }}
+              className="text-amber-400/70 hover:text-amber-400 cursor-pointer transition-colors"
+            >
+              + Friend
+            </button>
+          </>
+        )}
+        {friendRequestSent && (
+          <>
+            <span className="text-white/50">|</span>
+            <span className="text-green-400/70">Request sent</span>
+          </>
+        )}
       </div>
 
       {/* Mobile: dice */}

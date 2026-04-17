@@ -40,13 +40,21 @@ export default function App() {
     if (!player) return;
     let count = 0;
 
-    // Count pending invites
+    // Count pending game invites
     const { count: inviteCount } = await supabase
       .from('game_invites')
       .select('id', { count: 'exact', head: true })
       .eq('to_player_id', player.id)
       .eq('status', 'pending');
     count += (inviteCount || 0);
+
+    // Count pending friend requests
+    const { count: friendReqCount } = await supabase
+      .from('friends')
+      .select('id', { count: 'exact', head: true })
+      .eq('friend_id', player.id)
+      .eq('status', 'pending');
+    count += (friendReqCount || 0);
 
     // Count games where it's my turn
     const { data: activeGames } = await supabase
