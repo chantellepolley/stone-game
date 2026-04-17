@@ -69,8 +69,16 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
   const targetSpaces = new Set<number>();
   let canBearOff = false;
+  let hasWrapAroundMove = false;
+  const selectedBoardIndex = selected?.type === 'board' ? selected.index : -1;
   movesForSelected.forEach(m => {
-    if (m.to.type === 'board') targetSpaces.add(m.to.index);
+    if (m.to.type === 'board') {
+      if (m.to.index === selectedBoardIndex) {
+        hasWrapAroundMove = true; // Don't add to targetSpaces — handle separately
+      } else {
+        targetSpaces.add(m.to.index);
+      }
+    }
     if (m.to.type === 'home') canBearOff = true;
   });
 
@@ -231,22 +239,16 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
   const handleClickSpace = (index: number) => {
     if (busy) return;
 
-    // Tapping the already-selected space → deselect (easy deselect on mobile)
-    if (selected?.type === 'board' && selected.index === index && !targetSpaces.has(index)) {
+    // Tapping the already-selected space → deselect
+    if (selected?.type === 'board' && selected.index === index) {
       setSelected(null);
       return;
     }
 
-    // Click a target → execute move
+    // Click a target → execute move (never same-space — those use the button)
     if (selected && targetSpaces.has(index)) {
-      const isSameSpace = selected.type === 'board' && selected.index === index;
       const tooSoon = Date.now() - selectionTime.current < 300;
-      if (!isSameSpace && !tooSoon) {
-        const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
-        if (move) { animateMove(move); setSelected(null); return; }
-      }
-      // Same space wrap-around: need deliberate second tap
-      if (isSameSpace && !tooSoon) {
+      if (!tooSoon) {
         const move = movesForSelected.find(m => m.to.type === 'board' && m.to.index === index);
         if (move) { animateMove(move); setSelected(null); return; }
       }
@@ -433,6 +435,20 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
                          bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all cursor-pointer"
             >
               {mobileCrownedToggle ? 'Move Regular' : 'Move Crowned'}
+            </button>
+          )}
+          {hasWrapAroundMove && (
+            <button
+              onClick={() => {
+                const move = movesForSelected.find(m =>
+                  m.to.type === 'board' && m.to.index === selectedBoardIndex
+                );
+                if (move) { animateMove(move); setSelected(null); }
+              }}
+              className="px-3 py-0.5 rounded text-[10px] font-heading uppercase tracking-wider
+                         bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all cursor-pointer"
+            >
+              Wrap Around
             </button>
           )}
         </div>
