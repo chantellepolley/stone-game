@@ -114,7 +114,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
 
       {/* Turn + online info */}
       <div className="flex items-center gap-2 shrink-0">
-        <TurnIndicator currentPlayer={state.currentPlayer} phase={state.phase} winner={state.winner} player1Name={p1Name} player2Name={p2Name} />
+        <TurnIndicator currentPlayer={state.currentPlayer} phase={state.phase} winner={state.winner} player1Name={p1Name} player2Name={p2Name} isMyTurn={isMyTurn} />
         {isMyTurn && state.phase !== 'game_over' && (
           <span className="text-amber-400 font-heading text-sm animate-pulse shadow-[0_0_20px_rgba(255,180,0,0.5)]">Your Turn!</span>
         )}

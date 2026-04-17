@@ -8,9 +8,10 @@ interface TurnIndicatorProps {
   winner: PlayerId | null;
   player1Name?: string;
   player2Name?: string;
+  isMyTurn?: boolean;
 }
 
-export default function TurnIndicator({ currentPlayer, phase, winner, player1Name, player2Name }: TurnIndicatorProps) {
+export default function TurnIndicator({ currentPlayer, phase, winner, player1Name, player2Name, isMyTurn }: TurnIndicatorProps) {
   const dummyPiece = { id: 'indicator', owner: currentPlayer, crowned: false, routePos: -1 };
 
   const getDisplayName = (player: PlayerId) => {
@@ -43,7 +44,7 @@ export default function TurnIndicator({ currentPlayer, phase, winner, player1Nam
       <span className="text-xs lg:text-sm text-white">
         — {phaseText}
       </span>
-      {phase !== 'game_over' && (
+      {isMyTurn && phase !== 'game_over' && (
         <span className="text-amber-400 animate-pulse font-bold text-xs lg:text-sm shadow-[0_0_20px_rgba(255,180,0,0.5)]">Your Turn!</span>
       )}
     </div>
