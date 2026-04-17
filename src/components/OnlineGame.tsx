@@ -149,9 +149,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
                   if (r === true || r === 'Already friends' || r === 'Friend request already pending') setFriendRequestSent(true);
                 }
               }}
-              className="text-amber-400/70 hover:text-amber-400 cursor-pointer transition-colors"
+              className="px-2 py-0.5 rounded text-[8px] font-heading uppercase tracking-wider
+                         bg-amber-600/70 text-white hover:bg-amber-600 cursor-pointer transition-colors"
             >
-              + Friend
+              + Add Friend
             </button>
           </>
         )}

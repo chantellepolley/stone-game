@@ -104,10 +104,10 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                                 setFriendAdded(prev => new Set(prev).add(e.player_id));
                               }
                             }}
-                            className="text-[8px] text-amber-400/70 hover:text-amber-400 cursor-pointer transition-colors whitespace-nowrap"
-                            title="Add friend"
+                            className="px-2 py-0.5 rounded text-[8px] font-heading uppercase tracking-wider whitespace-nowrap
+                                       bg-amber-600/70 text-white hover:bg-amber-600 cursor-pointer transition-colors"
                           >
-                            + Friend
+                            + Add Friend
                           </button>
                         )}
                         {friendAdded.has(e.player_id) && (
