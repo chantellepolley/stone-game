@@ -157,8 +157,15 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
   };
 
   const handleEndGame = async (gameId: string) => {
-    await supabase.from('games').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', gameId);
-    setGames(prev => prev.map(g => g.id === gameId ? { ...g, status: 'completed', winner_label: 'Forfeited' } : g));
+    // End game — no winner, shows as "Ended" not a loss
+    await supabase.from('games').update({ status: 'completed', winner_id: null, updated_at: new Date().toISOString() }).eq('id', gameId);
+    setGames(prev => prev.map(g => g.id === gameId ? { ...g, status: 'completed', winner_label: 'Ended' } : g));
+  };
+
+  const handleCancelGame = async (gameId: string) => {
+    // Cancel game — removes it entirely
+    await supabase.from('games').delete().eq('id', gameId);
+    setGames(prev => prev.filter(g => g.id !== gameId));
   };
 
   const handleRemoveGame = async (gameId: string) => {
@@ -335,16 +342,25 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white/30 text-xs font-heading">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white/30 text-[10px] font-heading">
                       {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleEndGame(g.id); }}
-                      className="text-[8px] text-red-400/60 hover:text-red-400 cursor-pointer transition-colors"
-                      title="End game"
+                      className="px-1.5 py-0.5 rounded text-[7px] font-heading uppercase
+                                 bg-white/10 text-white/50 hover:text-white hover:bg-white/20 cursor-pointer transition-colors"
+                      title="End game (no winner)"
                     >
                       End
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleCancelGame(g.id); }}
+                      className="px-1.5 py-0.5 rounded text-[7px] font-heading uppercase
+                                 bg-red-900/30 text-red-400/60 hover:text-red-400 hover:bg-red-900/50 cursor-pointer transition-colors"
+                      title="Cancel and remove game"
+                    >
+                      Cancel
                     </button>
                   </div>
                 </button>
@@ -368,7 +384,11 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       {g.mode === 'local' && <span className="text-white/30 text-[10px] ml-1">(Local)</span>}
                     </div>
                     <div className="text-white/40 text-[10px]">
-                      <span className={g.winner_label === 'You won' ? 'text-green-400' : 'text-red-400'}>
+                      <span className={
+                        g.winner_label === 'You won' ? 'text-green-400'
+                        : g.winner_label === 'You lost' ? 'text-red-400'
+                        : 'text-white/50'
+                      }>
                         {g.winner_label || 'Completed'}
                       </span>
                       {' · '}{timeAgo(g.updated_at)}
