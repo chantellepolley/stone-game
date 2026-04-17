@@ -6,6 +6,7 @@ export interface ChatMessage {
   text: string;
   timestamp: number;
   isMine: boolean;
+  avatarUrl?: string | null;
 }
 
 interface ChatPanelProps {
@@ -69,15 +70,24 @@ export default function ChatPanel({ messages, onSend, isOpen = true, onToggle, u
           <p className="text-white/20 text-[10px] text-center italic mt-4">No messages yet</p>
         )}
         {messages.map(msg => (
-          <div key={msg.id} className={`flex flex-col ${msg.isMine ? 'items-end' : 'items-start'}`}>
-            <span className="text-[8px] text-white/30">{msg.sender}</span>
-            <div className={`px-2 py-1 rounded-lg text-[11px] max-w-[170px] break-words
-              ${msg.isMine
-                ? 'bg-amber-600/30 text-white/90'
-                : 'bg-white/10 text-white/80'
-              }`}
-            >
-              {msg.text}
+          <div key={msg.id} className={`flex gap-1.5 ${msg.isMine ? 'flex-row-reverse' : 'flex-row'}`}>
+            {msg.avatarUrl ? (
+              <img src={msg.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover shrink-0 mt-2" />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-[#3d3632] flex items-center justify-center shrink-0 mt-2">
+                <span className="text-[7px] text-white/40 font-heading">{(msg.sender || '?')[0].toUpperCase()}</span>
+              </div>
+            )}
+            <div className={`flex flex-col ${msg.isMine ? 'items-end' : 'items-start'}`}>
+              <span className="text-[8px] text-white/30">{msg.sender}</span>
+              <div className={`px-2 py-1 rounded-lg text-[11px] max-w-[150px] break-words
+                ${msg.isMine
+                  ? 'bg-amber-600/30 text-white/90'
+                  : 'bg-white/10 text-white/80'
+                }`}
+              >
+                {msg.text}
+              </div>
             </div>
           </div>
         ))}

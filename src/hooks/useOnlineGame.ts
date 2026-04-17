@@ -32,7 +32,7 @@ export function useOnlineGame() {
   const [opponentName, setOpponentName] = useState<string | null>(null);
   const [opponentColor, setOpponentColor] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
-  const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean }>>([]);
+  const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const undoStack = useRef<GameState[]>([]);
   const pingRef = useRef<number | null>(null);
@@ -228,6 +228,7 @@ export function useOnlineGame() {
             text: payload.text,
             timestamp: payload.timestamp || Date.now(),
             isMine: false,
+            avatarUrl: payload.avatarUrl || null,
           }]);
         }
       })
@@ -588,7 +589,7 @@ export function useOnlineGame() {
     });
   }, []);
 
-  const sendChat = useCallback((text: string, senderName: string) => {
+  const sendChat = useCallback((text: string, senderName: string, senderAvatarUrl?: string | null) => {
     if (!channelRef.current) return;
     const msg = {
       id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -596,12 +597,13 @@ export function useOnlineGame() {
       text,
       timestamp: Date.now(),
       isMine: true,
+      avatarUrl: senderAvatarUrl || null,
     };
     setChatMessages(prev => [...prev, msg]);
     channelRef.current.send({
       type: 'broadcast',
       event: 'chat_message',
-      payload: { sender: senderName, text, timestamp: msg.timestamp },
+      payload: { sender: senderName, text, timestamp: msg.timestamp, avatarUrl: senderAvatarUrl || null },
     });
 
     // Persist chat to DB

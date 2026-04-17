@@ -181,7 +181,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
           <MoveLog entries={state.moveLog} />
           <ChatPanel
             messages={chatMessages}
-            onSend={(text) => sendChat(text, myName || 'Player')}
+            onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
             isOpen={true}
           />
           <GameControls onRestart={() => { leave(); onBack(); }} />
@@ -242,7 +242,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         </button>
         <ChatPanel
           messages={chatMessages}
-          onSend={(text) => sendChat(text, myName || 'Player')}
+          onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
           isOpen={false}
           onToggle={() => { setChatOpen(v => !v); setShowMobileLog(false); setLastSeenMsgCount(chatMessages.length); }}
           unreadCount={chatUnread}
@@ -259,7 +259,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         <div className="lg:hidden fixed bottom-10 left-2 right-2 z-40">
           <ChatPanel
             messages={chatMessages}
-            onSend={(text) => sendChat(text, myName || 'Player')}
+            onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
             isOpen={true}
             onToggle={() => { setChatOpen(false); setLastSeenMsgCount(chatMessages.length); }}
           />
