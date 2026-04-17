@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
-import { useFriends, type FriendRequest } from '../hooks/useFriends';
+import { useFriends } from '../hooks/useFriends';
 
 interface GameRow {
   id: string;
