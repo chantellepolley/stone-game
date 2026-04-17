@@ -17,10 +17,20 @@ interface GameProps {
   onShowLeaderboard?: () => void;
   onShowMyGames?: () => void;
   onShowColors?: () => void;
+  resumeGameId?: string | null;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors }: GameProps) {
-  const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling } = useGame();
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, resumeGameId }: GameProps) {
+  const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
+
+  // Resume a saved game from My Games
+  const [hasResumed, setHasResumed] = useState(false);
+  useEffect(() => {
+    if (resumeGameId && !hasResumed) {
+      setHasResumed(true);
+      loadGame(resumeGameId);
+    }
+  }, [resumeGameId, hasResumed, loadGame]);
   const { player } = usePlayerContext();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());

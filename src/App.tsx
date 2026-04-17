@@ -28,6 +28,7 @@ export default function App() {
   const [screen, setScreen] = useState<AppScreen>('game');
   const [autoJoinCode, setAutoJoinCode] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2 } | null>(null);
+  const [resumeLocalGameId, setResumeLocalGameId] = useState<string | null>(null);
   const [stoneColor, setStoneColor] = useState(loadPlayerColor());
 
   useEffect(() => {
@@ -63,9 +64,14 @@ export default function App() {
       {screen === 'leaderboard' && <Leaderboard onBack={() => setScreen('game')} />}
       {screen === 'my-games' && (
         <MyGames
-          onResume={(gameId, roomCode, player) => {
-            setResumeData({ gameId, roomCode, player });
-            setScreen('online');
+          onResume={(gameId, roomCode, player, mode) => {
+            if (mode === 'ai' || mode === 'local') {
+              setResumeLocalGameId(gameId);
+              setScreen('game');
+            } else {
+              setResumeData({ gameId, roomCode, player });
+              setScreen('online');
+            }
           }}
           onBack={() => setScreen('game')}
         />
@@ -82,8 +88,9 @@ export default function App() {
           onPlayOnline={() => setScreen('online')}
           onShowStats={() => setScreen('stats')}
           onShowLeaderboard={() => setScreen('leaderboard')}
-          onShowMyGames={() => setScreen('my-games')}
+          onShowMyGames={() => { setResumeLocalGameId(null); setScreen('my-games'); }}
           onShowColors={() => setScreen('colors')}
+          resumeGameId={resumeLocalGameId}
         />
       )}
     </PlayerContext.Provider>

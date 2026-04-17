@@ -17,7 +17,7 @@ interface GameRow {
 }
 
 interface MyGamesProps {
-  onResume: (gameId: string, roomCode: string, player: 1 | 2) => void;
+  onResume: (gameId: string, roomCode: string, player: 1 | 2, mode: string) => void;
   onBack: () => void;
 }
 
@@ -120,14 +120,14 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           <div className="w-full overflow-y-auto space-y-2">
             {games.map(g => {
               const isCompleted = g.status === 'completed';
-              const isOnline = g.mode === 'online';
+              const canResume = !isCompleted;
               return (
                 <button
                   key={g.id}
-                  onClick={() => !isCompleted && isOnline ? onResume(g.id, g.room_code, g.my_player) : undefined}
+                  onClick={() => canResume ? onResume(g.id, g.room_code, g.my_player, g.mode) : undefined}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
                              bg-black/20 text-left transition-colors
-                             ${isCompleted || !isOnline ? 'opacity-70 cursor-default' : 'hover:bg-black/30 cursor-pointer'}`}
+                             ${!canResume ? 'opacity-70 cursor-default' : 'hover:bg-black/30 cursor-pointer'}`}
                 >
                   <div>
                     <div className="text-white text-sm">

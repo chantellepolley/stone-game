@@ -114,37 +114,57 @@ export function useGame() {
   const aiTimerRef = useRef<number | null>(null);
   const [pendingAIMove, setPendingAIMove] = useState<Move | null>(null);
   const [aiRolling, setAiRolling] = useState(false);
+  const gameDbId = useRef<string | null>(null);
+  const saveTimer = useRef<number | null>(null);
 
   const isAITurn = state.gameMode === 'ai' && state.currentPlayer === 2 && state.phase !== 'not_started' && state.phase !== 'game_over' && state.phase !== 'no_moves';
   const statsRecorded = useRef(false);
 
-  // ── Record stats and save game to DB when game ends ──
+  // ── Helper: get current player's DB id ──
+  async function getMyPlayerId(): Promise<string | null> {
+    const token = localStorage.getItem('stone_device_token');
+    if (!token) return null;
+    const { data } = await supabase.from('players').select('id').eq('device_token', token).single();
+    return data?.id || null;
+  }
+
+  // ── Auto-save state to DB (debounced) ──
+  useEffect(() => {
+    if (!gameDbId.current) return;
+    if (state.phase === 'not_started') return;
+
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      if (!gameDbId.current) return;
+      supabase.from('games').update({
+        state,
+        status: state.phase === 'game_over' ? 'completed' : 'active',
+        updated_at: new Date().toISOString(),
+      }).eq('id', gameDbId.current).then(() => {});
+    }, 1000); // debounce 1s so rapid state changes don't spam DB
+
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+  }, [state]);
+
+  // ── Record stats when game ends ──
   useEffect(() => {
     if (state.phase === 'game_over' && state.winner && !statsRecorded.current) {
       statsRecorded.current = true;
-      const token = localStorage.getItem('stone_device_token');
-      if (token) {
-        supabase.from('players').select('id').eq('device_token', token).single()
-          .then(({ data }) => {
-            if (data) {
-              const playerId = data.id;
-              recordGameResult(state, state.winner!, playerId, null);
+      getMyPlayerId().then(playerId => {
+        if (playerId) {
+          recordGameResult(state, state.winner!, playerId, null);
 
-              // Save AI/local game to DB so it appears in My Games
-              const mode = state.gameMode === 'ai' ? 'ai' : 'local';
-              const difficulty = state.gameMode === 'ai' ? state.aiDifficulty : null;
-              supabase.from('games').insert({
-                room_code: `${mode.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
-                player1_id: playerId,
-                mode,
-                state,
-                status: 'completed',
-                winner_id: state.winner === 1 ? playerId : null,
-                ...(difficulty ? { ai_difficulty: difficulty } : {}),
-              }).then(() => {});
-            }
-          });
-      }
+          // Mark game completed in DB + set winner
+          if (gameDbId.current) {
+            supabase.from('games').update({
+              state,
+              status: 'completed',
+              winner_id: state.winner === 1 ? playerId : null,
+              updated_at: new Date().toISOString(),
+            }).eq('id', gameDbId.current).then(() => {});
+          }
+        }
+      });
     }
     if (state.phase === 'not_started') statsRecorded.current = false;
   }, [state.phase, state.winner]);
@@ -166,8 +186,24 @@ export function useGame() {
 
   // ── Human actions ──
 
-  const startGame = useCallback((mode: GameMode, difficulty: AIDifficulty) => {
-    setState(prev => ({ ...prev, phase: 'rolling', gameMode: mode, aiDifficulty: difficulty }));
+  const startGame = useCallback(async (mode: GameMode, difficulty: AIDifficulty) => {
+    const newState: GameState = { ...createInitialState(), phase: 'rolling', gameMode: mode, aiDifficulty: difficulty };
+    setState(newState);
+    statsRecorded.current = false;
+
+    // Save to DB immediately so it appears in My Games
+    const playerId = await getMyPlayerId();
+    if (playerId) {
+      const dbMode = mode === 'ai' ? 'ai' : 'local';
+      const { data } = await supabase.from('games').insert({
+        room_code: `${dbMode.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
+        player1_id: playerId,
+        mode: dbMode,
+        state: newState,
+        status: 'active',
+      }).select('id').single();
+      if (data) gameDbId.current = data.id;
+    }
   }, []);
 
   const roll = useCallback(() => {
@@ -196,7 +232,23 @@ export function useGame() {
   const restart = useCallback(() => {
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
     undoStack.current = [];
+    gameDbId.current = null;
     setState(createInitialState());
+  }, []);
+
+  const loadGame = useCallback(async (dbGameId: string) => {
+    const { data } = await supabase
+      .from('games')
+      .select('state')
+      .eq('id', dbGameId)
+      .single();
+    if (data?.state) {
+      const loaded = data.state as GameState;
+      gameDbId.current = dbGameId;
+      statsRecorded.current = false;
+      undoStack.current = [];
+      setState(loaded);
+    }
   }, []);
 
   const chooseJesterDoubles = useCallback((value: number) => {
@@ -278,6 +330,7 @@ export function useGame() {
     state, roll, selectMove, restart, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
     undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling,
+    loadGame,
   };
 }
 
