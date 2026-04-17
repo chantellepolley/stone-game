@@ -15,15 +15,29 @@ function ctx(): AudioContext | null {
   return audioCtx;
 }
 
+/** Vibrate the phone — call separately so it works from user gesture context */
+export function vibratePhone(pattern: number | number[] = [100, 50, 100]) {
+  try {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  } catch {
+    // Vibration not supported or blocked
+  }
+}
+
 /** Your turn notification — gentle temple gong */
 export function playYourTurnSound() {
+  // Vibrate regardless of sound setting
+  vibratePhone([100, 50, 150]);
+
   const c = ctx(); if (!c) return;
   const now = c.currentTime;
   const osc = c.createOscillator();
   const gain = c.createGain();
   osc.type = 'sine';
   osc.frequency.value = 523;
-  gain.gain.setValueAtTime(0.12, now);
+  gain.gain.setValueAtTime(0.15, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
   osc.connect(gain).connect(c.destination);
   osc.start(now); osc.stop(now + 0.9);
@@ -32,13 +46,20 @@ export function playYourTurnSound() {
   const o2 = c.createOscillator();
   const g2 = c.createGain();
   o2.type = 'sine'; o2.frequency.value = 784;
-  g2.gain.setValueAtTime(0.06, now);
+  g2.gain.setValueAtTime(0.08, now);
   g2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
   o2.connect(g2).connect(c.destination);
   o2.start(now); o2.stop(now + 0.7);
 
-  // Vibrate on mobile
-  if (navigator.vibrate) navigator.vibrate(200);
+  // Second hit for emphasis
+  const o3 = c.createOscillator();
+  const g3 = c.createGain();
+  o3.type = 'sine'; o3.frequency.value = 659;
+  g3.gain.setValueAtTime(0, now + 0.15);
+  g3.gain.linearRampToValueAtTime(0.1, now + 0.17);
+  g3.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+  o3.connect(g3).connect(c.destination);
+  o3.start(now + 0.15); o3.stop(now + 0.8);
 }
 
 /** Crowned — mystical ascending temple chime */
