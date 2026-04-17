@@ -8,9 +8,10 @@ interface StartScreenProps {
   onShowStats?: () => void;
   onShowLeaderboard?: () => void;
   onShowMyGames?: () => void;
+  onShowColors?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors }: StartScreenProps) {
   const { player } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
 
@@ -110,6 +111,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white/50 hover:text-white/80 transition-colors cursor-pointer">
               Leaderboard
+            </button>
+          )}
+          {onShowColors && (
+            <button onClick={onShowColors}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+              Stone Color
             </button>
           )}
         </div>

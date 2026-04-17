@@ -5,10 +5,12 @@ import UsernamePrompt from './components/UsernamePrompt';
 import PlayerStats from './components/PlayerStats';
 import Leaderboard from './components/Leaderboard';
 import MyGames from './components/MyGames';
+import ColorPicker from './components/ColorPicker';
+import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -26,6 +28,7 @@ export default function App() {
   const [screen, setScreen] = useState<AppScreen>('game');
   const [autoJoinCode, setAutoJoinCode] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2 } | null>(null);
+  const [stoneColor, setStoneColor] = useState(loadPlayerColor());
 
   useEffect(() => {
     const code = getJoinCodeFromURL();
@@ -49,6 +52,13 @@ export default function App() {
       {/* Username prompt for first-time visitors */}
       {!player && <UsernamePrompt onSubmit={createPlayer} />}
 
+      {screen === 'colors' && (
+        <ColorPicker
+          selectedId={stoneColor}
+          onSelect={(id) => { setStoneColor(id); savePlayerColor(id); }}
+          onBack={() => setScreen('game')}
+        />
+      )}
       {screen === 'stats' && <PlayerStats onBack={() => setScreen('game')} />}
       {screen === 'leaderboard' && <Leaderboard onBack={() => setScreen('game')} />}
       {screen === 'my-games' && (
@@ -73,6 +83,7 @@ export default function App() {
           onShowStats={() => setScreen('stats')}
           onShowLeaderboard={() => setScreen('leaderboard')}
           onShowMyGames={() => setScreen('my-games')}
+          onShowColors={() => setScreen('colors')}
         />
       )}
     </PlayerContext.Provider>
