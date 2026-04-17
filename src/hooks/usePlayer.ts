@@ -43,12 +43,12 @@ export function usePlayer() {
     loadPlayer();
   }, []);
 
-  const createPlayer = useCallback(async (username: string): Promise<boolean> => {
+  const createPlayer = useCallback(async (username: string, password?: string): Promise<boolean> => {
     const token = generateDeviceToken();
 
     const { data, error } = await supabase
       .from('players')
-      .insert({ username, device_token: token })
+      .insert({ username, device_token: token, ...(password ? { password } : {}) })
       .select()
       .single();
 
@@ -121,5 +121,40 @@ export function usePlayer() {
     return true;
   }, [player]);
 
-  return { player, isLoading, createPlayer, updateUsername, updateAvatar };
+  const login = useCallback(async (username: string, password: string): Promise<string | true> => {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('username', username)
+      .single();
+
+    if (error || !data) return 'Player not found';
+    if (!data.password) return 'No password set for this account';
+    if (data.password !== password) return 'Incorrect password';
+
+    // Update device token to this device
+    const token = generateDeviceToken();
+    await supabase.from('players').update({ device_token: token }).eq('id', data.id);
+
+    localStorage.setItem('stone_device_token', token);
+    setPlayer({ id: data.id, username: data.username, deviceToken: token, avatarUrl: data.avatar_url || null });
+    return true;
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('stone_device_token');
+    localStorage.removeItem('stone_active_game');
+    setPlayer(null);
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string): Promise<boolean> => {
+    if (!player) return false;
+    const { error } = await supabase
+      .from('players')
+      .update({ password: newPassword })
+      .eq('id', player.id);
+    return !error;
+  }, [player]);
+
+  return { player, isLoading, createPlayer, updateUsername, updateAvatar, login, logout, updatePassword };
 }

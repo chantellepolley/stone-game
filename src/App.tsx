@@ -51,7 +51,7 @@ export default function App() {
   return (
     <PlayerContext.Provider value={playerHook}>
       {/* Username prompt for first-time visitors */}
-      {!player && <UsernamePrompt onSubmit={createPlayer} />}
+      {!player && <UsernamePrompt />}
 
       {screen === 'colors' && (
         <ColorPicker

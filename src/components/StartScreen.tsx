@@ -12,12 +12,16 @@ interface StartScreenProps {
 }
 
 export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors }: StartScreenProps) {
-  const { player, updateUsername, updateAvatar } = usePlayerContext();
+  const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [editingPassword, setEditingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,6 +37,15 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     await updateAvatar(file);
     setUploadingAvatar(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSavePassword = async () => {
+    if (newPassword.length < 3) { setPasswordMsg('Password must be at least 3 characters'); return; }
+    setSavingPassword(true);
+    const ok = await updatePassword(newPassword);
+    setSavingPassword(false);
+    if (ok) { setPasswordMsg('Password saved!'); setNewPassword(''); setTimeout(() => { setEditingPassword(false); setPasswordMsg(''); }, 1500); }
+    else setPasswordMsg('Failed to save');
   };
 
   const handleSaveName = async () => {
@@ -218,6 +231,47 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               Stone Color
             </button>
           )}
+        </div>
+      )}
+
+      {/* Account actions */}
+      {!showDifficulty && player && (
+        <div className="flex flex-col items-center gap-2">
+          {editingPassword ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSavePassword(); if (e.key === 'Escape') { setEditingPassword(false); setPasswordMsg(''); } }}
+                placeholder="New password"
+                className="px-3 py-1.5 rounded-lg bg-black/30 border border-[#6b5f55] text-white text-sm font-heading
+                           focus:outline-none focus:border-amber-400 transition-colors w-36"
+              />
+              <button onClick={handleSavePassword} disabled={savingPassword}
+                className="px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer
+                           disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                {savingPassword ? '...' : 'Save'}
+              </button>
+              <button onClick={() => { setEditingPassword(false); setPasswordMsg(''); }}
+                className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer">
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <button onClick={() => { setEditingPassword(true); setNewPassword(''); setPasswordMsg(''); }}
+                className="text-white/60 text-[10px] hover:text-white transition-colors cursor-pointer">
+                {'{'}Set/Change Password{'}'}
+              </button>
+              <button onClick={logout}
+                className="text-white/60 text-[10px] hover:text-red-400 transition-colors cursor-pointer">
+                Logout
+              </button>
+            </div>
+          )}
+          {passwordMsg && <p className={`text-xs ${passwordMsg.includes('saved') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
         </div>
       )}
     </div>
