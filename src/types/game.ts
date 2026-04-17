@@ -40,6 +40,8 @@ export interface GameState {
   winner: PlayerId | null;
   moveLog: MoveLogEntry[];
   turnCount: number;
+  /** Cumulative count of pieces each player has captured from their opponent */
+  captureCount: Record<PlayerId, number>;
 }
 
 export type MoveSource =

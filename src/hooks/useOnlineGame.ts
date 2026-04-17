@@ -6,6 +6,7 @@ import { GAME_CONFIG } from '../config/gameConfig';
 import { supabase } from '../lib/supabase';
 import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
 import { recordGameResult } from '../lib/statsTracker';
+import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 function generateRoomCode(): string {
@@ -28,13 +29,19 @@ export function useOnlineGame() {
   const [myPlayer, setMyPlayer] = useState<PlayerId | null>(null);
   const [error, setError] = useState('');
   const [opponentConnected, setOpponentConnected] = useState(false);
+  const [opponentName, setOpponentName] = useState<string | null>(null);
+  const [opponentColor, setOpponentColor] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
+  const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean }>>([]);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const undoStack = useRef<GameState[]>([]);
   const pingRef = useRef<number | null>(null);
   const stateReceivedRef = useRef(false);
   const gameDbId = useRef<string | null>(null);
   const statsRecorded = useRef(false);
+  // Always-current state ref so broadcast handlers don't use stale closures
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const isMyTurn = myPlayer !== null && state.currentPlayer === myPlayer && state.phase !== 'game_over' && state.phase !== 'not_started';
 
@@ -79,14 +86,20 @@ export function useOnlineGame() {
         .single();
 
       if (data?.state) {
-        setState(data.state as GameState);
+        const loadedState = data.state as GameState;
+        setState(loadedState);
+        stateRef.current = loadedState;
+        // Ensure we're in playing phase if we have valid state
+        if (loadedState.phase !== 'not_started') {
+          stateReceivedRef.current = true;
+          setOnlinePhase('playing');
+        }
       }
 
-      // Reconnect the channel
+      // Reconnect the channel if needed
       if (channelRef.current) {
-        const status = channelRef.current.state;
-        if (status !== 'joined' && status !== 'joining') {
-          // Channel is dead — reconnect
+        const channelStatus = channelRef.current.state;
+        if (channelStatus !== 'joined' && channelStatus !== 'joining') {
           joinChannel(roomCode, myPlayer);
         }
       } else {
@@ -185,16 +198,30 @@ export function useOnlineGame() {
       .on('broadcast', { event: 'ping' }, ({ payload }) => {
         setOpponentConnected(true);
         if (payload.needState && player === 1) {
-          channel.send({ type: 'broadcast', event: 'state_update', payload: { state } });
+          channel.send({ type: 'broadcast', event: 'state_update', payload: { state: stateRef.current } });
         }
       })
-      .on('broadcast', { event: 'player_joined' }, () => {
+      .on('broadcast', { event: 'player_joined' }, ({ payload }) => {
         setOpponentConnected(true);
+        if (payload?.color) setOpponentColor(payload.color);
         if (player === 1) {
           setOnlinePhase('playing');
           setTimeout(() => {
-            channel.send({ type: 'broadcast', event: 'state_update', payload: { state } });
+            channel.send({ type: 'broadcast', event: 'state_update', payload: { state: stateRef.current } });
+            // Send our color to the opponent
+            channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
           }, 200);
+        }
+      })
+      .on('broadcast', { event: 'chat_message' }, ({ payload }) => {
+        if (payload?.text && payload?.sender) {
+          setChatMessages(prev => [...prev, {
+            id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            sender: payload.sender,
+            text: payload.text,
+            timestamp: payload.timestamp || Date.now(),
+            isMine: false,
+          }]);
         }
       })
       .on('broadcast', { event: 'player_left' }, () => {
@@ -203,7 +230,7 @@ export function useOnlineGame() {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           if (player === 2) {
-            await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
+            await channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
             let retries = 0;
             const retryInterval = setInterval(async () => {
               if (stateReceivedRef.current) { clearInterval(retryInterval); return; }
@@ -214,7 +241,7 @@ export function useOnlineGame() {
                 setError('Game not found or host has left. Try a different code.');
                 return;
               }
-              await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
+              await channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
               await channel.send({ type: 'broadcast', event: 'ping', payload: { needState: true } });
             }, 1500);
           }
@@ -319,6 +346,12 @@ export function useOnlineGame() {
       }
     }
 
+    // Fetch opponent (P1) name
+    if (game?.player1_id) {
+      supabase.from('players').select('username').eq('id', game.player1_id).single()
+        .then(({ data: p }) => { if (p) setOpponentName(p.username); });
+    }
+
     // Always connect to the channel even if game not in DB yet
     joinChannel(upperCode, 2);
   }, []);
@@ -337,12 +370,35 @@ export function useOnlineGame() {
       .single();
 
     if (game?.state) {
-      setState(game.state as GameState);
+      const loadedState = game.state as GameState;
+      setState(loadedState);
+      stateRef.current = loadedState;
       stateReceivedRef.current = true;
       setOnlinePhase('playing');
     }
 
+    // Fetch opponent name
+    const { data: gameRow } = await supabase
+      .from('games')
+      .select('player1_id, player2_id')
+      .eq('id', gameId)
+      .single();
+    if (gameRow) {
+      const opponentId = player === 1 ? gameRow.player2_id : gameRow.player1_id;
+      if (opponentId) {
+        const { data: opp } = await supabase.from('players').select('username').eq('id', opponentId).single();
+        if (opp) setOpponentName(opp.username);
+      }
+    }
+
     joinChannel(code, player);
+
+    // Announce presence after a short delay so the channel is subscribed
+    setTimeout(() => {
+      if (channelRef.current) {
+        channelRef.current.send({ type: 'broadcast', event: 'player_joined', payload: {} });
+      }
+    }, 1000);
   }
 
   const resumeGame = useCallback(async (gameId: string, code: string, player: PlayerId) => {
@@ -480,12 +536,32 @@ export function useOnlineGame() {
     setOnlinePhase('idle');
     setMyPlayer(null);
     setOpponentConnected(false);
+    setOpponentName(null);
+    setOpponentColor(null);
+    setChatMessages([]);
     setRoomCode('');
     stateReceivedRef.current = false;
     gameDbId.current = null;
     setState(() => {
       const s = createInitialState();
       return { ...s, phase: 'not_started' as GamePhase, gameMode: 'pvp' as const };
+    });
+  }, []);
+
+  const sendChat = useCallback((text: string, senderName: string) => {
+    if (!channelRef.current) return;
+    const msg = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      sender: senderName,
+      text,
+      timestamp: Date.now(),
+      isMine: true,
+    };
+    setChatMessages(prev => [...prev, msg]);
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'chat_message',
+      payload: { sender: senderName, text, timestamp: msg.timestamp },
     });
   }, []);
 
@@ -514,8 +590,9 @@ export function useOnlineGame() {
   return {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
-    onlinePhase, roomCode, myPlayer, opponentConnected, error,
+    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor, error,
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
+    chatMessages, sendChat,
   };
 }

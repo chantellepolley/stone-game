@@ -1,5 +1,6 @@
 import type { Piece as PieceType } from '../types/game';
 import { getStoneColor, loadPlayerColor } from '../utils/stoneColors';
+import { useStoneColorOverrides } from '../contexts/StoneColorContext';
 
 interface PieceProps {
   piece: PieceType;
@@ -22,9 +23,12 @@ const DEFAULT_P2_COLOR = 'slate';
 export default function Piece({ piece, size = 'md', onClick, highlighted, selected, className = '' }: PieceProps) {
   const isP1 = piece.owner === 1;
   const s = sizes[size];
+  const colorOverrides = useStoneColorOverrides();
 
-  // Get custom color — player 1 uses their chosen color, player 2 uses slate (or could be customized for online)
-  const colorId = isP1 ? loadPlayerColor() : DEFAULT_P2_COLOR;
+  // Get custom color — context overrides take priority (used in online games for color conflict resolution)
+  const colorId = isP1
+    ? (colorOverrides.p1ColorId || loadPlayerColor())
+    : (colorOverrides.p2ColorId || DEFAULT_P2_COLOR);
   const color = getStoneColor(colorId);
 
   const tintOverlay = piece.crowned ? color.tintCrowned : color.tint;

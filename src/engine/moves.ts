@@ -280,6 +280,8 @@ export function canPlayerMove(state: GameState): boolean {
 
 export function executeMove(state: GameState, move: Move): GameState {
   const s: GameState = JSON.parse(JSON.stringify(state));
+  // Ensure captureCount exists (backward compat with old saved states)
+  if (!s.captureCount) s.captureCount = { 1: 0, 2: 0 };
   const player = s.currentPlayer;
 
   // 1. Remove piece from source
@@ -336,6 +338,7 @@ export function executeMove(state: GameState, move: Move): GameState {
           if (GAME_CONFIG.CAPTURE_REMOVES_CROWN) cp.crowned = false;
           cp.routePos = -1;
           s.jail[cp.owner].push(cp);
+          s.captureCount[player]++;
           s.moveLog.push({
             turn: s.turnCount, player,
             action: `${GAME_CONFIG.PLAYER_NAMES[player]} captured en passant at space ${intSpace}!`,
@@ -371,6 +374,7 @@ export function executeMove(state: GameState, move: Move): GameState {
           if (GAME_CONFIG.CAPTURE_REMOVES_CROWN) cp.crowned = false;
           cp.routePos = -1;
           s.jail[cp.owner].push(cp);
+          s.captureCount[player]++;
           s.moveLog.push({
             turn: s.turnCount, player,
             action: `${GAME_CONFIG.PLAYER_NAMES[player]} captured en passant at space ${intSpace}!`,
@@ -383,11 +387,12 @@ export function executeMove(state: GameState, move: Move): GameState {
 
   // 3b. Handle capture at final destination
   if (move.captures && move.to.type === 'board') {
-    const captured = s.board[move.to.index].splice(0, s.board[move.to.index].length);
-    captured.forEach(cp => {
+    const capturedPieces = s.board[move.to.index].splice(0, s.board[move.to.index].length);
+    capturedPieces.forEach(cp => {
       if (GAME_CONFIG.CAPTURE_REMOVES_CROWN) cp.crowned = false;
       cp.routePos = -1;
       s.jail[cp.owner].push(cp);
+      s.captureCount[player]++;
     });
   }
 

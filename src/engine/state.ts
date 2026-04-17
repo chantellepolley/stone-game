@@ -29,5 +29,6 @@ export function createInitialState(): GameState {
     winner: null,
     moveLog: [],
     turnCount: 1,
+    captureCount: { 1: 0, 2: 0 },
   };
 }

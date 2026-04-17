@@ -10,19 +10,19 @@ export async function recordGameResult(
   player1DbId: string | null,
   player2DbId: string | null,
 ) {
-  // Count captures and borne-off for each player
+  // Count captures (cumulative) and borne-off for each player
   const p1Home = gameState.home[1].length;
   const p2Home = gameState.home[2].length;
-  const p1Jail = gameState.jail[1].length;
-  const p2Jail = gameState.jail[2].length;
+  const captures = gameState.captureCount || { 1: 0, 2: 0 };
 
   // Update winner stats
   const winnerDbId = winnerId === 1 ? player1DbId : player2DbId;
   const loserDbId = winnerId === 1 ? player2DbId : player1DbId;
   const winnerHome = winnerId === 1 ? p1Home : p2Home;
-  const winnerCaptured = winnerId === 1 ? p2Jail : p1Jail; // opponent's jail = pieces we captured
+  const winnerCaptured = captures[winnerId]; // cumulative captures by winner
   const loserHome = winnerId === 1 ? p2Home : p1Home;
-  const loserCaptured = winnerId === 1 ? p1Jail : p2Jail;
+  const loserId: 1 | 2 = winnerId === 1 ? 2 : 1;
+  const loserCaptured = captures[loserId];
 
   if (winnerDbId) {
     await updateStatsManually(winnerDbId, true, winnerCaptured, winnerHome);

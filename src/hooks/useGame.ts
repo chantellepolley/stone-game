@@ -6,6 +6,7 @@ import { isJester } from '../engine/dice';
 import { chooseBestMove, chooseBestJesterValue } from '../engine/ai';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
+import { supabase } from '../lib/supabase';
 
 function applyRoll(prev: GameState): GameState {
   if (prev.phase !== 'rolling') return prev;
@@ -117,23 +118,32 @@ export function useGame() {
   const isAITurn = state.gameMode === 'ai' && state.currentPlayer === 2 && state.phase !== 'not_started' && state.phase !== 'game_over' && state.phase !== 'no_moves';
   const statsRecorded = useRef(false);
 
-  // ── Record stats when game ends ──
+  // ── Record stats and save game to DB when game ends ──
   useEffect(() => {
     if (state.phase === 'game_over' && state.winner && !statsRecorded.current) {
       statsRecorded.current = true;
       const token = localStorage.getItem('stone_device_token');
       if (token) {
-        // Get player ID from Supabase
-        import('../lib/supabase').then(({ supabase }) => {
-          supabase.from('players').select('id').eq('device_token', token).single()
-            .then(({ data }) => {
-              if (data) {
-                // For local/AI games, only the local player gets stats
-                const playerId = data.id;
-                recordGameResult(state, state.winner!, playerId, null);
-              }
-            });
-        });
+        supabase.from('players').select('id').eq('device_token', token).single()
+          .then(({ data }) => {
+            if (data) {
+              const playerId = data.id;
+              recordGameResult(state, state.winner!, playerId, null);
+
+              // Save AI/local game to DB so it appears in My Games
+              const mode = state.gameMode === 'ai' ? 'ai' : 'local';
+              const difficulty = state.gameMode === 'ai' ? state.aiDifficulty : null;
+              supabase.from('games').insert({
+                room_code: `${mode.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
+                player1_id: playerId,
+                mode,
+                state,
+                status: 'completed',
+                winner_id: state.winner === 1 ? playerId : null,
+                ...(difficulty ? { ai_difficulty: difficulty } : {}),
+              }).then(() => {});
+            }
+          });
       }
     }
     if (state.phase === 'not_started') statsRecorded.current = false;

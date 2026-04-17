@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { GameMode, AIDifficulty } from '../types/game';
 import { usePlayerContext } from '../contexts/PlayerContext';
 
@@ -12,15 +12,72 @@ interface StartScreenProps {
 }
 
 export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors }: StartScreenProps) {
-  const { player } = usePlayerContext();
+  const { player, updateUsername } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingName && nameInputRef.current) nameInputRef.current.focus();
+  }, [editingName]);
+
+  const handleSaveName = async () => {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed.length < 2) return;
+    setSavingName(true);
+    const ok = await updateUsername(trimmed);
+    setSavingName(false);
+    if (ok) setEditingName(false);
+  };
 
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4">
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
 
-      {player && (
-        <p className="text-white/50 text-sm font-heading">Welcome back, <span className="text-amber-400">{player.username}</span></p>
+      {player && !editingName && (
+        <div className="flex items-center gap-2">
+          <p className="text-white/50 text-sm font-heading">Welcome back, <span className="text-amber-400">{player.username}</span></p>
+          <button
+            onClick={() => { setNewName(player.username); setEditingName(true); }}
+            className="text-white/30 hover:text-white/60 transition-colors cursor-pointer"
+            title="Edit username"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5Z" />
+            </svg>
+          </button>
+        </div>
+      )}
+      {player && editingName && (
+        <div className="flex items-center gap-2">
+          <input
+            ref={nameInputRef}
+            type="text"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+            maxLength={20}
+            className="px-3 py-1.5 rounded-lg bg-black/30 border border-[#6b5f55] text-white text-sm font-heading
+                       focus:outline-none focus:border-amber-400 transition-colors w-40"
+          />
+          <button
+            onClick={handleSaveName}
+            disabled={savingName || newName.trim().length < 2}
+            className="px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                       bg-amber-600 text-white hover:bg-amber-500 cursor-pointer
+                       disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {savingName ? '...' : 'Save'}
+          </button>
+          <button
+            onClick={() => setEditingName(false)}
+            className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
       )}
 
       {!showDifficulty ? (

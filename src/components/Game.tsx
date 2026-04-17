@@ -195,7 +195,11 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
               {state.winner === 1 ? '☀' : '☽'}
             </div>
             <h2 className="font-heading text-2xl lg:text-3xl text-highlight-selected mb-2">
-              {GAME_CONFIG.PLAYER_NAMES[state.winner]} Wins!
+              {state.winner === 1 && player?.username
+                ? `${player.username} Wins!`
+                : state.winner === 2 && state.gameMode === 'ai'
+                  ? 'Computer Wins!'
+                  : `${GAME_CONFIG.PLAYER_NAMES[state.winner]} Wins!`}
             </h2>
             <p className="text-white/60 mb-4 lg:mb-6 text-sm">
               All stones have been borne off. The temple is sealed.
