@@ -78,7 +78,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
 
           <div className="flex items-center gap-2">
-            <p className="text-white/50 text-sm font-heading">Welcome back, <span className="text-amber-400">{player.username}</span></p>
+            <p className="text-white text-sm font-heading">Welcome back, <span className="text-amber-400">{player.username}</span></p>
             <button
               onClick={() => { setNewName(player.username); setEditingName(true); }}
               className="text-white/30 hover:text-white/60 transition-colors cursor-pointer"
@@ -123,7 +123,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
 
       {!showDifficulty ? (
         <div className="flex flex-col items-center gap-4">
-          <p className="text-white/60 text-sm font-heading tracking-wider">Choose how to play</p>
+          <p className="text-white text-sm font-heading tracking-wider">Choose how to play</p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               onClick={() => onStart('pvp', 'medium')}
@@ -158,7 +158,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4">
-          <p className="text-white/60 text-sm font-heading tracking-wider">Select difficulty</p>
+          <p className="text-white text-sm font-heading tracking-wider">Select difficulty</p>
           <div className="flex gap-3">
             {([
               { level: 'easy' as AIDifficulty, label: 'Easy', desc: 'Random moves' },
@@ -193,28 +193,28 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           {onShowMyGames && (
             <button onClick={onShowMyGames}
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+                         text-white hover:text-amber-400 transition-colors cursor-pointer">
               My Games
             </button>
           )}
           {onShowStats && (
             <button onClick={onShowStats}
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+                         text-white hover:text-amber-400 transition-colors cursor-pointer">
               My Stats
             </button>
           )}
           {onShowLeaderboard && (
             <button onClick={onShowLeaderboard}
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+                         text-white hover:text-amber-400 transition-colors cursor-pointer">
               Leaderboard
             </button>
           )}
           {onShowColors && (
             <button onClick={onShowColors}
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+                         text-white hover:text-amber-400 transition-colors cursor-pointer">
               Stone Color
             </button>
           )}
