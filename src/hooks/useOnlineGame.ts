@@ -184,10 +184,16 @@ export function useOnlineGame() {
           setPendingOpponentMove(move);
           setTimeout(() => {
             setPendingOpponentMove(null);
-            if (payload.state) setState(payload.state as GameState);
+            if (payload.state) {
+              const s = payload.state as GameState;
+              setState(s);
+              stateRef.current = s;
+            }
           }, 500);
         } else if (payload.state) {
-          setState(payload.state as GameState);
+          const s = payload.state as GameState;
+          setState(s);
+          stateRef.current = s;
         }
         if (!stateReceivedRef.current) {
           stateReceivedRef.current = true;
@@ -197,6 +203,7 @@ export function useOnlineGame() {
       })
       .on('broadcast', { event: 'ping' }, ({ payload }) => {
         setOpponentConnected(true);
+        if (payload?.color) setOpponentColor(payload.color);
         if (payload.needState && player === 1) {
           channel.send({ type: 'broadcast', event: 'state_update', payload: { state: stateRef.current } });
         }
@@ -246,7 +253,7 @@ export function useOnlineGame() {
             }, 1500);
           }
           pingRef.current = window.setInterval(() => {
-            channel.send({ type: 'broadcast', event: 'ping', payload: { needState: false } });
+            channel.send({ type: 'broadcast', event: 'ping', payload: { needState: false, color: loadPlayerColor() } });
           }, 5000);
         }
       });
@@ -339,10 +346,29 @@ export function useOnlineGame() {
 
       // Load saved state if it exists
       if (game.state) {
-        setState(game.state as GameState);
+        const loadedState = game.state as GameState;
+        setState(loadedState);
+        stateRef.current = loadedState;
         stateReceivedRef.current = true;
         setOnlinePhase('playing');
         setOpponentConnected(true);
+      }
+
+      // Load chat from DB
+      const { data: chatData } = await supabase
+        .from('games')
+        .select('chat')
+        .eq('id', game.id)
+        .single();
+      if (chatData?.chat && Array.isArray(chatData.chat)) {
+        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number }>).map((m, i) => ({
+          id: `db-${i}-${m.timestamp}`,
+          sender: m.sender,
+          text: m.text,
+          timestamp: m.timestamp,
+          isMine: false,
+        }));
+        if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
       }
     }
 
@@ -375,6 +401,25 @@ export function useOnlineGame() {
       stateRef.current = loadedState;
       stateReceivedRef.current = true;
       setOnlinePhase('playing');
+    }
+
+    // Load chat from DB
+    if (gameId) {
+      const { data: chatData } = await supabase
+        .from('games')
+        .select('chat')
+        .eq('id', gameId)
+        .single();
+      if (chatData?.chat && Array.isArray(chatData.chat)) {
+        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number }>).map((m, i) => ({
+          id: `db-${i}-${m.timestamp}`,
+          sender: m.sender,
+          text: m.text,
+          timestamp: m.timestamp,
+          isMine: false,
+        }));
+        if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
+      }
     }
 
     // Fetch opponent name
@@ -558,6 +603,57 @@ export function useOnlineGame() {
       event: 'chat_message',
       payload: { sender: senderName, text, timestamp: msg.timestamp },
     });
+
+    // Persist chat to DB
+    if (gameDbId.current) {
+      const chatEntry = { sender: senderName, text, timestamp: msg.timestamp };
+      supabase
+        .from('games')
+        .select('chat')
+        .eq('id', gameDbId.current)
+        .single()
+        .then(({ data }) => {
+          const existing = (data?.chat as Array<{ sender: string; text: string; timestamp: number }>) || [];
+          existing.push(chatEntry);
+          supabase.from('games').update({ chat: existing }).eq('id', gameDbId.current!).then(() => {});
+        });
+    }
+  }, []);
+
+  const sendInvite = useCallback(async (toPlayerId: string): Promise<{ gameId: string; roomCode: string } | string> => {
+    const code = generateRoomCode();
+    const myId = await getMyPlayerId();
+    if (!myId) return 'Not logged in';
+
+    const initialState: GameState = {
+      ...createInitialState(),
+      phase: 'rolling',
+      gameMode: 'pvp',
+    };
+
+    // Create the game room
+    const { data: game, error: gameErr } = await supabase.from('games').insert({
+      room_code: code,
+      player1_id: myId,
+      mode: 'online',
+      state: initialState,
+      status: 'waiting',
+    }).select('id').single();
+
+    if (gameErr || !game) return gameErr?.message || 'Failed to create game';
+
+    // Create the invite
+    const { error: inviteErr } = await supabase.from('game_invites').insert({
+      from_player_id: myId,
+      to_player_id: toPlayerId,
+      game_id: game.id,
+      room_code: code,
+      status: 'pending',
+    });
+
+    if (inviteErr) return inviteErr.message;
+
+    return { gameId: game.id, roomCode: code };
   }, []);
 
   const awaitingJesterChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0 && state.phase === 'moving';
@@ -588,6 +684,6 @@ export function useOnlineGame() {
     onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor, error,
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
-    chatMessages, sendChat,
+    chatMessages, sendChat, sendInvite,
   };
 }

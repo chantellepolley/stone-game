@@ -9,9 +9,11 @@ interface StartScreenProps {
   onShowLeaderboard?: () => void;
   onShowMyGames?: () => void;
   onShowColors?: () => void;
+  onShowFriends?: () => void;
+  pendingNotifications?: number;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -143,9 +145,10 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
                          bg-[#504840] text-white border-2 border-[#6b5f55]
                          hover:bg-[#5e5549] hover:scale-105 active:scale-95
-                         transition-all cursor-pointer shadow-lg"
+                         transition-all cursor-pointer shadow-lg flex flex-col items-center gap-1"
             >
-              2 Players
+              <span>2 Players</span>
+              <span className="text-[10px] text-white/40 normal-case">(pass & play)</span>
             </button>
             <button
               onClick={() => setShowDifficulty(true)}
@@ -205,9 +208,21 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         <div className="flex gap-3 flex-wrap justify-center">
           {onShowMyGames && (
             <button onClick={onShowMyGames}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+              className="relative px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white hover:text-amber-400 transition-colors cursor-pointer">
               My Games
+              {(pendingNotifications ?? 0) > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {pendingNotifications! > 9 ? '9+' : pendingNotifications}
+                </span>
+              )}
+            </button>
+          )}
+          {onShowFriends && (
+            <button onClick={onShowFriends}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-white hover:text-amber-400 transition-colors cursor-pointer">
+              Friends
             </button>
           )}
           {onShowStats && (

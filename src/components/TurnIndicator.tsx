@@ -40,9 +40,12 @@ export default function TurnIndicator({ currentPlayer, phase, winner, player1Nam
       <span className="font-heading text-base lg:text-lg text-white">
         {getDisplayName(currentPlayer)}
       </span>
-      <span className="text-xs lg:text-sm text-white/50">
+      <span className="text-xs lg:text-sm text-white">
         — {phaseText}
       </span>
+      {phase !== 'game_over' && (
+        <span className="text-amber-400 animate-pulse font-bold text-xs lg:text-sm shadow-[0_0_20px_rgba(255,180,0,0.5)]">Your Turn!</span>
+      )}
     </div>
   );
 }

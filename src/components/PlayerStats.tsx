@@ -33,7 +33,7 @@ interface HeadToHead {
   total: number;
 }
 
-export default function PlayerStats({ onBack }: { onBack: () => void }) {
+export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => void; onInviteToPlay?: (playerId: string) => void }) {
   const { player } = usePlayerContext();
   const [stats, setStats] = useState<Stats | null>(null);
   const [history, setHistory] = useState<GameHistoryRow[]>([]);
@@ -261,6 +261,15 @@ export default function PlayerStats({ onBack }: { onBack: () => void }) {
                         <div className="text-sm font-heading text-white">{pct}%</div>
                         <div className="text-[8px] text-white/40">Win</div>
                       </div>
+                      {onInviteToPlay && (
+                        <button
+                          onClick={() => onInviteToPlay(h.opponent_id)}
+                          className="px-2 py-1 rounded text-[8px] font-heading uppercase tracking-wider
+                                     bg-amber-600/60 text-white hover:bg-amber-600 cursor-pointer transition-colors ml-1"
+                        >
+                          Invite
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

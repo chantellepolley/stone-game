@@ -52,9 +52,7 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
       relative w-14 h-14 rounded-lg border-2 flex items-center justify-center
       ${used
         ? 'bg-stone-dark border-stone-accent/40 opacity-50'
-        : jester
-          ? 'border-amber-600 shadow-lg'
-          : normalBg
+        : normalBg
       }
       ${rolling ? 'dice-rolling' : ''}
       transition-opacity duration-300

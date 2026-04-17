@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Game from './components/Game';
 import OnlineGame from './components/OnlineGame';
 import UsernamePrompt from './components/UsernamePrompt';
@@ -6,11 +6,14 @@ import PlayerStats from './components/PlayerStats';
 import Leaderboard from './components/Leaderboard';
 import MyGames from './components/MyGames';
 import ColorPicker from './components/ColorPicker';
+import FriendsList from './components/FriendsList';
+import Notifications from './components/Notifications';
 import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
+import { supabase } from './lib/supabase';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -30,6 +33,88 @@ export default function App() {
   const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2 } | null>(null);
   const [resumeLocalGameId, setResumeLocalGameId] = useState<string | null>(null);
   const [stoneColor, setStoneColor] = useState(loadPlayerColor());
+  const [pendingNotifications, setPendingNotifications] = useState(0);
+
+  // Poll for pending notifications (invites + your-turn games)
+  const pollNotifications = useCallback(async () => {
+    if (!player) return;
+    let count = 0;
+
+    // Count pending invites
+    const { count: inviteCount } = await supabase
+      .from('game_invites')
+      .select('id', { count: 'exact', head: true })
+      .eq('to_player_id', player.id)
+      .eq('status', 'pending');
+    count += (inviteCount || 0);
+
+    // Count games where it's my turn
+    const { data: activeGames } = await supabase
+      .from('games')
+      .select('id, state, player1_id')
+      .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
+      .in('status', ['active'])
+      .limit(20);
+
+    if (activeGames) {
+      for (const g of activeGames) {
+        const myPlayer = g.player1_id === player.id ? 1 : 2;
+        const currentPlayer = (g.state as any)?.currentPlayer;
+        if (currentPlayer === myPlayer) count++;
+      }
+    }
+
+    setPendingNotifications(count);
+  }, [player]);
+
+  useEffect(() => {
+    pollNotifications();
+    const interval = setInterval(pollNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [pollNotifications]);
+
+  const handleInviteToPlay = useCallback(async (toPlayerId: string) => {
+    if (!player) return;
+
+    // Generate room code
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+
+    // Create the game
+    const { data: game, error: gameErr } = await supabase.from('games').insert({
+      room_code: code,
+      player1_id: player.id,
+      mode: 'online',
+      state: { phase: 'rolling', gameMode: 'pvp', currentPlayer: 1 },
+      status: 'waiting',
+    }).select('id').single();
+
+    if (gameErr || !game) {
+      alert(gameErr?.message || 'Failed to create game');
+      return;
+    }
+
+    // Create invite
+    const { error: inviteErr } = await supabase.from('game_invites').insert({
+      from_player_id: player.id,
+      to_player_id: toPlayerId,
+      game_id: game.id,
+      room_code: code,
+      status: 'pending',
+    });
+
+    if (inviteErr) {
+      alert(inviteErr.message);
+    } else {
+      alert('Game invite sent!');
+    }
+  }, [player]);
+
+  const handleAcceptNotificationInvite = useCallback((gameId: string, roomCode: string) => {
+    setResumeData({ gameId, roomCode, player: 2 });
+    setScreen('online');
+  }, []);
 
   useEffect(() => {
     const code = getJoinCodeFromURL();
@@ -60,7 +145,7 @@ export default function App() {
           onBack={() => setScreen('game')}
         />
       )}
-      {screen === 'stats' && <PlayerStats onBack={() => setScreen('game')} />}
+      {screen === 'stats' && <PlayerStats onBack={() => setScreen('game')} onInviteToPlay={handleInviteToPlay} />}
       {screen === 'leaderboard' && <Leaderboard onBack={() => setScreen('game')} />}
       {screen === 'my-games' && (
         <MyGames
@@ -74,6 +159,12 @@ export default function App() {
             }
           }}
           onBack={() => setScreen('game')}
+        />
+      )}
+      {screen === 'friends' && (
+        <FriendsList
+          onBack={() => setScreen('game')}
+          onInviteToPlay={handleInviteToPlay}
         />
       )}
       {screen === 'online' && (
@@ -90,9 +181,14 @@ export default function App() {
           onShowLeaderboard={() => setScreen('leaderboard')}
           onShowMyGames={() => { setResumeLocalGameId(null); setScreen('my-games'); }}
           onShowColors={() => setScreen('colors')}
+          onShowFriends={() => setScreen('friends')}
+          pendingNotifications={pendingNotifications}
           resumeGameId={resumeLocalGameId}
         />
       )}
+
+      {/* Notifications overlay - always rendered */}
+      <Notifications onAcceptInvite={handleAcceptNotificationInvite} />
     </PlayerContext.Provider>
   );
 }

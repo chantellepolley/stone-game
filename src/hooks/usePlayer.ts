@@ -122,14 +122,18 @@ export function usePlayer() {
   }, [player]);
 
   const login = useCallback(async (username: string, password: string): Promise<string | true> => {
-    const { data, error } = await supabase
+    // Case-insensitive username lookup
+    const { data: matches, error: lookupErr } = await supabase
       .from('players')
       .select('*')
-      .eq('username', username)
-      .single();
+      .ilike('username', username);
 
-    if (error || !data) return 'Player not found';
-    if (!data.password) return 'No password set for this account';
+    if (lookupErr || !matches || matches.length === 0) return 'Player not found';
+
+    // If multiple matches, prefer exact match or the one with a password set
+    const data = matches.find(m => m.password) || matches[0];
+
+    if (!data.password) return 'This account has no password. Please log in on your original device and set a password first.';
     if (data.password !== password) return 'Incorrect password';
 
     // Update device token to this device

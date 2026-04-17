@@ -16,6 +16,15 @@ interface GameRow {
   winner_label: string | null;
 }
 
+interface InviteRow {
+  id: string;
+  from_player_id: string;
+  game_id: string;
+  room_code: string;
+  from_username: string;
+  created_at: string;
+}
+
 interface MyGamesProps {
   onResume: (gameId: string, roomCode: string, player: 1 | 2, mode: string) => void;
   onBack: () => void;
@@ -24,7 +33,9 @@ interface MyGamesProps {
 export default function MyGames({ onResume, onBack }: MyGamesProps) {
   const { player } = usePlayerContext();
   const [games, setGames] = useState<GameRow[]>([]);
+  const [invites, setInvites] = useState<InviteRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'invites' | 'active' | 'past'>('active');
 
   useEffect(() => {
     if (!player) return;
@@ -90,10 +101,58 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
       });
 
       setGames(rows);
+
+      // Fetch pending game invites
+      const { data: inviteData } = await supabase
+        .from('game_invites')
+        .select('id, from_player_id, game_id, room_code, created_at')
+        .eq('to_player_id', player.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (inviteData && inviteData.length > 0) {
+        const fromIds = inviteData.map(i => i.from_player_id);
+        const { data: fromPlayers } = await supabase
+          .from('players')
+          .select('id, username')
+          .in('id', fromIds);
+
+        const fromMap: Record<string, string> = {};
+        fromPlayers?.forEach(p => { fromMap[p.id] = p.username; });
+
+        setInvites(inviteData.map(i => ({
+          id: i.id,
+          from_player_id: i.from_player_id,
+          game_id: i.game_id,
+          room_code: i.room_code,
+          from_username: fromMap[i.from_player_id] || 'Unknown',
+          created_at: i.created_at,
+        })));
+      }
+
       setLoading(false);
     };
     load();
   }, [player]);
+
+  const handleAcceptInvite = async (invite: InviteRow) => {
+    // Update invite status
+    await supabase
+      .from('game_invites')
+      .update({ status: 'accepted' })
+      .eq('id', invite.id);
+
+    // Join the game as player 2
+    onResume(invite.game_id, invite.room_code, 2, 'online');
+  };
+
+  const handleDeclineInvite = async (inviteId: string) => {
+    await supabase
+      .from('game_invites')
+      .update({ status: 'declined' })
+      .eq('id', inviteId);
+    setInvites(prev => prev.filter(i => i.id !== inviteId));
+  };
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -105,6 +164,9 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
+  const activeGames = games.filter(g => g.status !== 'completed');
+  const pastGames = games.filter(g => g.status === 'completed');
+
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
@@ -112,22 +174,81 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
       <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-md w-full max-h-[60vh]">
         <p className="text-white font-heading text-lg">My Games</p>
 
+        {/* Tab bar */}
+        <div className="flex gap-1 bg-black/20 rounded-lg p-0.5 w-full">
+          <button onClick={() => setTab('invites')}
+            className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer relative
+              ${tab === 'invites' ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
+            Invites
+            {invites.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {invites.length}
+              </span>
+            )}
+          </button>
+          <button onClick={() => setTab('active')}
+            className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer
+              ${tab === 'active' ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
+            Active
+          </button>
+          <button onClick={() => setTab('past')}
+            className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer
+              ${tab === 'past' ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
+            Past
+          </button>
+        </div>
+
         {loading ? (
           <p className="text-white/40 text-sm">Loading...</p>
-        ) : games.length === 0 ? (
-          <p className="text-white/40 text-sm">No active games</p>
-        ) : (
-          <div className="w-full overflow-y-auto space-y-2">
-            {games.map(g => {
-              const isCompleted = g.status === 'completed';
-              const canResume = !isCompleted;
-              return (
+        ) : tab === 'invites' ? (
+          /* Game Invites tab */
+          invites.length === 0 ? (
+            <p className="text-white/40 text-sm">No pending invites</p>
+          ) : (
+            <div className="w-full overflow-y-auto space-y-2">
+              {invites.map(inv => (
+                <div key={inv.id}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-black/20">
+                  <div>
+                    <div className="text-white text-sm">
+                      From <span className="font-heading text-amber-400">{inv.from_username}</span>
+                    </div>
+                    <div className="text-white/40 text-[10px]">
+                      Room: {inv.room_code} · {timeAgo(inv.created_at)}
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => handleAcceptInvite(inv)}
+                      className="px-3 py-1.5 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                                 bg-green-600/60 text-white hover:bg-green-600 cursor-pointer transition-colors"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleDeclineInvite(inv.id)}
+                      className="px-3 py-1.5 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                                 bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : tab === 'active' ? (
+          /* Active Games tab */
+          activeGames.length === 0 ? (
+            <p className="text-white/40 text-sm">No active games</p>
+          ) : (
+            <div className="w-full overflow-y-auto space-y-2">
+              {activeGames.map(g => (
                 <button
                   key={g.id}
-                  onClick={() => canResume ? onResume(g.id, g.room_code, g.my_player, g.mode) : undefined}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg
-                             bg-black/20 text-left transition-colors
-                             ${!canResume ? 'opacity-70 cursor-default' : 'hover:bg-black/30 cursor-pointer'}`}
+                  onClick={() => onResume(g.id, g.room_code, g.my_player, g.mode)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg
+                             bg-black/20 text-left transition-colors hover:bg-black/30 cursor-pointer"
                 >
                   <div>
                     <div className="text-white text-sm">
@@ -136,11 +257,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       {g.mode === 'local' && <span className="text-white/30 text-[10px] ml-1">(Local)</span>}
                     </div>
                     <div className="text-white/40 text-[10px]">
-                      {isCompleted ? (
-                        <span className={g.winner_label === 'You won' ? 'text-green-400' : 'text-red-400'}>
-                          {g.winner_label || 'Completed'}
-                        </span>
-                      ) : g.is_my_turn ? (
+                      {g.is_my_turn ? (
                         <span className="text-amber-400">Your turn</span>
                       ) : (
                         <span>Opponent's turn</span>
@@ -152,9 +269,39 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                     {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
                   </div>
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )
+        ) : (
+          /* Past Games tab */
+          pastGames.length === 0 ? (
+            <p className="text-white/40 text-sm">No completed games</p>
+          ) : (
+            <div className="w-full overflow-y-auto space-y-2">
+              {pastGames.map(g => (
+                <div key={g.id}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-black/20 opacity-70"
+                >
+                  <div>
+                    <div className="text-white text-sm">
+                      vs <span className="font-heading">{g.opponent_name}</span>
+                      {g.mode === 'ai' && <span className="text-white/30 text-[10px] ml-1">(AI)</span>}
+                      {g.mode === 'local' && <span className="text-white/30 text-[10px] ml-1">(Local)</span>}
+                    </div>
+                    <div className="text-white/40 text-[10px]">
+                      <span className={g.winner_label === 'You won' ? 'text-green-400' : 'text-red-400'}>
+                        {g.winner_label || 'Completed'}
+                      </span>
+                      {' · '}{timeAgo(g.updated_at)}
+                    </div>
+                  </div>
+                  <div className="text-white/30 text-xs font-heading">
+                    {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         )}
 
         <button onClick={onBack}

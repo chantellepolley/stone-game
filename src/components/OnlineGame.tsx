@@ -115,8 +115,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
       {/* Turn + online info */}
       <div className="flex items-center gap-2 shrink-0">
         <TurnIndicator currentPlayer={state.currentPlayer} phase={state.phase} winner={state.winner} player1Name={p1Name} player2Name={p2Name} />
+        {isMyTurn && state.phase !== 'game_over' && (
+          <span className="text-amber-400 font-heading text-sm animate-pulse shadow-[0_0_20px_rgba(255,180,0,0.5)]">Your Turn!</span>
+        )}
         {waitingForOpponent && (
-          <span className="text-[10px] lg:text-xs text-white/40 animate-pulse">Opponent's turn...</span>
+          <span className="text-[10px] lg:text-xs text-white animate-pulse">Opponent's turn...</span>
         )}
       </div>
 
@@ -126,7 +129,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         <span className="text-white/50">|</span>
         <span className="text-white">You: {playerLabel}</span>
         <span className="text-white/50">|</span>
-        <span className={opponentConnected ? 'text-white' : 'text-white/60 animate-pulse'}>
+        <span className={opponentConnected ? 'text-white' : 'text-white animate-pulse'}>
           {opponentConnected
             ? 'Opponent is live'
             : `${opponentName || 'Opponent'} has stepped away`}
