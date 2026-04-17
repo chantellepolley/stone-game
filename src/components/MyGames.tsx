@@ -156,6 +156,16 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     onResume(invite.game_id, invite.room_code, 2, 'online');
   };
 
+  const handleEndGame = async (gameId: string) => {
+    await supabase.from('games').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', gameId);
+    setGames(prev => prev.map(g => g.id === gameId ? { ...g, status: 'completed', winner_label: 'Forfeited' } : g));
+  };
+
+  const handleRemoveGame = async (gameId: string) => {
+    await supabase.from('games').delete().eq('id', gameId);
+    setGames(prev => prev.filter(g => g.id !== gameId));
+  };
+
   const handleDeclineInvite = async (inviteId: string) => {
     await supabase
       .from('game_invites')
@@ -325,8 +335,17 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       </div>
                     </div>
                   </div>
-                  <div className="text-white/30 text-xs font-heading">
-                    {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/30 text-xs font-heading">
+                      {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleEndGame(g.id); }}
+                      className="text-[8px] text-red-400/60 hover:text-red-400 cursor-pointer transition-colors"
+                      title="End game"
+                    >
+                      End
+                    </button>
                   </div>
                 </button>
               ))}
@@ -355,8 +374,17 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       {' · '}{timeAgo(g.updated_at)}
                     </div>
                   </div>
-                  <div className="text-white/30 text-xs font-heading">
-                    {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/30 text-xs font-heading">
+                      {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
+                    </span>
+                    <button
+                      onClick={() => handleRemoveGame(g.id)}
+                      className="text-[8px] text-red-400/60 hover:text-red-400 cursor-pointer transition-colors"
+                      title="Remove game"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               ))}
