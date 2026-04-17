@@ -53,9 +53,15 @@ export default function BoardSpace({
     ? 'cursor-pointer'
     : '';
 
-  const maxVisible = 3;
-  const visiblePieces = pieces.slice(-maxVisible);
-  const hiddenCount = Math.max(0, pieces.length - maxVisible);
+  // Sort: uncrowned pieces on top (visible), crowned hidden in +X
+  const sorted = [...pieces].sort((a, b) => {
+    if (a.crowned && !b.crowned) return -1; // crowned first (bottom of stack)
+    if (!a.crowned && b.crowned) return 1;  // uncrowned last (top = visible)
+    return 0;
+  });
+  const maxVisible = 5;
+  const visiblePieces = sorted.slice(-maxVisible);
+  const hiddenCount = Math.max(0, sorted.length - maxVisible);
 
   // Only spread pieces for selection when mixed crowned/uncrowned AND on desktop
   const playerPieces = pieces.filter(p => p.owner === currentPlayer);

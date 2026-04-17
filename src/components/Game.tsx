@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useGame } from '../hooks/useGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { setSoundEnabled, isSoundEnabled, playYourTurnSound } from '../utils/sounds';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -18,11 +19,21 @@ interface GameProps {
 }
 
 export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames }: GameProps) {
-  const { state, roll, selectMove, restart, validMoves, awaitingJokerChoice, chooseJokerDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling } = useGame();
+  const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling } = useGame();
   const { player } = usePlayerContext();
   const [hintsEnabled, setHintsEnabled] = useState(true);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [showMobileRules, setShowMobileRules] = useState(false);
+  const prevPlayer = useRef(state.currentPlayer);
+
+  // Play "your turn" sound when it becomes your turn
+  useEffect(() => {
+    if (state.phase === 'rolling' && state.currentPlayer === 1 && prevPlayer.current !== 1 && state.gameMode !== 'pvp') {
+      playYourTurnSound();
+    }
+    prevPlayer.current = state.currentPlayer;
+  }, [state.currentPlayer, state.phase, state.gameMode]);
 
   if (state.phase === 'not_started') {
     return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} />;
@@ -56,8 +67,8 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
           phase={state.phase}
           currentPlayer={state.currentPlayer}
           onRoll={roll}
-          awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
-          onChooseJokerDoubles={chooseJokerDoubles}
+          awaitingJesterChoice={awaitingJesterChoice && !isAITurn}
+          onChooseJesterDoubles={chooseJesterDoubles}
           isAITurn={isAITurn}
           externalRolling={aiRolling}
         />
@@ -93,8 +104,8 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
             phase={state.phase}
             currentPlayer={state.currentPlayer}
             onRoll={roll}
-            awaitingJokerChoice={awaitingJokerChoice && !isAITurn}
-            onChooseJokerDoubles={chooseJokerDoubles}
+            awaitingJesterChoice={awaitingJesterChoice && !isAITurn}
+            onChooseJesterDoubles={chooseJesterDoubles}
             isAITurn={isAITurn}
             externalRolling={aiRolling}
           />
@@ -106,6 +117,12 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
             className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer"
           >
             Hints: {hintsEnabled ? 'ON' : 'OFF'}
+          </button>
+          <button
+            onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); }}
+            className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer"
+          >
+            Sound: {soundOn ? 'ON' : 'OFF'}
           </button>
         </div>
       </div>
@@ -121,6 +138,14 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
                      transition-all cursor-pointer shadow-md whitespace-nowrap"
         >
           Hints {hintsEnabled ? 'ON' : 'OFF'}
+        </button>
+        <button
+          onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); }}
+          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55]
+                     transition-all cursor-pointer shadow-md whitespace-nowrap"
+        >
+          {soundOn ? '🔊' : '🔇'}
         </button>
         <button
           onClick={() => { setShowMobileLog(v => !v); setShowMobileRules(false); }}

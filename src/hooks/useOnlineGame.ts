@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { GameState, GamePhase, Move, PlayerId } from '../types/game';
 import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
-import { isJoker } from '../engine/dice';
+import { isJester } from '../engine/dice';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { supabase } from '../lib/supabase';
 import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
@@ -302,7 +302,7 @@ export function useOnlineGame() {
           {
             turn: newState.turnCount,
             player: newState.currentPlayer,
-            action: `${newState.currentPlayer === 1 ? 'Sunstone' : 'Moonstone'} rolled ${isJoker(dice.values[0]) ? 'Joker' : dice.values[0]}, ${isJoker(dice.values[1]) ? 'Joker' : dice.values[1]} — no valid moves`,
+            action: `${newState.currentPlayer === 1 ? 'Sunstone' : 'Moonstone'} rolled ${isJester(dice.values[0]) ? 'Jester' : dice.values[0]}, ${isJester(dice.values[1]) ? 'Jester' : dice.values[1]} — no valid moves`,
             timestamp: Date.now(),
           },
         ],
@@ -315,7 +315,7 @@ export function useOnlineGame() {
           const switched: GameState = {
             ...prev,
             currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
-            dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJoker: false },
+            dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
             phase: 'rolling',
             turnCount: prev.turnCount + 1,
           };
@@ -325,10 +325,10 @@ export function useOnlineGame() {
       }, 2500);
       return;
     } else {
-      const d1J = isJoker(dice.values[0]), d2J = isJoker(dice.values[1]);
+      const d1J = isJester(dice.values[0]), d2J = isJester(dice.values[1]);
       let note = '';
-      if (d1J && d2J) note = ' — Double Jokers! Move 1 & 2, then choose doubles';
-      else if (d1J || d2J) note = ` — Joker! 4x${d1J ? dice.values[1] : dice.values[0]}`;
+      if (d1J && d2J) note = ' — Double Jesters! Move 1 & 2, then choose doubles';
+      else if (d1J || d2J) note = ` — Jester! 4x${d1J ? dice.values[1] : dice.values[0]}`;
       else if (dice.values[0] === dice.values[1]) note = ' (doubles!)';
 
       newState = {
@@ -338,7 +338,7 @@ export function useOnlineGame() {
           {
             turn: newState.turnCount,
             player: newState.currentPlayer,
-            action: `${GAME_CONFIG.PLAYER_NAMES[newState.currentPlayer]} rolled ${d1J ? 'Joker' : dice.values[0]}, ${d2J ? 'Joker' : dice.values[1]}${note}`,
+            action: `${GAME_CONFIG.PLAYER_NAMES[newState.currentPlayer]} rolled ${d1J ? 'Jester' : dice.values[0]}, ${d2J ? 'Jester' : dice.values[1]}${note}`,
             timestamp: Date.now(),
           },
         ],
@@ -366,13 +366,13 @@ export function useOnlineGame() {
     broadcastState(newState, move);
   }, [isMyTurn, state]);
 
-  const chooseJokerDoubles = useCallback((value: number) => {
+  const chooseJesterDoubles = useCallback((value: number) => {
     if (!isMyTurn) return;
-    if (!state.dice.pendingDoubleJoker || state.dice.remaining.length > 0) return;
+    if (!state.dice.pendingDoubleJester || state.dice.remaining.length > 0) return;
 
     let newState: GameState = {
       ...state,
-      dice: { ...state.dice, remaining: [value, value, value, value], pendingDoubleJoker: false },
+      dice: { ...state.dice, remaining: [value, value, value, value], pendingDoubleJester: false },
       moveLog: [
         ...state.moveLog,
         {
@@ -388,7 +388,7 @@ export function useOnlineGame() {
       newState = {
         ...newState,
         currentPlayer: newState.currentPlayer === 1 ? 2 : 1,
-        dice: { values: newState.dice.values, remaining: [], hasRolled: false, pendingDoubleJoker: false },
+        dice: { values: newState.dice.values, remaining: [], hasRolled: false, pendingDoubleJester: false },
         phase: 'rolling',
         turnCount: newState.turnCount + 1,
       };
@@ -424,11 +424,11 @@ export function useOnlineGame() {
     });
   }, []);
 
-  const awaitingJokerChoice = state.dice.pendingDoubleJoker && state.dice.remaining.length === 0 && state.phase === 'moving';
+  const awaitingJesterChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0 && state.phase === 'moving';
 
   const validMoves = (() => {
     if (state.phase !== 'moving' || !isMyTurn) return [];
-    if (awaitingJokerChoice) return [];
+    if (awaitingJesterChoice) return [];
     const seen = new Set<string>();
     const moves: Move[] = [];
     for (const dv of state.dice.remaining) {
@@ -448,7 +448,7 @@ export function useOnlineGame() {
 
   return {
     state, roll, selectMove, undo, canUndo, validMoves,
-    awaitingJokerChoice, chooseJokerDoubles,
+    awaitingJesterChoice, chooseJesterDoubles,
     onlinePhase, roomCode, myPlayer, opponentConnected, error,
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,

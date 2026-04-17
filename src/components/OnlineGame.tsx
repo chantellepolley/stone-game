@@ -18,7 +18,7 @@ interface OnlineGameProps {
 export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineGameProps) {
   const {
     state, roll, selectMove, undo, canUndo, validMoves,
-    awaitingJokerChoice, chooseJokerDoubles,
+    awaitingJesterChoice, chooseJesterDoubles,
     onlinePhase, roomCode, myPlayer, opponentConnected,
     error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
   } = useOnlineGame();
@@ -91,8 +91,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         <DiceArea
           dice={state.dice} phase={state.phase} currentPlayer={state.currentPlayer}
           onRoll={roll}
-          awaitingJokerChoice={awaitingJokerChoice && isMyTurn}
-          onChooseJokerDoubles={chooseJokerDoubles}
+          awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
+          onChooseJesterDoubles={chooseJesterDoubles}
           isAITurn={!isMyTurn}
         />
       </div>
@@ -118,8 +118,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
           <DiceArea
             dice={state.dice} phase={state.phase} currentPlayer={state.currentPlayer}
             onRoll={roll}
-            awaitingJokerChoice={awaitingJokerChoice && isMyTurn}
-            onChooseJokerDoubles={chooseJokerDoubles}
+            awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
+            onChooseJesterDoubles={chooseJesterDoubles}
             isAITurn={!isMyTurn}
           />
           {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}

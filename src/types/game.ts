@@ -16,8 +16,8 @@ export interface DiceState {
   values: [number, number];
   remaining: number[];
   hasRolled: boolean;
-  /** True when double Jokers were rolled and the player still needs to choose their doubles value */
-  pendingDoubleJoker: boolean;
+  /** True when double Jesters were rolled and the player still needs to choose their doubles value */
+  pendingDoubleJester: boolean;
 }
 
 export interface MoveLogEntry {
@@ -70,6 +70,6 @@ export type GameAction =
   | { type: 'START_GAME'; mode: GameMode; difficulty: AIDifficulty }
   | { type: 'ROLL_DICE' }
   | { type: 'SELECT_MOVE'; move: Move }
-  | { type: 'CHOOSE_JOKER_DOUBLES'; value: number }
+  | { type: 'CHOOSE_JESTER_DOUBLES'; value: number }
   | { type: 'UNDO_MOVE' }
   | { type: 'RESTART_GAME' };

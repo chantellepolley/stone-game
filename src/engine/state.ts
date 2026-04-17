@@ -22,7 +22,7 @@ export function createInitialState(): GameState {
     jail: { 1: [], 2: [] },
     home: { 1: [], 2: [] },
     currentPlayer: 1,
-    dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJoker: false },
+    dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
     phase: 'not_started',
     gameMode: 'pvp',
     aiDifficulty: 'medium',

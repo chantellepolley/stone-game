@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { DiceState, GamePhase, PlayerId } from '../types/game';
 import { GAME_CONFIG } from '../config/gameConfig';
-import { isJoker } from '../engine/dice';
+import { isJester } from '../engine/dice';
 import { playDiceRattle, playDiceSlam } from '../utils/sounds';
 
 interface DiceAreaProps {
@@ -9,8 +9,8 @@ interface DiceAreaProps {
   phase: GamePhase;
   currentPlayer: PlayerId;
   onRoll: () => void;
-  awaitingJokerChoice?: boolean;
-  onChooseJokerDoubles?: (value: number) => void;
+  awaitingJesterChoice?: boolean;
+  onChooseJesterDoubles?: (value: number) => void;
   isAITurn?: boolean;
   externalRolling?: boolean;
 }
@@ -24,8 +24,8 @@ const DOT_POSITIONS: Record<number, [number, number][]> = {
   5: [[10, 10], [30, 10], [20, 20], [10, 30], [30, 30]],
 };
 
-/** Joker/Jester face SVG drawn on the die */
-function JokerFaceSVG({ faded }: { faded: boolean }) {
+/** Jester/Jester face SVG drawn on the die */
+function JesterFaceSVG({ faded }: { faded: boolean }) {
   const color = faded ? '#8b735560' : '#c62828';
   const accent = faded ? '#8b735540' : '#ff8f00';
   return (
@@ -52,8 +52,8 @@ function JokerFaceSVG({ faded }: { faded: boolean }) {
 }
 
 function DieFace({ value, used, rolling, player }: { value: number; used: boolean; rolling: boolean; player: PlayerId }) {
-  const joker = isJoker(value);
-  const dots = !joker ? (DOT_POSITIONS[value] || []) : [];
+  const jester = isJester(value);
+  const dots = !jester ? (DOT_POSITIONS[value] || []) : [];
   const isP1 = player === 1;
 
   // Player-colored dice — fully opaque
@@ -68,15 +68,15 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
       relative w-14 h-14 rounded-lg border-2 flex items-center justify-center
       ${used
         ? 'bg-stone-dark border-stone-accent/40 opacity-50'
-        : joker
+        : jester
           ? 'bg-amber-50 border-amber-600 shadow-lg'
           : normalBg
       }
       ${rolling ? 'dice-rolling' : ''}
       transition-opacity duration-300
     `}>
-      {joker ? (
-        <JokerFaceSVG faded={used} />
+      {jester ? (
+        <JesterFaceSVG faded={used} />
       ) : (
         <svg width="40" height="40" viewBox="0 0 40 40">
           {dots.map(([cx, cy], i) => (
@@ -94,7 +94,7 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
   );
 }
 
-export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJokerChoice, onChooseJokerDoubles, isAITurn, externalRolling }: DiceAreaProps) {
+export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJesterChoice, onChooseJesterDoubles, isAITurn, externalRolling }: DiceAreaProps) {
   const [rolling, setRolling] = useState(false);
   const [rollFaces, setRollFaces] = useState<[number, number]>([1, 1]);
   const canRoll = phase === 'rolling' && !isAITurn;
@@ -145,11 +145,11 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
   };
 
   // Track which dice values have been used
-  const hasAnyJoker = isJoker(dice.values[0]) || isJoker(dice.values[1]);
+  const hasAnyJester = isJester(dice.values[0]) || isJester(dice.values[1]);
   let diceUsed: boolean[];
-  if (hasAnyJoker) {
-    // Any joker roll: both dice stay visible as long as moves remain
-    const allUsed = dice.remaining.length === 0 && !dice.pendingDoubleJoker;
+  if (hasAnyJester) {
+    // Any jester roll: both dice stay visible as long as moves remain
+    const allUsed = dice.remaining.length === 0 && !dice.pendingDoubleJester;
     diceUsed = [allUsed, allUsed];
   } else {
     const remainingCopy = [...dice.remaining];
@@ -163,9 +163,9 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
     });
   }
 
-  // Describe what the joker did
-  const hasJoker = dice.hasRolled && (isJoker(dice.values[0]) || isJoker(dice.values[1]));
-  const bothJokers = dice.hasRolled && isJoker(dice.values[0]) && isJoker(dice.values[1]);
+  // Describe what the jester did
+  const hasJester = dice.hasRolled && (isJester(dice.values[0]) || isJester(dice.values[1]));
+  const bothJesters = dice.hasRolled && isJester(dice.values[0]) && isJester(dice.values[1]);
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -187,27 +187,27 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
         </div>
       )}
 
-      {/* Joker explanation */}
-      {dice.hasRolled && hasJoker && phase === 'moving' && !awaitingJokerChoice && (
+      {/* Jester explanation */}
+      {dice.hasRolled && hasJester && phase === 'moving' && !awaitingJesterChoice && (
         <div className="text-xs text-amber-500/80 font-heading">
-          {bothJokers && dice.remaining.length > 0
-            ? 'Double Jokers! Use 1 & 2 first'
-            : bothJokers
+          {bothJesters && dice.remaining.length > 0
+            ? 'Double Jesters! Use 1 & 2 first'
+            : bothJesters
             ? 'Choose your doubles!'
-            : `Joker! Doubles of ${dice.remaining[0] ?? '?'}`
+            : `Jester! Doubles of ${dice.remaining[0] ?? '?'}`
           }
         </div>
       )}
 
-      {/* Double Joker choice UI */}
-      {awaitingJokerChoice && onChooseJokerDoubles && (
+      {/* Double Jester choice UI */}
+      {awaitingJesterChoice && onChooseJesterDoubles && (
         <div className="flex flex-col items-center gap-2">
           <div className="text-xs text-amber-500 font-heading">Choose your doubles:</div>
           <div className="flex gap-1.5">
             {[1, 2, 3, 4, 5, 6].map(v => (
               <button
                 key={v}
-                onClick={() => onChooseJokerDoubles(v)}
+                onClick={() => onChooseJesterDoubles(v)}
                 className="w-10 h-10 rounded-lg bg-stone-light border-2 border-amber-600/60
                            text-stone-bg font-bold text-lg
                            hover:bg-amber-100 hover:scale-110 active:scale-95
@@ -222,7 +222,7 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
       )}
 
       {/* Remaining moves indicator */}
-      {dice.hasRolled && phase === 'moving' && !awaitingJokerChoice && dice.remaining.length > 0 && (
+      {dice.hasRolled && phase === 'moving' && !awaitingJesterChoice && dice.remaining.length > 0 && (
         <div className="text-xs text-stone-light font-bold">
           Moves left: {dice.remaining.join(', ')}
         </div>

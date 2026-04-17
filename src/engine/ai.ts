@@ -391,9 +391,9 @@ export function chooseBestMove(state: GameState, validMoves: Move[], difficulty:
 }
 
 /**
- * Choose the best Joker doubles value for the AI.
+ * Choose the best Jester doubles value for the AI.
  */
-export function chooseBestJokerValue(state: GameState, difficulty: AIDifficulty): number {
+export function chooseBestJesterValue(state: GameState, difficulty: AIDifficulty): number {
   if (difficulty === 'easy') {
     return Math.floor(Math.random() * 6) + 1;
   }
@@ -404,7 +404,7 @@ export function chooseBestJokerValue(state: GameState, difficulty: AIDifficulty)
   for (let v = 1; v <= 6; v++) {
     const simState: GameState = {
       ...state,
-      dice: { ...state.dice, remaining: [v, v, v, v], pendingDoubleJoker: false },
+      dice: { ...state.dice, remaining: [v, v, v, v], pendingDoubleJester: false },
     };
 
     const moves = [

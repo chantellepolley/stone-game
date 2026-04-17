@@ -1,246 +1,152 @@
 /**
  * Mayan temple-themed sound effects using Web Audio API.
- * No audio files needed — all synthesized in the browser.
  */
 
 let audioCtx: AudioContext | null = null;
+let soundEnabled = true;
 
-function getCtx(): AudioContext {
+export function setSoundEnabled(enabled: boolean) { soundEnabled = enabled; }
+export function isSoundEnabled() { return soundEnabled; }
+
+function ctx(): AudioContext | null {
+  if (!soundEnabled) return null;
   if (!audioCtx) audioCtx = new AudioContext();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
-/**
- * Crowned — mystical ascending temple chime.
- * Two tones rising with reverb, like ancient stone bells.
- */
+/** Your turn notification — gentle temple gong */
+export function playYourTurnSound() {
+  const c = ctx(); if (!c) return;
+  const now = c.currentTime;
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 523;
+  gain.gain.setValueAtTime(0.12, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  osc.connect(gain).connect(c.destination);
+  osc.start(now); osc.stop(now + 0.9);
+
+  // Overtone
+  const o2 = c.createOscillator();
+  const g2 = c.createGain();
+  o2.type = 'sine'; o2.frequency.value = 784;
+  g2.gain.setValueAtTime(0.06, now);
+  g2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+  o2.connect(g2).connect(c.destination);
+  o2.start(now); o2.stop(now + 0.7);
+
+  // Vibrate on mobile
+  if (navigator.vibrate) navigator.vibrate(200);
+}
+
+/** Crowned — mystical ascending temple chime */
 export function playCrownedSound() {
-  const ctx = getCtx();
-  const now = ctx.currentTime;
-
-  // Pentatonic ascending notes (Mayan-ish scale)
-  const notes = [330, 440, 550, 660];
-  notes.forEach((freq, i) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-
-    osc.type = 'triangle';
-    osc.frequency.value = freq;
-
-    filter.type = 'bandpass';
-    filter.frequency.value = freq * 1.5;
-    filter.Q.value = 8;
-
+  const c = ctx(); if (!c) return;
+  const now = c.currentTime;
+  [330, 440, 550, 660].forEach((freq, i) => {
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    const filter = c.createBiquadFilter();
+    osc.type = 'triangle'; osc.frequency.value = freq;
+    filter.type = 'bandpass'; filter.frequency.value = freq * 1.5; filter.Q.value = 8;
     const start = now + i * 0.12;
     gain.gain.setValueAtTime(0, start);
     gain.gain.linearRampToValueAtTime(0.15, start + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.001, start + 0.6);
-
-    osc.connect(filter).connect(gain).connect(ctx.destination);
-    osc.start(start);
-    osc.stop(start + 0.7);
+    osc.connect(filter).connect(gain).connect(c.destination);
+    osc.start(start); osc.stop(start + 0.7);
   });
-
-  // Deep undertone — stone resonance
-  const sub = ctx.createOscillator();
-  const subGain = ctx.createGain();
-  sub.type = 'sine';
-  sub.frequency.value = 165;
-  subGain.gain.setValueAtTime(0.1, now);
-  subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-  sub.connect(subGain).connect(ctx.destination);
-  sub.start(now);
-  sub.stop(now + 0.9);
+  const sub = c.createOscillator();
+  const sg = c.createGain();
+  sub.type = 'sine'; sub.frequency.value = 165;
+  sg.gain.setValueAtTime(0.1, now);
+  sg.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  sub.connect(sg).connect(c.destination);
+  sub.start(now); sub.stop(now + 0.9);
 }
 
-/**
- * Home / Borne off — triumphant ancient drum sequence with bright chime.
- * Deep hits followed by a bright bell, like a temple ceremony completion.
- */
+/** Home / Borne off — triumphant drums + bell */
 export function playHomeSound() {
-  const ctx = getCtx();
-  const now = ctx.currentTime;
-
-  // Two deep drum hits
+  const c = ctx(); if (!c) return;
+  const now = c.currentTime;
   [0, 0.15].forEach(offset => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(80, now + offset);
     osc.frequency.exponentialRampToValueAtTime(40, now + offset + 0.3);
     gain.gain.setValueAtTime(0.25, now + offset);
     gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.3);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now + offset);
-    osc.stop(now + offset + 0.4);
-
-    // Noise burst for drum texture
-    const bufferSize = ctx.sampleRate * 0.1;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
-    const noise = ctx.createBufferSource();
-    const noiseGain = ctx.createGain();
-    const noiseFilter = ctx.createBiquadFilter();
-    noise.buffer = buffer;
-    noiseFilter.type = 'lowpass';
-    noiseFilter.frequency.value = 200;
-    noiseGain.gain.setValueAtTime(0.15, now + offset);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.15);
-    noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
-    noise.start(now + offset);
+    osc.connect(gain).connect(c.destination);
+    osc.start(now + offset); osc.stop(now + offset + 0.4);
   });
-
-  // Bright temple bell
-  const bell = ctx.createOscillator();
-  const bellGain = ctx.createGain();
-  bell.type = 'sine';
-  bell.frequency.value = 880;
-  bellGain.gain.setValueAtTime(0, now + 0.3);
-  bellGain.gain.linearRampToValueAtTime(0.12, now + 0.32);
-  bellGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-  bell.connect(bellGain).connect(ctx.destination);
-  bell.start(now + 0.3);
-  bell.stop(now + 1.3);
-
-  // Harmonic overtone
-  const overtone = ctx.createOscillator();
-  const otGain = ctx.createGain();
-  overtone.type = 'sine';
-  overtone.frequency.value = 1320;
-  otGain.gain.setValueAtTime(0, now + 0.3);
-  otGain.gain.linearRampToValueAtTime(0.06, now + 0.33);
-  otGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
-  overtone.connect(otGain).connect(ctx.destination);
-  overtone.start(now + 0.3);
-  overtone.stop(now + 1.0);
+  const bell = c.createOscillator();
+  const bg = c.createGain();
+  bell.type = 'sine'; bell.frequency.value = 880;
+  bg.gain.setValueAtTime(0, now + 0.3);
+  bg.gain.linearRampToValueAtTime(0.12, now + 0.32);
+  bg.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+  bell.connect(bg).connect(c.destination);
+  bell.start(now + 0.3); bell.stop(now + 1.3);
 }
 
-/**
- * Jailed / Captured — heavy stone door slam with ominous rumble.
- * Deep impact with descending tone, like being sealed in a temple chamber.
- */
+/** Jailed / Captured — stone door slam */
 export function playJailedSound() {
-  const ctx = getCtx();
-  const now = ctx.currentTime;
-
-  // Heavy stone impact
-  const impact = ctx.createOscillator();
-  const impactGain = ctx.createGain();
+  const c = ctx(); if (!c) return;
+  const now = c.currentTime;
+  const impact = c.createOscillator();
+  const ig = c.createGain();
   impact.type = 'sine';
   impact.frequency.setValueAtTime(120, now);
   impact.frequency.exponentialRampToValueAtTime(30, now + 0.5);
-  impactGain.gain.setValueAtTime(0.3, now);
-  impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-  impact.connect(impactGain).connect(ctx.destination);
-  impact.start(now);
-  impact.stop(now + 0.6);
+  ig.gain.setValueAtTime(0.3, now);
+  ig.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  impact.connect(ig).connect(c.destination);
+  impact.start(now); impact.stop(now + 0.6);
 
-  // Stone scrape noise
-  const bufferSize = ctx.sampleRate * 0.3;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
-  const noise = ctx.createBufferSource();
-  const noiseGain = ctx.createGain();
-  const noiseFilter = ctx.createBiquadFilter();
-  noise.buffer = buffer;
-  noiseFilter.type = 'bandpass';
-  noiseFilter.frequency.value = 300;
-  noiseFilter.Q.value = 3;
-  noiseGain.gain.setValueAtTime(0.12, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-  noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
-  noise.start(now);
-
-  // Ominous low rumble
-  const rumble = ctx.createOscillator();
-  const rumbleGain = ctx.createGain();
-  rumble.type = 'sawtooth';
-  rumble.frequency.value = 55;
-  rumbleGain.gain.setValueAtTime(0.08, now + 0.1);
-  rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-  const rumbleFilter = ctx.createBiquadFilter();
-  rumbleFilter.type = 'lowpass';
-  rumbleFilter.frequency.value = 100;
-  rumble.connect(rumbleFilter).connect(rumbleGain).connect(ctx.destination);
-  rumble.start(now + 0.1);
-  rumble.stop(now + 0.9);
+  const rumble = c.createOscillator();
+  const rg = c.createGain();
+  rumble.type = 'sawtooth'; rumble.frequency.value = 55;
+  rg.gain.setValueAtTime(0.08, now + 0.1);
+  rg.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  const rf = c.createBiquadFilter();
+  rf.type = 'lowpass'; rf.frequency.value = 100;
+  rumble.connect(rf).connect(rg).connect(c.destination);
+  rumble.start(now + 0.1); rumble.stop(now + 0.9);
 }
 
-/**
- * Dice rattle — stone dice tumbling on a carved slab.
- * Series of rapid clicks with filtered noise, like pebbles shaking.
- */
+/** Dice rattle — stones tumbling */
 export function playDiceRattle() {
-  const ctx = getCtx();
-  const now = ctx.currentTime;
-
-  // Rapid clicking stones
+  const c = ctx(); if (!c) return;
+  const now = c.currentTime;
   for (let i = 0; i < 8; i++) {
     const t = now + i * 0.1 + Math.random() * 0.05;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
     osc.type = 'square';
     osc.frequency.value = 800 + Math.random() * 600;
     gain.gain.setValueAtTime(0.04 + Math.random() * 0.03, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t + 0.05);
+    osc.connect(gain).connect(c.destination);
+    osc.start(t); osc.stop(t + 0.05);
   }
-
-  // Shaking noise bed
-  const bufSize = ctx.sampleRate * 0.8;
-  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1);
-  const noise = ctx.createBufferSource();
-  const nGain = ctx.createGain();
-  const nFilter = ctx.createBiquadFilter();
-  noise.buffer = buf;
-  nFilter.type = 'bandpass';
-  nFilter.frequency.value = 2000;
-  nFilter.Q.value = 2;
-  nGain.gain.setValueAtTime(0.06, now);
-  nGain.gain.linearRampToValueAtTime(0.08, now + 0.3);
-  nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
-  noise.connect(nFilter).connect(nGain).connect(ctx.destination);
-  noise.start(now);
 }
 
-/**
- * Dice slam — stones landing hard on the board.
- * Sharp impact with a low thud.
- */
+/** Dice slam — stones landing */
 export function playDiceSlam() {
-  const ctx = getCtx();
-  const now = ctx.currentTime;
-
-  // Two stone impacts (one per die)
+  const c = ctx(); if (!c) return;
+  const now = c.currentTime;
   [0, 0.06].forEach(offset => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const osc = c.createOscillator();
+    const gain = c.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(150, now + offset);
     osc.frequency.exponentialRampToValueAtTime(60, now + offset + 0.15);
     gain.gain.setValueAtTime(0.2, now + offset);
     gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.15);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(now + offset);
-    osc.stop(now + offset + 0.2);
-
-    // Click
-    const click = ctx.createOscillator();
-    const cGain = ctx.createGain();
-    click.type = 'square';
-    click.frequency.value = 1200;
-    cGain.gain.setValueAtTime(0.08, now + offset);
-    cGain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.02);
-    click.connect(cGain).connect(ctx.destination);
-    click.start(now + offset);
-    click.stop(now + offset + 0.03);
+    osc.connect(gain).connect(c.destination);
+    osc.start(now + offset); osc.stop(now + offset + 0.2);
   });
 }

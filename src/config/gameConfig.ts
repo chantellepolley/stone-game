@@ -70,13 +70,13 @@ export const GAME_CONFIG = {
     /** If true, rolling doubles gives 4 moves of that value (backgammon-style) */
     doublesGrant4Moves: true,
     /**
-     * The Joker face replaces the 6 on each die.
-     * Rolling a Joker + any number X turns the roll into doubles of X (4 moves).
-     * Rolling double Jokers = 4 moves of 5 (highest normal face).
+     * The Jester face replaces the 6 on each die.
+     * Rolling a Jester + any number X turns the roll into doubles of X (4 moves).
+     * Rolling double Jesters = 4 moves of 5 (highest normal face).
      */
-    jokerFace: 6,
-    /** Value used when both dice are Jokers */
-    doubleJokerValue: 5,
+    jesterFace: 6,
+    /** Value used when both dice are Jesters */
+    doubleJesterValue: 5,
   },
 
   /**

@@ -416,10 +416,10 @@ export function executeMove(state: GameState, move: Move): GameState {
 
   // 8. Check if turn ends
   const outOfMoves = s.dice.remaining.length === 0 || !canPlayerMoveWith(s);
-  const awaitingJokerChoice = s.dice.remaining.length === 0 && s.dice.pendingDoubleJoker;
-  if (outOfMoves && !awaitingJokerChoice) {
+  const awaitingJesterChoice = s.dice.remaining.length === 0 && s.dice.pendingDoubleJester;
+  if (outOfMoves && !awaitingJesterChoice) {
     s.currentPlayer = player === 1 ? 2 : 1;
-    s.dice = { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJoker: false };
+    s.dice = { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false };
     s.phase = 'rolling';
     s.turnCount++;
   }

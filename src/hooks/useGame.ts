@@ -2,8 +2,8 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import type { GameState, GamePhase, Move, GameMode, AIDifficulty } from '../types/game';
 import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
 import { recordGameResult } from '../lib/statsTracker';
-import { isJoker } from '../engine/dice';
-import { chooseBestMove, chooseBestJokerValue } from '../engine/ai';
+import { isJester } from '../engine/dice';
+import { chooseBestMove, chooseBestJesterValue } from '../engine/ai';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
 
@@ -23,23 +23,23 @@ function applyRoll(prev: GameState): GameState {
         {
           turn: newState.turnCount,
           player: newState.currentPlayer,
-          action: `${newState.currentPlayer === 1 ? 'Sunstone' : 'Moonstone'} rolled ${isJoker(dice.values[0]) ? 'Joker' : dice.values[0]}, ${isJoker(dice.values[1]) ? 'Joker' : dice.values[1]} — no valid moves`,
+          action: `${newState.currentPlayer === 1 ? 'Sunstone' : 'Moonstone'} rolled ${isJester(dice.values[0]) ? 'Jester' : dice.values[0]}, ${isJester(dice.values[1]) ? 'Jester' : dice.values[1]} — no valid moves`,
           timestamp: Date.now(),
         },
       ],
     };
   }
 
-  const d1Joker = isJoker(dice.values[0]);
-  const d2Joker = isJoker(dice.values[1]);
-  const d1Label = d1Joker ? 'Joker' : String(dice.values[0]);
-  const d2Label = d2Joker ? 'Joker' : String(dice.values[1]);
+  const d1Jester = isJester(dice.values[0]);
+  const d2Jester = isJester(dice.values[1]);
+  const d1Label = d1Jester ? 'Jester' : String(dice.values[0]);
+  const d2Label = d2Jester ? 'Jester' : String(dice.values[1]);
   let rollNote = '';
-  if (d1Joker && d2Joker) {
-    rollNote = ' — Double Jokers! Move 1 & 2, then choose doubles';
-  } else if (d1Joker || d2Joker) {
-    const normalVal = d1Joker ? dice.values[1] : dice.values[0];
-    rollNote = ` — Joker! 4x${normalVal}`;
+  if (d1Jester && d2Jester) {
+    rollNote = ' — Double Jesters! Move 1 & 2, then choose doubles';
+  } else if (d1Jester || d2Jester) {
+    const normalVal = d1Jester ? dice.values[1] : dice.values[0];
+    rollNote = ` — Jester! 4x${normalVal}`;
   } else if (dice.values[0] === dice.values[1]) {
     rollNote = ' (doubles!)';
   }
@@ -80,11 +80,11 @@ function applyMove(prev: GameState, move: Move): GameState {
   return newState;
 }
 
-function applyJokerChoice(prev: GameState, value: number): GameState {
-  if (!prev.dice.pendingDoubleJoker || prev.dice.remaining.length > 0) return prev;
+function applyJesterChoice(prev: GameState, value: number): GameState {
+  if (!prev.dice.pendingDoubleJester || prev.dice.remaining.length > 0) return prev;
   const newState: GameState = {
     ...prev,
-    dice: { ...prev.dice, remaining: [value, value, value, value], pendingDoubleJoker: false },
+    dice: { ...prev.dice, remaining: [value, value, value, value], pendingDoubleJester: false },
     moveLog: [
       ...prev.moveLog,
       {
@@ -99,7 +99,7 @@ function applyJokerChoice(prev: GameState, value: number): GameState {
     return {
       ...newState,
       currentPlayer: newState.currentPlayer === 1 ? 2 : 1,
-      dice: { values: newState.dice.values, remaining: [], hasRolled: false, pendingDoubleJoker: false },
+      dice: { values: newState.dice.values, remaining: [], hasRolled: false, pendingDoubleJester: false },
       phase: 'rolling',
       turnCount: newState.turnCount + 1,
     };
@@ -146,7 +146,7 @@ export function useGame() {
       setState(prev => ({
         ...prev,
         currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
-        dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJoker: false },
+        dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
         phase: 'rolling',
         turnCount: prev.turnCount + 1,
       }));
@@ -189,9 +189,9 @@ export function useGame() {
     setState(createInitialState());
   }, []);
 
-  const chooseJokerDoubles = useCallback((value: number) => {
+  const chooseJesterDoubles = useCallback((value: number) => {
     if (isAITurn) return;
-    setState(prev => applyJokerChoice(prev, value));
+    setState(prev => applyJesterChoice(prev, value));
   }, [isAITurn]);
 
   // ── AI auto-play ──
@@ -220,13 +220,13 @@ export function useGame() {
 
       // Moving phase
       if (state.phase === 'moving') {
-        // Handle Joker doubles choice
-        const awaitingChoice = state.dice.pendingDoubleJoker && state.dice.remaining.length === 0;
+        // Handle Jester doubles choice
+        const awaitingChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0;
         if (awaitingChoice) {
           await delay(2000);
           if (cancelled) return;
-          const value = chooseBestJokerValue(state, state.aiDifficulty);
-          setState(prev => applyJokerChoice(prev, value));
+          const value = chooseBestJesterValue(state, state.aiDifficulty);
+          setState(prev => applyJesterChoice(prev, value));
           return;
         }
 
@@ -254,26 +254,26 @@ export function useGame() {
       cancelled = true;
       if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
     };
-  }, [state.phase, state.currentPlayer, state.dice.remaining.length, state.gameMode, isAITurn, state.dice.pendingDoubleJoker, state.turnCount]);
+  }, [state.phase, state.currentPlayer, state.dice.remaining.length, state.gameMode, isAITurn, state.dice.pendingDoubleJester, state.turnCount]);
 
   // ── Computed values ──
 
-  const awaitingJokerChoice = state.dice.pendingDoubleJoker && state.dice.remaining.length === 0 && state.phase === 'moving';
+  const awaitingJesterChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0 && state.phase === 'moving';
 
-  const validMoves = useMemo(() => computeValidMoves(state, awaitingJokerChoice), [state, awaitingJokerChoice]);
+  const validMoves = useMemo(() => computeValidMoves(state, awaitingJesterChoice), [state, awaitingJesterChoice]);
 
   const canUndo = undoStack.current.length > 0 && state.phase === 'moving' && !isAITurn;
 
   return {
     state, roll, selectMove, restart, validMoves,
-    awaitingJokerChoice, chooseJokerDoubles,
+    awaitingJesterChoice, chooseJesterDoubles,
     undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling,
   };
 }
 
-function computeValidMoves(state: GameState, awaitingJokerChoice?: boolean): Move[] {
+function computeValidMoves(state: GameState, awaitingJesterChoice?: boolean): Move[] {
   if (state.phase !== 'moving') return [];
-  if (awaitingJokerChoice) return [];
+  if (awaitingJesterChoice) return [];
   const seen = new Set<string>();
   const moves: Move[] = [];
 
