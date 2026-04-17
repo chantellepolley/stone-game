@@ -244,7 +244,7 @@ export function useGame() {
             dbCreatePending.current = false;
           });
       })
-      .catch(e => {
+      .then(undefined, (e: unknown) => {
         console.error('[STONE] startGame error:', e);
         dbCreatePending.current = false;
       });

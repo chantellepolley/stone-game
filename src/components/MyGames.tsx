@@ -149,7 +149,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                     </div>
                   </div>
                   <div className="text-white/30 text-xs font-heading">
-                    {isOnline ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
+                    {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
                   </div>
                 </button>
               );
