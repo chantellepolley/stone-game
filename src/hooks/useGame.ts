@@ -123,25 +123,32 @@ export function useGame() {
   // ── Helper: get current player's DB id ──
   async function getMyPlayerId(): Promise<string | null> {
     const token = localStorage.getItem('stone_device_token');
-    if (!token) return null;
-    const { data } = await supabase.from('players').select('id').eq('device_token', token).single();
+    if (!token) { console.warn('[STONE] No device token'); return null; }
+    const { data, error } = await supabase.from('players').select('id').eq('device_token', token).single();
+    if (error) { console.warn('[STONE] getMyPlayerId error:', error.message); return null; }
     return data?.id || null;
   }
 
   // ── Auto-save state to DB (debounced) ──
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
   useEffect(() => {
+    // Save whenever game is active — even if gameDbId isn't set yet (will save on next change)
+    if (state.phase === 'not_started' || state.phase === 'game_over') return;
     if (!gameDbId.current) return;
-    if (state.phase === 'not_started') return;
 
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       if (!gameDbId.current) return;
       supabase.from('games').update({
-        state,
-        status: state.phase === 'game_over' ? 'completed' : 'active',
+        state: stateRef.current,
+        status: stateRef.current.phase === 'game_over' ? 'completed' : 'active',
         updated_at: new Date().toISOString(),
-      }).eq('id', gameDbId.current).then(() => {});
-    }, 1000); // debounce 1s so rapid state changes don't spam DB
+      }).eq('id', gameDbId.current).then(({ error }) => {
+        if (error) console.error('[STONE] Auto-save failed:', error.message);
+      });
+    }, 1000);
 
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [state]);
@@ -186,24 +193,47 @@ export function useGame() {
 
   // ── Human actions ──
 
-  const startGame = useCallback(async (mode: GameMode, difficulty: AIDifficulty) => {
+  // Track pending DB creation so auto-save waits for it
+  const dbCreatePending = useRef(false);
+
+  const startGame = useCallback((mode: GameMode, difficulty: AIDifficulty) => {
     const newState: GameState = { ...createInitialState(), phase: 'rolling', gameMode: mode, aiDifficulty: difficulty };
     setState(newState);
     statsRecorded.current = false;
+    gameDbId.current = null;
+    dbCreatePending.current = true;
 
-    // Save to DB immediately so it appears in My Games
-    const playerId = await getMyPlayerId();
-    if (playerId) {
-      const dbMode = mode === 'ai' ? 'ai' : 'local';
-      const { data } = await supabase.from('games').insert({
-        room_code: `${dbMode.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
-        player1_id: playerId,
-        mode: dbMode,
-        state: newState,
-        status: 'active',
-      }).select('id').single();
-      if (data) gameDbId.current = data.id;
-    }
+    // Fire-and-forget DB insert — don't block the game starting
+    (async () => {
+      try {
+        const playerId = await getMyPlayerId();
+        if (!playerId) {
+          console.warn('[STONE] Cannot save game: no player ID');
+          dbCreatePending.current = false;
+          return;
+        }
+        const dbMode = mode === 'ai' ? 'ai' : 'local';
+        const code = `${dbMode.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+        const { data, error } = await supabase.from('games').insert({
+          room_code: code,
+          player1_id: playerId,
+          mode: dbMode,
+          state: stateRef.current, // use ref to get latest state (game may have progressed)
+          status: 'active',
+        }).select('id').single();
+
+        if (error) {
+          console.error('[STONE] Failed to create game in DB:', error.message);
+        } else if (data) {
+          console.log('[STONE] Game saved to DB:', data.id);
+          gameDbId.current = data.id;
+        }
+      } catch (e) {
+        console.error('[STONE] startGame DB error:', e);
+      } finally {
+        dbCreatePending.current = false;
+      }
+    })();
   }, []);
 
   const roll = useCallback(() => {
