@@ -24,30 +24,14 @@ const DOT_POSITIONS: Record<number, [number, number][]> = {
   5: [[10, 10], [30, 10], [20, 20], [10, 30], [30, 30]],
 };
 
-/** Jester/Jester face SVG drawn on the die */
-function JesterFaceSVG({ faded }: { faded: boolean }) {
-  const color = faded ? '#8b735560' : '#c62828';
-  const accent = faded ? '#8b735540' : '#ff8f00';
+/** Jester face image on the die */
+function JesterFaceImage({ faded }: { faded: boolean }) {
   return (
-    <svg width="40" height="40" viewBox="0 0 40 40">
-      {/* Jester hat - three points */}
-      <path d="M8 18 L14 6 L18 14 L20 4 L22 14 L26 6 L32 18"
-        fill="none" stroke={accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Bells on hat tips */}
-      <circle cx="14" cy="5" r="2" fill={accent} />
-      <circle cx="20" cy="3" r="2" fill={accent} />
-      <circle cx="26" cy="5" r="2" fill={accent} />
-      {/* Face circle */}
-      <circle cx="20" cy="24" r="10" fill={faded ? '#c4b59a30' : '#fff3e0'} stroke={color} strokeWidth="1.5" />
-      {/* Eyes */}
-      <path d="M15 22 L17 20 L15 22 L17 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M25 22 L23 20 L25 22 L23 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      {/* Wide grin */}
-      <path d="M14 27 Q20 33 26 27" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      {/* Grin teeth marks */}
-      <line x1="18" y1="28" x2="18" y2="30" stroke={color} strokeWidth="0.8" />
-      <line x1="22" y1="28" x2="22" y2="30" stroke={color} strokeWidth="0.8" />
-    </svg>
+    <img
+      src="/jester-dice.png"
+      alt="Jester"
+      className={`w-10 h-10 rounded-full object-cover ${faded ? 'opacity-40' : ''}`}
+    />
   );
 }
 
@@ -76,7 +60,7 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
       transition-opacity duration-300
     `}>
       {jester ? (
-        <JesterFaceSVG faded={used} />
+        <JesterFaceImage faded={used} />
       ) : (
         <svg width="40" height="40" viewBox="0 0 40 40">
           {dots.map(([cx, cy], i) => (
