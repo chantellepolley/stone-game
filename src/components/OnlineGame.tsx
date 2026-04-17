@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
-import { playYourTurnSound } from '../utils/sounds';
+import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -24,6 +24,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
   } = useOnlineGame();
   const [hintsEnabled, setHintsEnabled] = useState(true);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const { player } = usePlayerContext();
 
@@ -137,6 +138,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer">
             Hints: {hintsEnabled ? 'ON' : 'OFF'}
           </button>
+          <button onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); }}
+            className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer">
+            Sound: {soundOn ? 'ON' : 'OFF'}
+          </button>
         </div>
       </div>
 
@@ -152,6 +157,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
           className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
                      bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
           Hints {hintsEnabled ? 'ON' : 'OFF'}
+        </button>
+        <button onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); }}
+          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
+          {soundOn ? '🔊' : '🔇'}
         </button>
         <button onClick={() => setShowMobileLog(v => !v)}
           className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
