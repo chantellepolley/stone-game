@@ -6,7 +6,7 @@ import { GAME_CONFIG } from '../config/gameConfig';
 import { supabase } from '../lib/supabase';
 import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
 import { recordGameResult } from '../lib/statsTracker';
-import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
+import { loadPlayerColor } from '../utils/stoneColors';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 function generateRoomCode(): string {
@@ -313,7 +313,7 @@ export function useOnlineGame() {
 
     const { data: game } = await supabase
       .from('games')
-      .select('id, state')
+      .select('id, state, player1_id')
       .eq('room_code', upperCode)
       .in('status', ['waiting', 'active'])
       .maybeSingle();
@@ -365,7 +365,7 @@ export function useOnlineGame() {
 
     const { data: game } = await supabase
       .from('games')
-      .select('state, status')
+      .select('state, status, player1_id, player2_id')
       .eq('id', gameId)
       .single();
 
@@ -378,13 +378,8 @@ export function useOnlineGame() {
     }
 
     // Fetch opponent name
-    const { data: gameRow } = await supabase
-      .from('games')
-      .select('player1_id, player2_id')
-      .eq('id', gameId)
-      .single();
-    if (gameRow) {
-      const opponentId = player === 1 ? gameRow.player2_id : gameRow.player1_id;
+    if (game) {
+      const opponentId = player === 1 ? game.player2_id : game.player1_id;
       if (opponentId) {
         const { data: opp } = await supabase.from('players').select('username').eq('id', opponentId).single();
         if (opp) setOpponentName(opp.username);
