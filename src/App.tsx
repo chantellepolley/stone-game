@@ -24,7 +24,7 @@ function getJoinCodeFromURL(): string | null {
 
 export default function App() {
   const playerHook = usePlayer();
-  const { player, isLoading, createPlayer } = playerHook;
+  const { player, isLoading } = playerHook;
   const [screen, setScreen] = useState<AppScreen>('game');
   const [autoJoinCode, setAutoJoinCode] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2 } | null>(null);
