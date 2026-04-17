@@ -197,43 +197,57 @@ export function useGame() {
   const dbCreatePending = useRef(false);
 
   const startGame = useCallback((mode: GameMode, difficulty: AIDifficulty) => {
+    console.log('[STONE] startGame called:', mode, difficulty);
     const newState: GameState = { ...createInitialState(), phase: 'rolling', gameMode: mode, aiDifficulty: difficulty };
     setState(newState);
     statsRecorded.current = false;
     gameDbId.current = null;
     dbCreatePending.current = true;
 
-    // Fire-and-forget DB insert — don't block the game starting
-    (async () => {
-      try {
-        const playerId = await getMyPlayerId();
-        if (!playerId) {
-          console.warn('[STONE] Cannot save game: no player ID');
+    // Save game to DB in background
+    const token = localStorage.getItem('stone_device_token');
+    console.log('[STONE] device token:', token ? 'exists' : 'MISSING');
+
+    if (!token) {
+      console.warn('[STONE] Cannot save game: no device token');
+      dbCreatePending.current = false;
+      return;
+    }
+
+    supabase.from('players').select('id').eq('device_token', token).single()
+      .then(({ data: playerData, error: playerErr }) => {
+        if (playerErr || !playerData) {
+          console.error('[STONE] Cannot get player ID:', playerErr?.message);
           dbCreatePending.current = false;
           return;
         }
+        const playerId = playerData.id;
+        console.log('[STONE] Player ID:', playerId);
+
         const dbMode = mode === 'ai' ? 'ai' : 'local';
         const code = `${dbMode.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-        const { data, error } = await supabase.from('games').insert({
+
+        return supabase.from('games').insert({
           room_code: code,
           player1_id: playerId,
           mode: dbMode,
-          state: stateRef.current, // use ref to get latest state (game may have progressed)
+          state: stateRef.current,
           status: 'active',
-        }).select('id').single();
-
-        if (error) {
-          console.error('[STONE] Failed to create game in DB:', error.message);
-        } else if (data) {
-          console.log('[STONE] Game saved to DB:', data.id);
-          gameDbId.current = data.id;
-        }
-      } catch (e) {
-        console.error('[STONE] startGame DB error:', e);
-      } finally {
+        }).select('id').single()
+          .then(({ data: gameData, error: gameErr }) => {
+            if (gameErr) {
+              console.error('[STONE] DB insert failed:', gameErr.message, gameErr.details, gameErr.hint);
+            } else if (gameData) {
+              console.log('[STONE] Game saved to DB:', gameData.id);
+              gameDbId.current = gameData.id;
+            }
+            dbCreatePending.current = false;
+          });
+      })
+      .catch(e => {
+        console.error('[STONE] startGame error:', e);
         dbCreatePending.current = false;
-      }
-    })();
+      });
   }, []);
 
   const roll = useCallback(() => {
