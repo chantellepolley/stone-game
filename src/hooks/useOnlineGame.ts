@@ -96,14 +96,14 @@ export function useOnlineGame() {
         }
       }
 
-      // Reconnect the channel if needed
+      // Reconnect the channel if needed (preserve state since we loaded from DB)
       if (channelRef.current) {
         const channelStatus = channelRef.current.state;
         if (channelStatus !== 'joined' && channelStatus !== 'joining') {
-          joinChannel(roomCode, myPlayer);
+          joinChannel(roomCode, myPlayer, true);
         }
       } else {
-        joinChannel(roomCode, myPlayer);
+        joinChannel(roomCode, myPlayer, true);
       }
 
       // Announce we're back
@@ -167,10 +167,10 @@ export function useOnlineGame() {
     }).eq('id', gameDbId.current);
   }
 
-  function joinChannel(code: string, player: PlayerId) {
+  function joinChannel(code: string, player: PlayerId, preserveStateReceived = false) {
     if (channelRef.current) supabase.removeChannel(channelRef.current);
     if (pingRef.current) clearInterval(pingRef.current);
-    stateReceivedRef.current = false;
+    if (!preserveStateReceived) stateReceivedRef.current = false;
 
     const channel = supabase.channel(`stone-game-${code}`, {
       config: { broadcast: { self: false } },
@@ -457,7 +457,9 @@ export function useOnlineGame() {
       }
     }
 
-    joinChannel(code, player);
+    // preserveStateReceived=true so the P2 retry loop doesn't error out
+    // when we already loaded state from DB
+    joinChannel(code, player, true);
 
     // Announce presence after a short delay so the channel is subscribed
     setTimeout(() => {
