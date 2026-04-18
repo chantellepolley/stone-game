@@ -34,8 +34,24 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   const [chatOpen, setChatOpen] = useState(false);
   const [lastSeenMsgCount, setLastSeenMsgCount] = useState(0);
   const { player } = usePlayerContext();
-  const { addFriendById } = useFriends();
+  const { addFriendById, isFriend } = useFriends();
   const [friendRequestSent, setFriendRequestSent] = useState(false);
+  const [alreadyFriends, setAlreadyFriends] = useState(false);
+
+  // Check if already friends with opponent
+  useEffect(() => {
+    if (!opponentName || !roomCode || !myPlayer) return;
+    (async () => {
+      const { supabase: sb } = await import('../lib/supabase');
+      const col = myPlayer === 1 ? 'player2_id' : 'player1_id';
+      const { data } = await sb.from('games').select(col).eq('room_code', roomCode).single();
+      const oppId = data?.[col];
+      if (oppId) {
+        const yes = await isFriend(oppId);
+        if (yes) setAlreadyFriends(true);
+      }
+    })();
+  }, [opponentName, roomCode, myPlayer, isFriend]);
 
   const myName = player?.username;
   const p1Name = myPlayer === 1 ? myName : (opponentName || undefined);
@@ -63,7 +79,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
 
   // Auto-join from URL or resume from My Games
   const [autoJoined, setAutoJoined] = useState(false);
-  if (!autoJoined && onlinePhase === 'idle') {
+  useEffect(() => {
+    if (autoJoined || onlinePhase !== 'idle') return;
     if (resumeData) {
       setAutoJoined(true);
       setTimeout(() => resumeGame(resumeData.gameId, resumeData.roomCode, resumeData.player), 100);
@@ -71,7 +88,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
       setAutoJoined(true);
       setTimeout(() => joinRoom(autoJoinCode), 100);
     }
-  }
+  }, [autoJoined, onlinePhase, resumeData, autoJoinCode, resumeGame, joinRoom]);
 
   // Show lobby if not playing yet
   if (onlinePhase !== 'playing') {
@@ -135,7 +152,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             : `${opponentName || 'Opponent'} has stepped away`}
         </span>
         <span className={`w-2 h-2 rounded-full ${opponentConnected ? 'bg-green-400' : 'bg-white/30'}`} />
-        {opponentName && !friendRequestSent && (
+        {opponentName && !friendRequestSent && !alreadyFriends && (
           <>
             <span className="text-white/50">|</span>
             <button

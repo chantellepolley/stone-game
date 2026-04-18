@@ -18,6 +18,7 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
   const [entries, setEntries] = useState<LeaderEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [friendAdded, setFriendAdded] = useState<Set<string>>(new Set());
+  const [existingFriends, setExistingFriends] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
@@ -43,10 +44,24 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
       players?.forEach(p => { nameMap[p.id] = p.username; avatarMap[p.id] = p.avatar_url; });
 
       setEntries(stats.map(s => ({ ...s, username: nameMap[s.player_id] || 'Unknown', avatar_url: avatarMap[s.player_id] || null })));
+
+      // Check which players are already friends
+      if (player) {
+        const { data: friendships } = await supabase
+          .from('friends')
+          .select('player_id, friend_id')
+          .or(`player_id.eq.${player.id},friend_id.eq.${player.id}`);
+        const friendSet = new Set<string>();
+        friendships?.forEach(f => {
+          friendSet.add(f.player_id === player.id ? f.friend_id : f.player_id);
+        });
+        setExistingFriends(friendSet);
+      }
+
       setLoading(false);
     };
     load();
-  }, []);
+  }, [player]);
 
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
@@ -96,7 +111,7 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                       <td className="py-1.5 px-1 text-center">{e.losses}</td>
                       <td className="py-1.5 px-1 text-center">{pct}%</td>
                       <td className="py-1.5 px-1">
-                        {!isMe && !friendAdded.has(e.player_id) && (
+                        {!isMe && !friendAdded.has(e.player_id) && !existingFriends.has(e.player_id) && (
                           <button
                             onClick={async () => {
                               const r = await addFriendById(e.player_id);

@@ -194,7 +194,8 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
-  const activeGames = games.filter(g => g.status !== 'completed');
+  // Filter out stale waiting games with no opponent (old abandoned rooms)
+  const activeGames = games.filter(g => g.status !== 'completed' && g.opponent_name !== 'Waiting...');
   const pastGames = games.filter(g => g.status === 'completed');
   const totalInvites = invites.length + pendingRequests.length;
   const myTurnCount = activeGames.filter(g => g.is_my_turn).length;

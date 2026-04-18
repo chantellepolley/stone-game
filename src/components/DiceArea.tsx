@@ -3,6 +3,8 @@ import type { DiceState, GamePhase, PlayerId } from '../types/game';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { isJester } from '../engine/dice';
 import { playDiceRattle, playDiceSlam } from '../utils/sounds';
+import { useStoneColorOverrides } from '../contexts/StoneColorContext';
+import { getStoneColor, loadPlayerColor } from '../utils/stoneColors';
 
 interface DiceAreaProps {
   dice: DiceState;
@@ -39,41 +41,54 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
   const jester = isJester(value);
   const dots = !jester ? (DOT_POSITIONS[value] || []) : [];
   const isP1 = player === 1;
+  const colorOverrides = useStoneColorOverrides();
 
-  // Player-colored dice — fully opaque
-  const normalBg = isP1
-    ? 'bg-player1 border-player1-accent shadow-lg'
-    : 'bg-player2 border-player2-accent shadow-lg';
-  const dotColor = isP1 ? '#3d2a14' : '#1a2e38';
+  // Use custom stone colors for dice
+  const colorId = isP1
+    ? (colorOverrides.p1ColorId || loadPlayerColor())
+    : (colorOverrides.p2ColorId || 'slate');
+  const stoneColor = getStoneColor(colorId);
+
   const dotFaded = '#8b735580';
 
   return (
     <div className={`
-      relative w-14 h-14 rounded-lg border-2 flex items-center justify-center
-      ${used
-        ? 'bg-stone-dark border-stone-accent/40 opacity-50'
-        : normalBg
-      }
+      relative w-14 h-14 rounded-lg border-2 flex items-center justify-center shadow-lg
+      ${used ? 'opacity-50' : ''}
       ${rolling ? 'dice-rolling' : ''}
       transition-opacity duration-300
     `}
-    style={jester && !used ? {
+    style={used ? {
+      backgroundColor: '#3d3632',
+      borderColor: 'rgba(107,95,85,0.4)',
+    } : jester ? {
       backgroundImage: "url('/stone-bg.jpg')",
       backgroundSize: '80px',
       filter: 'brightness(1.2) contrast(1.1)',
-    } : undefined}
+      borderColor: stoneColor.border,
+    } : {
+      backgroundImage: "url('/stone-bg.jpg')",
+      backgroundSize: '80px',
+      filter: 'brightness(1.3) contrast(1.1)',
+      borderColor: stoneColor.border,
+      backgroundColor: stoneColor.tint,
+    }}
     >
+      {/* Color tint overlay */}
+      {!used && !jester && (
+        <div className="absolute inset-0 rounded-md" style={{ backgroundColor: stoneColor.tint }} />
+      )}
       {jester ? (
         <JesterFaceImage faded={used} />
       ) : (
-        <svg width="40" height="40" viewBox="0 0 40 40">
+        <svg width="40" height="40" viewBox="0 0 40 40" className="relative z-10">
           {dots.map(([cx, cy], i) => (
             <circle
               key={i}
               cx={cx}
               cy={cy}
               r={4}
-              fill={used ? dotFaded : dotColor}
+              fill={used ? dotFaded : '#1a1510'}
             />
           ))}
         </svg>
