@@ -383,14 +383,15 @@ export function useOnlineGame() {
         }));
       }
 
-      // Load saved state if it exists
+      // Load saved state from DB so we have it ready
       if (game.state) {
         const loadedState = validateState(game.state);
         setState(loadedState);
         stateRef.current = loadedState;
+        // Mark state as received so the channel retry won't error out
         stateReceivedRef.current = true;
+        // Go straight to playing — we have valid state from DB
         setOnlinePhase('playing');
-        setOpponentConnected(true);
       }
 
       // Load chat from DB

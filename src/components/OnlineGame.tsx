@@ -90,6 +90,13 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     }
   }, [autoJoined, onlinePhase, resumeData, autoJoinCode, resumeGame, joinRoom]);
 
+  // Safety log
+  useEffect(() => {
+    if (onlinePhase === 'playing' && state.phase === 'not_started') {
+      console.error('[STONE] Playing phase but state is not_started — this should not happen');
+    }
+  }, [onlinePhase, state.phase]);
+
   // Show lobby if not playing yet
   if (onlinePhase !== 'playing') {
     return (
@@ -104,14 +111,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
       />
     );
   }
-
-  // Safety: if we're "playing" but state is not_started (blank), this shouldn't happen
-  // since validateState creates a rolling state. Log it for debugging.
-  useEffect(() => {
-    if (onlinePhase === 'playing' && state.phase === 'not_started') {
-      console.error('[STONE] Playing phase but state is not_started — this should not happen');
-    }
-  }, [onlinePhase, state.phase]);
 
   if (onlinePhase === 'playing' && state.phase === 'not_started') {
     return (
