@@ -105,15 +105,13 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     );
   }
 
-  // Safety: if we're "playing" but state is not_started (blank), try to reload from DB
-  const [retried, setRetried] = useState(false);
+  // Safety: if we're "playing" but state is not_started (blank), this shouldn't happen
+  // since validateState creates a rolling state. Log it for debugging.
   useEffect(() => {
-    if (onlinePhase === 'playing' && state.phase === 'not_started' && !retried && resumeData) {
-      setRetried(true);
-      // Try to reload state from DB
-      resumeGame(resumeData.gameId, resumeData.roomCode, resumeData.player);
+    if (onlinePhase === 'playing' && state.phase === 'not_started') {
+      console.error('[STONE] Playing phase but state is not_started — this should not happen');
     }
-  }, [onlinePhase, state.phase, retried, resumeData, resumeGame]);
+  }, [onlinePhase, state.phase]);
 
   if (onlinePhase === 'playing' && state.phase === 'not_started') {
     return (

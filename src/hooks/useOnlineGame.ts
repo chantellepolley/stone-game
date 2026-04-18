@@ -258,10 +258,26 @@ export function useOnlineGame() {
             const retryInterval = setInterval(async () => {
               if (stateReceivedRef.current) { clearInterval(retryInterval); return; }
               retries++;
-              if (retries > 7) {
+              if (retries > 5) {
                 clearInterval(retryInterval);
+                // Host isn't responding — try loading state from DB as fallback
+                if (gameDbId.current) {
+                  const { data: fallback } = await supabase
+                    .from('games')
+                    .select('state')
+                    .eq('id', gameDbId.current)
+                    .single();
+                  if (fallback?.state) {
+                    const loadedState = validateState(fallback.state);
+                    setState(loadedState);
+                    stateRef.current = loadedState;
+                    stateReceivedRef.current = true;
+                    setOnlinePhase('playing');
+                    return;
+                  }
+                }
                 setOnlinePhase('error');
-                setError('Could not connect to this game. The host may not be online right now. Try resuming from My Games.');
+                setError('Could not connect to this game. Try resuming from My Games.');
                 return;
               }
               await channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
@@ -403,7 +419,8 @@ export function useOnlineGame() {
     }
 
     // Always connect to the channel even if game not in DB yet
-    joinChannel(upperCode, 2);
+    // preserveStateReceived if we already loaded state from DB
+    joinChannel(upperCode, 2, stateReceivedRef.current);
   }, []);
 
   async function resumeGameInternal(gameId: string, code: string, player: PlayerId) {
