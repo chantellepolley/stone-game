@@ -400,18 +400,32 @@ export function useOnlineGame() {
     statsRecorded.current = false;
     gameDbId.current = gameId;
 
-    const { data: game } = await supabase
+    const { data: game, error: gameErr } = await supabase
       .from('games')
       .select('state, status, player1_id, player2_id')
       .eq('id', gameId)
       .single();
 
+    if (gameErr) {
+      console.error('[STONE] Resume failed:', gameErr.message);
+      setOnlinePhase('error');
+      setError('Could not load game. It may have been deleted.');
+      return;
+    }
+
     if (game?.state) {
       const loadedState = game.state as GameState;
+      // Ensure backward compat fields
+      if (!loadedState.captureCount) loadedState.captureCount = { 1: 0, 2: 0 };
       setState(loadedState);
       stateRef.current = loadedState;
       stateReceivedRef.current = true;
       setOnlinePhase('playing');
+    } else {
+      // No state in DB — game might be corrupted
+      setOnlinePhase('error');
+      setError('Game data not found. It may have been ended.');
+      return;
     }
 
     // Load chat from DB

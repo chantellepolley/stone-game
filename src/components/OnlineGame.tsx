@@ -105,12 +105,21 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     );
   }
 
-  // Safety: if we're "playing" but state is not_started (blank), show reconnecting
+  // Safety: if we're "playing" but state is not_started (blank), try to reload from DB
+  const [retried, setRetried] = useState(false);
+  useEffect(() => {
+    if (onlinePhase === 'playing' && state.phase === 'not_started' && !retried && resumeData) {
+      setRetried(true);
+      // Try to reload state from DB
+      resumeGame(resumeData.gameId, resumeData.roomCode, resumeData.player);
+    }
+  }, [onlinePhase, state.phase, retried, resumeData, resumeGame]);
+
   if (onlinePhase === 'playing' && state.phase === 'not_started') {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center gap-4">
         <img src="/logo.png" alt="STONE" className="h-32 object-contain" />
-        <p className="text-white/50 text-sm animate-pulse">Reconnecting...</p>
+        <p className="text-white/50 text-sm animate-pulse">Loading game...</p>
         <button onClick={() => { leave(); onBack(); }}
           className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-4">
           Back to Menu
