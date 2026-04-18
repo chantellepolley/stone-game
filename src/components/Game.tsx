@@ -25,14 +25,14 @@ interface GameProps {
 export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
 
-  // Resume a saved game from My Games
+  // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
   const [hasResumed, setHasResumed] = useState(false);
   useEffect(() => {
-    if (resumeGameId && !hasResumed) {
+    if (resumeGameId && !hasResumed && state.phase === 'not_started') {
       setHasResumed(true);
       loadGame(resumeGameId);
     }
-  }, [resumeGameId, hasResumed, loadGame]);
+  }, [resumeGameId, hasResumed, loadGame, state.phase]);
   const { player } = usePlayerContext();
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());

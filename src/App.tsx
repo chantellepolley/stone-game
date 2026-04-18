@@ -125,22 +125,16 @@ export default function App() {
       setAutoJoinCode(code);
       setScreen('online');
       window.history.replaceState({}, '', '/');
-    } else {
-      // Check for a pending join code from a previous page load (e.g., after login)
+    } else if (player) {
+      // Only check pending join if player is already logged in
       const pending = localStorage.getItem('stone_pending_join');
       if (pending) {
+        localStorage.removeItem('stone_pending_join');
         setAutoJoinCode(pending);
         setScreen('online');
       }
     }
-  }, []);
-
-  // Clear pending join code once player is loaded and we're joining
-  useEffect(() => {
-    if (player && autoJoinCode && screen === 'online') {
-      localStorage.removeItem('stone_pending_join');
-    }
-  }, [player, autoJoinCode, screen]);
+  }, [player]);
 
   if (isLoading) {
     return (
@@ -186,14 +180,14 @@ export default function App() {
       )}
       {screen === 'online' && (
         <OnlineGame
-          onBack={() => { setScreen('game'); setAutoJoinCode(null); setResumeData(null); }}
+          onBack={() => { setScreen('game'); setAutoJoinCode(null); setResumeData(null); setResumeLocalGameId(null); }}
           autoJoinCode={autoJoinCode}
           resumeData={resumeData}
         />
       )}
       {screen === 'game' && (
         <Game
-          onPlayOnline={() => setScreen('online')}
+          onPlayOnline={() => { setResumeLocalGameId(null); setScreen('online'); }}
           onShowStats={() => setScreen('stats')}
           onShowLeaderboard={() => setScreen('leaderboard')}
           onShowMyGames={() => { setResumeLocalGameId(null); setScreen('my-games'); }}

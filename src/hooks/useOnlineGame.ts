@@ -64,16 +64,8 @@ export function useOnlineGame() {
   }, [roomCode, myPlayer]);
 
   useEffect(() => {
-    // Auto-recover active game on mount
-    const saved = localStorage.getItem('stone_active_game');
-    if (saved && onlinePhase === 'idle') {
-      try {
-        const { gameId, roomCode: code, myPlayer: player } = JSON.parse(saved);
-        if (gameId && code && player) {
-          resumeGameInternal(gameId, code, player);
-        }
-      } catch { /* ignore bad data */ }
-    }
+    // Don't auto-recover — let the user resume from My Games instead.
+    // Auto-recovery was causing blank screens when old game data was stale.
 
     return () => {
       if (channelRef.current) supabase.removeChannel(channelRef.current);
