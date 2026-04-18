@@ -9,6 +9,18 @@ import { recordGameResult } from '../lib/statsTracker';
 import { loadPlayerColor } from '../utils/stoneColors';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+/** Validate and repair a game state loaded from DB */
+function validateState(raw: any): GameState {
+  // If critical fields are missing, create a fresh state
+  if (!raw || !raw.board || !raw.bench || !raw.jail || !raw.home || !raw.dice) {
+    return { ...createInitialState(), phase: 'rolling' as GamePhase, gameMode: 'pvp' as const };
+  }
+  const s = raw as GameState;
+  if (!s.captureCount) s.captureCount = { 1: 0, 2: 0 };
+  if (!s.moveLog) s.moveLog = [];
+  return s;
+}
+
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -87,8 +99,7 @@ export function useOnlineGame() {
         .single();
 
       if (data?.state) {
-        const loadedState = data.state as GameState;
-        if (!loadedState.captureCount) loadedState.captureCount = { 1: 0, 2: 0 };
+        const loadedState = validateState(data.state);
         setState(loadedState);
         stateRef.current = loadedState;
         // Ensure we're in playing phase if we have valid state
@@ -358,8 +369,7 @@ export function useOnlineGame() {
 
       // Load saved state if it exists
       if (game.state) {
-        const loadedState = game.state as GameState;
-        if (!loadedState.captureCount) loadedState.captureCount = { 1: 0, 2: 0 };
+        const loadedState = validateState(game.state);
         setState(loadedState);
         stateRef.current = loadedState;
         stateReceivedRef.current = true;
@@ -416,10 +426,20 @@ export function useOnlineGame() {
       return;
     }
 
+    // If joining as P2 and player2_id isn't set yet, set it now
+    if (player === 2 && game && !game.player2_id) {
+      const myId = await getMyPlayerId();
+      if (myId) {
+        await supabase.from('games').update({
+          player2_id: myId,
+          status: 'active',
+          updated_at: new Date().toISOString(),
+        }).eq('id', gameId);
+      }
+    }
+
     if (game?.state) {
-      const loadedState = game.state as GameState;
-      // Ensure backward compat fields
-      if (!loadedState.captureCount) loadedState.captureCount = { 1: 0, 2: 0 };
+      const loadedState = validateState(game.state);
       setState(loadedState);
       stateRef.current = loadedState;
       stateReceivedRef.current = true;
