@@ -34,11 +34,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   const [chatOpen, setChatOpen] = useState(false);
   const [lastSeenMsgCount, setLastSeenMsgCount] = useState(0);
   const { player } = usePlayerContext();
-  const { addFriendById, isFriend } = useFriends();
-  const [friendRequestSent, setFriendRequestSent] = useState(false);
-  const [alreadyFriends, setAlreadyFriends] = useState(false);
+  const { addFriendById, getFriendStatus } = useFriends();
+  const [friendStatus, setFriendStatus] = useState<'none' | 'pending' | 'accepted' | 'sent'>('none');
 
-  // Check if already friends with opponent
+  // Check friend status with opponent
   useEffect(() => {
     if (!opponentName || !roomCode || !myPlayer) return;
     (async () => {
@@ -46,11 +45,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
       const { data } = await sb.from('games').select('player1_id, player2_id').eq('room_code', roomCode).single();
       const oppId = myPlayer === 1 ? data?.player2_id : data?.player1_id;
       if (oppId) {
-        const yes = await isFriend(oppId);
-        if (yes) setAlreadyFriends(true);
+        const status = await getFriendStatus(oppId);
+        if (status !== 'none') setFriendStatus(status);
       }
     })();
-  }, [opponentName, roomCode, myPlayer, isFriend]);
+  }, [opponentName, roomCode, myPlayer, getFriendStatus]);
 
   const myName = player?.username;
   const p1Name = myPlayer === 1 ? myName : (opponentName || undefined);
@@ -154,13 +153,13 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         {opponentName && (
           <>
             <span className="text-white/50">|</span>
-            {alreadyFriends ? (
+            {friendStatus === 'accepted' ? (
               <span className="text-[8px] text-green-400/80 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                 Friends
               </span>
-            ) : friendRequestSent ? (
-              <span className="text-[8px] text-amber-400/70">Request sent</span>
+            ) : friendStatus === 'pending' || friendStatus === 'sent' ? (
+              <span className="text-[8px] text-amber-400/70">Pending</span>
             ) : (
               <button
                 onClick={async () => {
@@ -169,7 +168,9 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
                     : (await import('../lib/supabase').then(m => m.supabase.from('games').select('player1_id').eq('room_code', roomCode).single())).data?.player1_id;
                   if (oppId) {
                     const r = await addFriendById(oppId);
-                    if (r === true || r === 'Already friends' || r === 'Friend request already pending') setFriendRequestSent(true);
+                    if (r === true) setFriendStatus('sent');
+                    else if (r === 'Already friends') setFriendStatus('accepted');
+                    else if (r === 'Friend invite already sent') setFriendStatus('pending');
                   }
                 }}
                 className="px-2 py-0.5 rounded text-[8px] font-heading uppercase tracking-wider

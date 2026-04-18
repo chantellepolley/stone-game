@@ -145,7 +145,7 @@ export function useFriends() {
     if (existing && existing.length > 0) {
       const f = existing[0];
       if (f.status === 'accepted') return 'Already friends';
-      return 'Friend request already pending';
+      return 'Friend invite already sent';
     }
 
     // Insert friend request
@@ -170,7 +170,7 @@ export function useFriends() {
     if (existing && existing.length > 0) {
       const f = existing[0];
       if (f.status === 'accepted') return 'Already friends';
-      return 'Friend request already pending';
+      return 'Friend invite already sent';
     }
 
     const { error } = await supabase
@@ -181,15 +181,22 @@ export function useFriends() {
     return true;
   }, [player]);
 
-  const isFriend = useCallback(async (targetId: string): Promise<boolean> => {
-    if (!player) return false;
+  const getFriendStatus = useCallback(async (targetId: string): Promise<'none' | 'pending' | 'accepted'> => {
+    if (!player) return 'none';
     const { data } = await supabase
       .from('friends')
-      .select('id')
+      .select('id, status')
       .or(`and(player_id.eq.${player.id},friend_id.eq.${targetId}),and(player_id.eq.${targetId},friend_id.eq.${player.id})`)
       .limit(1);
-    return (data?.length ?? 0) > 0;
+    if (!data || data.length === 0) return 'none';
+    return data[0].status as 'pending' | 'accepted';
   }, [player]);
+
+  // Backward compat wrapper
+  const isFriend = useCallback(async (targetId: string): Promise<boolean> => {
+    const status = await getFriendStatus(targetId);
+    return status === 'accepted';
+  }, [getFriendStatus]);
 
   const acceptFriend = useCallback(async (friendshipId: string): Promise<boolean> => {
     const { error } = await supabase
@@ -218,6 +225,7 @@ export function useFriends() {
     addFriend,
     addFriendById,
     isFriend,
+    getFriendStatus,
     acceptFriend,
     getOnlineFriends,
   };

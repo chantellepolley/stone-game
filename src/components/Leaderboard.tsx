@@ -18,7 +18,7 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
   const [entries, setEntries] = useState<LeaderEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [friendAdded, setFriendAdded] = useState<Set<string>>(new Set());
-  const [existingFriends, setExistingFriends] = useState<Set<string>>(new Set());
+  const [friendStatusMap, setFriendStatusMap] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     const load = async () => {
@@ -45,17 +45,18 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
 
       setEntries(stats.map(s => ({ ...s, username: nameMap[s.player_id] || 'Unknown', avatar_url: avatarMap[s.player_id] || null })));
 
-      // Check which players are already friends
+      // Check which players are already friends (with status)
       if (player) {
         const { data: friendships } = await supabase
           .from('friends')
-          .select('player_id, friend_id')
+          .select('player_id, friend_id, status')
           .or(`player_id.eq.${player.id},friend_id.eq.${player.id}`);
-        const friendSet = new Set<string>();
+        const statusMap = new Map<string, string>();
         friendships?.forEach(f => {
-          friendSet.add(f.player_id === player.id ? f.friend_id : f.player_id);
+          const otherId = f.player_id === player.id ? f.friend_id : f.player_id;
+          statusMap.set(otherId, f.status);
         });
-        setExistingFriends(friendSet);
+        setFriendStatusMap(statusMap);
       }
 
       setLoading(false);
@@ -111,18 +112,22 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                       <td className="py-1.5 px-1 text-center">{e.losses}</td>
                       <td className="py-1.5 px-1 text-center">{pct}%</td>
                       <td className="py-1.5 px-1">
-                        {isMe ? null : existingFriends.has(e.player_id) ? (
+                        {isMe ? null : friendStatusMap.get(e.player_id) === 'accepted' ? (
                           <span className="text-[8px] text-green-400/70 flex items-center gap-0.5 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                             Friend
                           </span>
-                        ) : friendAdded.has(e.player_id) ? (
-                          <span className="text-[8px] text-amber-400/70 whitespace-nowrap">Sent</span>
+                        ) : friendStatusMap.get(e.player_id) === 'pending' || friendAdded.has(e.player_id) ? (
+                          <span className="text-[8px] text-amber-400/70 whitespace-nowrap">Pending</span>
                         ) : (
                           <button
                             onClick={async () => {
                               const r = await addFriendById(e.player_id);
-                              if (r === true || r === 'Already friends' || r === 'Friend request already pending') {
+                              if (r === true) {
+                                setFriendAdded(prev => new Set(prev).add(e.player_id));
+                              } else if (r === 'Already friends') {
+                                setFriendStatusMap(prev => new Map(prev).set(e.player_id, 'accepted'));
+                              } else if (r === 'Friend invite already sent') {
                                 setFriendAdded(prev => new Set(prev).add(e.player_id));
                               }
                             }}
