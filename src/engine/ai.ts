@@ -395,7 +395,7 @@ export function chooseBestMove(state: GameState, validMoves: Move[], difficulty:
  */
 export function chooseBestJesterValue(state: GameState, difficulty: AIDifficulty): number {
   if (difficulty === 'easy') {
-    return Math.floor(Math.random() * 6) + 1;
+    return Math.floor(Math.random() * 5) + 1;
   }
 
   let bestValue = 5;

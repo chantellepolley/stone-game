@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { GameState, GamePhase, Move, PlayerId } from '../types/game';
 import { createInitialState, rollDice, getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
 import { isJester } from '../engine/dice';
@@ -42,6 +42,15 @@ export function useOnlineGame() {
   // Always-current state ref so broadcast handlers don't use stale closures
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  const myUsernameRef = useRef<string | null>(null);
+  useEffect(() => {
+    const token = localStorage.getItem('stone_device_token');
+    if (token) {
+      supabase.from('players').select('username').eq('device_token', token).single()
+        .then(({ data }) => { if (data) myUsernameRef.current = data.username; });
+    }
+  }, []);
 
   const isMyTurn = myPlayer !== null && state.currentPlayer === myPlayer && state.phase !== 'game_over' && state.phase !== 'not_started';
 
@@ -87,6 +96,7 @@ export function useOnlineGame() {
 
       if (data?.state) {
         const loadedState = data.state as GameState;
+        if (!loadedState.captureCount) loadedState.captureCount = { 1: 0, 2: 0 };
         setState(loadedState);
         stateRef.current = loadedState;
         // Ensure we're in playing phase if we have valid state
@@ -357,6 +367,7 @@ export function useOnlineGame() {
       // Load saved state if it exists
       if (game.state) {
         const loadedState = game.state as GameState;
+        if (!loadedState.captureCount) loadedState.captureCount = { 1: 0, 2: 0 };
         setState(loadedState);
         stateRef.current = loadedState;
         stateReceivedRef.current = true;
@@ -376,7 +387,7 @@ export function useOnlineGame() {
           sender: m.sender,
           text: m.text,
           timestamp: m.timestamp,
-          isMine: false,
+          isMine: m.sender === myUsernameRef.current,
           avatarUrl: m.avatarUrl || null,
         }));
         if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
@@ -441,7 +452,7 @@ export function useOnlineGame() {
           sender: m.sender,
           text: m.text,
           timestamp: m.timestamp,
-          isMine: false,
+          isMine: m.sender === myUsernameRef.current,
           avatarUrl: m.avatarUrl || null,
         }));
         if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
@@ -688,7 +699,7 @@ export function useOnlineGame() {
 
   const awaitingJesterChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0 && state.phase === 'moving';
 
-  const validMoves = (() => {
+  const validMoves = useMemo(() => {
     if (state.phase !== 'moving' || !isMyTurn) return [];
     if (awaitingJesterChoice) return [];
     const seen = new Set<string>();
@@ -704,7 +715,7 @@ export function useOnlineGame() {
       if (!seen.has(key)) { seen.add(key); moves.push(m); }
     }
     return moves;
-  })();
+  }, [state, isMyTurn, awaitingJesterChoice]);
 
   const canUndo = undoStack.current.length > 0 && isMyTurn && state.phase === 'moving';
 

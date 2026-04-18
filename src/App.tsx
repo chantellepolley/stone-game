@@ -12,6 +12,7 @@ import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
 import { supabase } from './lib/supabase';
+import { createInitialState } from './engine';
 
 type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends';
 
@@ -86,7 +87,7 @@ export default function App() {
       room_code: code,
       player1_id: player.id,
       mode: 'online',
-      state: { phase: 'rolling', gameMode: 'pvp', currentPlayer: 1 },
+      state: { ...createInitialState(), phase: 'rolling', gameMode: 'pvp' },
       status: 'waiting',
     }).select('id').single();
 
