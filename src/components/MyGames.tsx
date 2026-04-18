@@ -206,13 +206,27 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
   };
 
   const handleCancelGame = async (gameId: string) => {
-    // Cancel game — removes it entirely
-    await supabase.from('games').delete().eq('id', gameId);
+    // Cancel game — delete invites first (foreign key), then the game
+    await supabase.from('game_invites').delete().eq('game_id', gameId);
+    const { error } = await supabase.from('games').delete().eq('id', gameId);
+    if (error) {
+      // If delete fails, mark as completed instead
+      await supabase.from('games').update({ status: 'completed', winner_id: null, updated_at: new Date().toISOString() }).eq('id', gameId);
+    }
     setGames(prev => prev.filter(g => g.id !== gameId));
+    // Clear from localStorage if this was the active game
+    try {
+      const saved = localStorage.getItem('stone_active_game');
+      if (saved && JSON.parse(saved).gameId === gameId) localStorage.removeItem('stone_active_game');
+    } catch {}
   };
 
   const handleRemoveGame = async (gameId: string) => {
-    await supabase.from('games').delete().eq('id', gameId);
+    await supabase.from('game_invites').delete().eq('game_id', gameId);
+    const { error } = await supabase.from('games').delete().eq('id', gameId);
+    if (error) {
+      await supabase.from('games').update({ status: 'completed', winner_id: null }).eq('id', gameId);
+    }
     setGames(prev => prev.filter(g => g.id !== gameId));
   };
 
