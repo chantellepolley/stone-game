@@ -32,7 +32,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [lastSeenMsgCount, setLastSeenMsgCount] = useState(0);
   const { player } = usePlayerContext();
   const { addFriendById, getFriendStatus } = useFriends();
   const [friendStatus, setFriendStatus] = useState<'none' | 'pending' | 'accepted' | 'sent'>('none');
@@ -65,7 +64,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     resolvedP2Color = alt ? alt.id : 'slate';
   }
   const prevIsMyTurn = useRef(isMyTurn);
-  const chatUnread = chatOpen ? 0 : chatMessages.length - lastSeenMsgCount;
+  // Only count unread messages from opponent (not your own)
+  const opponentMsgCount = chatMessages.filter(m => !m.isMine).length;
+  const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState(0);
+  const chatUnread = chatOpen ? 0 : opponentMsgCount - lastSeenOpponentCount;
 
   // Play "your turn" sound + vibrate when it becomes your turn
   useEffect(() => {
@@ -263,7 +265,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
           messages={chatMessages}
           onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
           isOpen={false}
-          onToggle={() => { setChatOpen(v => !v); setShowMobileLog(false); setLastSeenMsgCount(chatMessages.length); }}
+          onToggle={() => { setChatOpen(v => !v); setShowMobileLog(false); setLastSeenOpponentCount(opponentMsgCount); }}
           unreadCount={chatUnread}
         />
       </div>
@@ -280,7 +282,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             messages={chatMessages}
             onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
             isOpen={true}
-            onToggle={() => { setChatOpen(false); setLastSeenMsgCount(chatMessages.length); }}
+            onToggle={() => { setChatOpen(false); setLastSeenOpponentCount(opponentMsgCount); }}
           />
         </div>
       )}

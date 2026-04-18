@@ -237,7 +237,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
   // Filter out stale waiting games with no opponent (old abandoned rooms)
   const activeGames = games.filter(g => g.status !== 'completed' && g.opponent_name !== 'Waiting...');
   const pastGames = games.filter(g => g.status === 'completed');
-  const totalInvites = invites.length + pendingRequests.length + sentInvites.length;
+  const incomingInviteCount = invites.length;  // only incoming game invites trigger badge
   const myTurnCount = activeGames.filter(g => g.is_my_turn).length;
 
   return (
@@ -253,9 +253,9 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
             className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer relative
               ${tab === 'invites' ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
             Invites
-            {totalInvites > 0 && (
+            {incomingInviteCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {totalInvites}
+                {incomingInviteCount}
               </span>
             )}
           </button>
@@ -280,7 +280,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           <p className="text-white/40 text-sm">Loading...</p>
         ) : tab === 'invites' ? (
           /* Invites tab — game invites + friend requests */
-          totalInvites === 0 ? (
+          invites.length === 0 && pendingRequests.length === 0 && sentInvites.length === 0 ? (
             <p className="text-white/40 text-sm">No pending invites</p>
           ) : (
             <div className="w-full overflow-y-auto space-y-2 max-h-[45vh]">
