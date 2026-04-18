@@ -43,9 +43,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     if (!opponentName || !roomCode || !myPlayer) return;
     (async () => {
       const { supabase: sb } = await import('../lib/supabase');
-      const col = myPlayer === 1 ? 'player2_id' : 'player1_id';
-      const { data } = await sb.from('games').select(col).eq('room_code', roomCode).single();
-      const oppId = data?.[col];
+      const { data } = await sb.from('games').select('player1_id, player2_id').eq('room_code', roomCode).single();
+      const oppId = myPlayer === 1 ? data?.player2_id : data?.player1_id;
       if (oppId) {
         const yes = await isFriend(oppId);
         if (yes) setAlreadyFriends(true);
