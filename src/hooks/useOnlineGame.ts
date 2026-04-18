@@ -122,6 +122,8 @@ export function useOnlineGame() {
   useEffect(() => {
     if (state.phase === 'game_over' && state.winner && !statsRecorded.current) {
       statsRecorded.current = true;
+      // Game is done — clear active game from localStorage
+      localStorage.removeItem('stone_active_game');
       // Update game status in DB
       if (gameDbId.current) {
         getMyPlayerId().then(myId => {
@@ -246,7 +248,7 @@ export function useOnlineGame() {
               if (retries > 7) {
                 clearInterval(retryInterval);
                 setOnlinePhase('error');
-                setError('Game not found or host has left. Try a different code.');
+                setError('Could not connect to this game. The host may not be online right now. Try resuming from My Games.');
                 return;
               }
               await channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
@@ -332,9 +334,11 @@ export function useOnlineGame() {
       // Update player2 — retry if myId is null (race condition with player creation)
       let playerId = myId;
       if (!playerId) {
-        // Retry once after a short delay
-        await new Promise(r => setTimeout(r, 500));
-        playerId = await getMyPlayerId();
+        // Retry a few times with increasing delays
+        for (let attempt = 0; attempt < 3 && !playerId; attempt++) {
+          await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+          playerId = await getMyPlayerId();
+        }
       }
 
       if (playerId) {
@@ -343,6 +347,11 @@ export function useOnlineGame() {
           status: 'active',
           updated_at: new Date().toISOString(),
         }).eq('id', game.id);
+
+        // Persist active game so it appears in My Games even after navigating away
+        localStorage.setItem('stone_active_game', JSON.stringify({
+          gameId: game.id, roomCode: upperCode, myPlayer: 2,
+        }));
       }
 
       // Load saved state if it exists
@@ -575,7 +584,8 @@ export function useOnlineGame() {
       channelRef.current = null;
     }
     if (pingRef.current) clearInterval(pingRef.current);
-    localStorage.removeItem('stone_active_game');
+    // Keep stone_active_game in localStorage so the game shows in My Games
+    // and can be resumed — only clear on game completion
     setOnlinePhase('idle');
     setMyPlayer(null);
     setOpponentConnected(false);

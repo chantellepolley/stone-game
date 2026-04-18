@@ -119,11 +119,27 @@ export default function App() {
   useEffect(() => {
     const code = getJoinCodeFromURL();
     if (code) {
+      // Save to localStorage so it survives login/page reload
+      localStorage.setItem('stone_pending_join', code);
       setAutoJoinCode(code);
       setScreen('online');
       window.history.replaceState({}, '', '/');
+    } else {
+      // Check for a pending join code from a previous page load (e.g., after login)
+      const pending = localStorage.getItem('stone_pending_join');
+      if (pending) {
+        setAutoJoinCode(pending);
+        setScreen('online');
+      }
     }
   }, []);
+
+  // Clear pending join code once player is loaded and we're joining
+  useEffect(() => {
+    if (player && autoJoinCode && screen === 'online') {
+      localStorage.removeItem('stone_pending_join');
+    }
+  }, [player, autoJoinCode, screen]);
 
   if (isLoading) {
     return (
