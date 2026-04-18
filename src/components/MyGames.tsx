@@ -26,6 +26,16 @@ interface InviteRow {
   created_at: string;
 }
 
+interface SentInviteRow {
+  id: string;
+  to_player_id: string;
+  game_id: string;
+  room_code: string;
+  to_username: string;
+  status: string;
+  created_at: string;
+}
+
 interface MyGamesProps {
   onResume: (gameId: string, roomCode: string, player: 1 | 2, mode: string) => void;
   onBack: () => void;
@@ -36,6 +46,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
   const { getPendingRequests, pendingRequests, acceptFriend } = useFriends();
   const [games, setGames] = useState<GameRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
+  const [sentInvites, setSentInvites] = useState<SentInviteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'active' | 'invites' | 'past'>('active');
 
@@ -135,6 +146,35 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         })));
       }
 
+      // Fetch sent invites
+      const { data: sentData } = await supabase
+        .from('game_invites')
+        .select('id, to_player_id, game_id, room_code, status, created_at')
+        .eq('from_player_id', player.id)
+        .in('status', ['pending'])
+        .order('created_at', { ascending: false });
+
+      if (sentData && sentData.length > 0) {
+        const toIds = sentData.map(i => i.to_player_id);
+        const { data: toPlayers } = await supabase
+          .from('players')
+          .select('id, username')
+          .in('id', toIds);
+
+        const toMap: Record<string, string> = {};
+        toPlayers?.forEach(p => { toMap[p.id] = p.username; });
+
+        setSentInvites(sentData.map(i => ({
+          id: i.id,
+          to_player_id: i.to_player_id,
+          game_id: i.game_id,
+          room_code: i.room_code,
+          to_username: toMap[i.to_player_id] || 'Unknown',
+          status: i.status,
+          created_at: i.created_at,
+        })));
+      }
+
       // Load friend requests
       await getPendingRequests();
 
@@ -197,7 +237,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
   // Filter out stale waiting games with no opponent (old abandoned rooms)
   const activeGames = games.filter(g => g.status !== 'completed' && g.opponent_name !== 'Waiting...');
   const pastGames = games.filter(g => g.status === 'completed');
-  const totalInvites = invites.length + pendingRequests.length;
+  const totalInvites = invites.length + pendingRequests.length + sentInvites.length;
   const myTurnCount = activeGames.filter(g => g.is_my_turn).length;
 
   return (
@@ -309,6 +349,38 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                                bg-green-600/60 text-white hover:bg-green-600 cursor-pointer transition-colors"
                   >
                     Accept
+                  </button>
+                </div>
+              ))}
+
+              {/* Sent invites */}
+              {sentInvites.length > 0 && (
+                <div className="text-[9px] text-white/40 uppercase tracking-wider px-1 pt-2">Sent Invites</div>
+              )}
+              {sentInvites.map(si => (
+                <div key={si.id}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-black/20">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-white/30 shrink-0" />
+                    <div>
+                      <div className="text-white text-sm">
+                        Invited <span className="font-heading text-amber-400">{si.to_username}</span>
+                      </div>
+                      <div className="text-white/40 text-[10px]">
+                        <span className="text-amber-400/70">Pending</span>
+                        {' · '}{timeAgo(si.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await supabase.from('game_invites').update({ status: 'declined' }).eq('id', si.id);
+                      setSentInvites(prev => prev.filter(i => i.id !== si.id));
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                               bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors"
+                  >
+                    Cancel
                   </button>
                 </div>
               ))}
