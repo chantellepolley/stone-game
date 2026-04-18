@@ -16,16 +16,16 @@ export default function RulesPanel({ defaultOpen = false }: { defaultOpen?: bool
       {open && (
         <div className="px-3 pb-3 text-xs text-stone-light/70 space-y-2 border-t border-stone-accent/20 pt-2">
           <p><strong>Goal:</strong> Be the first to bear off all 13 stones.</p>
-          <p><strong>Starting:</strong> All stones begin in your starting area (left of your row). Use a die to enter a stone onto the board — the die value determines how far along your route it enters.</p>
-          <p><strong>Movement:</strong> Each player travels 1.5 laps around the board (30 spaces). Sunstone goes right across the top, left across the bottom, then right across the top again to bear off at the top-right. Moonstone goes right across the bottom, left across the top, then right across the bottom again to bear off at the bottom-right.</p>
-          <p><strong>Rolling:</strong> Roll 2 special dice (faces 1, 2, 3, 4, 5, and Jester instead of 6). Each die is a separate move. You can combine dice to move a single stone multiple steps. Doubles grant 4 moves.</p>
-          <p><strong>Jester:</strong> The 6 face is a Jester. Rolling a Jester with any number X turns the roll into 4 moves of X. A value of 6 (Jester) cannot be used to enter or exit the board.</p>
-          <p><strong>Double Jesters:</strong> You must first move a 1 and a 2. Then you choose any doubles value (1-5) and get 4 moves of it.</p>
-          <p><strong>Capturing:</strong> Land on a space with a single opponent stone to capture it. Captured stones go to jail.</p>
-          <p><strong>Jail:</strong> You must re-enter all jailed stones before making any other moves. Jailed stones re-enter from the start of your route.</p>
-          <p><strong>Crowning:</strong> When a stone enters the final 10 spaces (home stretch), it becomes crowned and shows its jester symbol.</p>
-          <p><strong>Bearing Off:</strong> Only crowned stones can bear off. An exact roll is needed unless ALL your remaining board pieces are in the last 5 spaces.</p>
-          <p><strong>Winning:</strong> First player to bear off all 13 stones wins.</p>
+          <p><strong>Starting:</strong> All stones begin in your starting area. Use a die value (1–5) to enter a stone onto the board — the value determines how far along your route it enters. You cannot enter with a 6 (Jester).</p>
+          <p><strong>Movement:</strong> Each player travels 1.5 laps around the board (30 spaces total). You can use each die separately on different stones, or combine multiple dice to move one stone several steps.</p>
+          <p><strong>Rolling:</strong> Roll 2 special dice with faces 1, 2, 3, 4, 5, and Jester (replaces the 6). Doubles grant 4 moves of that value.</p>
+          <p><strong>Jester:</strong> Rolling a Jester with any number X gives you 4 moves of X. The Jester value (6) cannot be used to enter the board or bear off.</p>
+          <p><strong>Double Jesters:</strong> You must first use a 1 and a 2 move. Then choose any doubles value (1–5) and get 4 additional moves of that value.</p>
+          <p><strong>Capturing:</strong> Land on a space occupied by a single opponent stone to capture it — it goes to The Stoned Dungeon (jail). If a space has 2 or more opponent stones, you cannot land there. Multi-step moves can capture at intermediate spaces along the way.</p>
+          <p><strong>Jail:</strong> You must re-enter all jailed stones before making any other moves. Jailed stones re-enter from the start of your route using a die value. Captured stones lose their crowned status.</p>
+          <p><strong>Crowning:</strong> When a stone enters the home stretch (last 10 spaces of your route), it becomes crowned and displays the Jester symbol.</p>
+          <p><strong>Bearing Off:</strong> Only crowned stones can bear off. An exact roll is needed to leave the board, unless ALL of your remaining board pieces are within the last 5 spaces — then any roll high enough will bear off your farthest piece.</p>
+          <p><strong>Winning:</strong> First player to bear off all 13 stones wins!</p>
         </div>
       )}
     </div>

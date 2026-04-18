@@ -111,7 +111,14 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                       <td className="py-1.5 px-1 text-center">{e.losses}</td>
                       <td className="py-1.5 px-1 text-center">{pct}%</td>
                       <td className="py-1.5 px-1">
-                        {!isMe && !friendAdded.has(e.player_id) && !existingFriends.has(e.player_id) && (
+                        {isMe ? null : existingFriends.has(e.player_id) ? (
+                          <span className="text-[8px] text-green-400/70 flex items-center gap-0.5 whitespace-nowrap">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                            Friend
+                          </span>
+                        ) : friendAdded.has(e.player_id) ? (
+                          <span className="text-[8px] text-amber-400/70 whitespace-nowrap">Sent</span>
+                        ) : (
                           <button
                             onClick={async () => {
                               const r = await addFriendById(e.player_id);
@@ -124,9 +131,6 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
                           >
                             + Add Friend
                           </button>
-                        )}
-                        {friendAdded.has(e.player_id) && (
-                          <span className="text-[8px] text-green-400/70">Sent</span>
                         )}
                       </td>
                     </tr>

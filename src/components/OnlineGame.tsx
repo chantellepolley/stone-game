@@ -152,31 +152,33 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             : `${opponentName || 'Opponent'} has stepped away`}
         </span>
         <span className={`w-2 h-2 rounded-full ${opponentConnected ? 'bg-green-400' : 'bg-white/30'}`} />
-        {opponentName && !friendRequestSent && !alreadyFriends && (
+        {opponentName && (
           <>
             <span className="text-white/50">|</span>
-            <button
-              onClick={async () => {
-                // Get opponent's player ID from the game
-                const oppId = myPlayer === 1
-                  ? (await import('../lib/supabase').then(m => m.supabase.from('games').select('player2_id').eq('room_code', roomCode).single())).data?.player2_id
-                  : (await import('../lib/supabase').then(m => m.supabase.from('games').select('player1_id').eq('room_code', roomCode).single())).data?.player1_id;
-                if (oppId) {
-                  const r = await addFriendById(oppId);
-                  if (r === true || r === 'Already friends' || r === 'Friend request already pending') setFriendRequestSent(true);
-                }
-              }}
-              className="px-2 py-0.5 rounded text-[8px] font-heading uppercase tracking-wider
-                         bg-amber-600/70 text-white hover:bg-amber-600 cursor-pointer transition-colors"
-            >
-              + Add Friend
-            </button>
-          </>
-        )}
-        {friendRequestSent && (
-          <>
-            <span className="text-white/50">|</span>
-            <span className="text-green-400/70">Request sent</span>
+            {alreadyFriends ? (
+              <span className="text-[8px] text-green-400/80 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                Friends
+              </span>
+            ) : friendRequestSent ? (
+              <span className="text-[8px] text-amber-400/70">Request sent</span>
+            ) : (
+              <button
+                onClick={async () => {
+                  const oppId = myPlayer === 1
+                    ? (await import('../lib/supabase').then(m => m.supabase.from('games').select('player2_id').eq('room_code', roomCode).single())).data?.player2_id
+                    : (await import('../lib/supabase').then(m => m.supabase.from('games').select('player1_id').eq('room_code', roomCode).single())).data?.player1_id;
+                  if (oppId) {
+                    const r = await addFriendById(oppId);
+                    if (r === true || r === 'Already friends' || r === 'Friend request already pending') setFriendRequestSent(true);
+                  }
+                }}
+                className="px-2 py-0.5 rounded text-[8px] font-heading uppercase tracking-wider
+                           bg-amber-600/70 text-white hover:bg-amber-600 cursor-pointer transition-colors"
+              >
+                + Add Friend
+              </button>
+            )}
           </>
         )}
       </div>
