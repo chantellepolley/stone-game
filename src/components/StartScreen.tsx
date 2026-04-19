@@ -259,7 +259,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </button>
           )}
           {onShowFeedback && (
-            <button onClick={onShowFeedback}
+            <button onClick={player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback ? onShowAdminFeedback : onShowFeedback}
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white hover:text-amber-400 transition-colors cursor-pointer">
               Feedback
