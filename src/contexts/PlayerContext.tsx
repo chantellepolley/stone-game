@@ -4,7 +4,7 @@ import type { Player } from '../hooks/usePlayer';
 interface PlayerContextType {
   player: Player | null;
   isLoading: boolean;
-  createPlayer: (username: string, password?: string) => Promise<boolean>;
+  createPlayer: (username: string, password?: string) => Promise<string | true>;
   updateUsername: (username: string) => Promise<boolean>;
   updateAvatar: (file: File) => Promise<boolean>;
   login: (username: string, password: string) => Promise<string | true>;
@@ -15,7 +15,7 @@ interface PlayerContextType {
 export const PlayerContext = createContext<PlayerContextType>({
   player: null,
   isLoading: true,
-  createPlayer: async () => false,
+  createPlayer: async () => 'Not initialized',
   updateUsername: async () => false,
   updateAvatar: async () => false,
   login: async () => 'Not initialized',

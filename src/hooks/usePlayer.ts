@@ -43,7 +43,18 @@ export function usePlayer() {
     loadPlayer();
   }, []);
 
-  const createPlayer = useCallback(async (username: string, password?: string): Promise<boolean> => {
+  const createPlayer = useCallback(async (username: string, password?: string): Promise<string | true> => {
+    // Check if username already exists
+    const { data: existing } = await supabase
+      .from('players')
+      .select('id')
+      .ilike('username', username)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return 'Username already taken. Please log in or choose a different name.';
+    }
+
     const token = generateDeviceToken();
 
     const { data, error } = await supabase
@@ -61,7 +72,7 @@ export function usePlayer() {
 
       return true;
     }
-    return false;
+    return 'Could not create account. Try again.';
   }, []);
 
   const updateUsername = useCallback(async (newUsername: string): Promise<boolean> => {
