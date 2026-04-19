@@ -22,9 +22,10 @@ interface GameProps {
   resumeGameId?: string | null;
   onShowTerms?: () => void;
   onShowPrivacy?: () => void;
+  onShowFeedback?: () => void;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
@@ -65,7 +66,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   }, [state.currentPlayer, state.phase, state.gameMode]);
 
   if (state.phase === 'not_started') {
-    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} />;
+    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} />;
   }
 
   return (
