@@ -23,9 +23,10 @@ interface GameProps {
   onShowTerms?: () => void;
   onShowPrivacy?: () => void;
   onShowFeedback?: () => void;
+  onShowTutorial?: () => void;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
@@ -66,7 +67,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   }, [state.currentPlayer, state.phase, state.gameMode]);
 
   if (state.phase === 'not_started') {
-    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} />;
+    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} onShowTutorial={onShowTutorial} />;
   }
 
   return (
@@ -214,20 +215,32 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
         </div>
       )}
 
-      {/* First-time rules overlay */}
+      {/* First-time tutorial prompt */}
       {showFirstTimeRules && !state.winner && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-white font-heading text-xl mb-3 text-center">How to Play</h2>
-            <RulesPanel defaultOpen />
-            <button
-              onClick={() => setShowFirstTimeRules(false)}
-              className="w-full mt-4 px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                         bg-amber-600 text-white border-2 border-amber-500
-                         hover:bg-amber-500 cursor-pointer shadow-lg"
-            >
-              Got it, let's play!
-            </button>
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-md w-full text-center">
+            <h2 className="text-white font-heading text-xl mb-2">New to STONE?</h2>
+            <p className="text-white/60 text-sm mb-5">Take a quick interactive walkthrough to learn the basics, or jump right in!</p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => { setShowFirstTimeRules(false); if (onShowTutorial) onShowTutorial(); }}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white border-2 border-amber-500
+                           hover:bg-amber-500 hover:scale-105 active:scale-95
+                           transition-all cursor-pointer shadow-lg"
+              >
+                Play Tutorial
+              </button>
+              <button
+                onClick={() => setShowFirstTimeRules(false)}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#6b5f55] hover:scale-105 active:scale-95
+                           transition-all cursor-pointer shadow-lg"
+              >
+                Skip — I know how to play
+              </button>
+            </div>
           </div>
         </div>
       )}

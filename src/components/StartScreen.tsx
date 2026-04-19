@@ -14,9 +14,10 @@ interface StartScreenProps {
   onShowTerms?: () => void;
   onShowPrivacy?: () => void;
   onShowFeedback?: () => void;
+  onShowTutorial?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -247,6 +248,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white hover:text-amber-400 transition-colors cursor-pointer">
               Stone Color
+            </button>
+          )}
+          {onShowTutorial && (
+            <button onClick={onShowTutorial}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-white hover:text-amber-400 transition-colors cursor-pointer">
+              How to Play
             </button>
           )}
           {onShowFeedback && (
