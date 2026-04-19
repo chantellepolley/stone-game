@@ -312,20 +312,20 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       {/* Footer */}
       {!showDifficulty && (
         <div className="flex flex-col items-center gap-1 mt-2">
-          <div className="flex gap-3 text-[9px] text-white/30">
-            {onShowTerms && <button onClick={onShowTerms} className="hover:text-white/60 transition-colors cursor-pointer">Terms</button>}
-            <span>|</span>
-            {onShowPrivacy && <button onClick={onShowPrivacy} className="hover:text-white/60 transition-colors cursor-pointer">Privacy</button>}
-            <span>|</span>
-            <a href="mailto:support@stonethegame.com" className="hover:text-white/60 transition-colors">Support</a>
+          <div className="flex gap-3 text-[9px] text-white">
+            {onShowTerms && <button onClick={onShowTerms} className="hover:text-amber-400 transition-colors cursor-pointer">Terms</button>}
+            <span className="text-white/50">|</span>
+            {onShowPrivacy && <button onClick={onShowPrivacy} className="hover:text-amber-400 transition-colors cursor-pointer">Privacy</button>}
+            <span className="text-white/50">|</span>
+            <a href="mailto:support@stonethegame.com" className="hover:text-amber-400 transition-colors">Support</a>
           </div>
           {player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback && (
             <button onClick={onShowAdminFeedback}
-              className="text-white/30 text-[9px] hover:text-white/60 transition-colors cursor-pointer">
+              className="text-white text-[9px] hover:text-amber-400 transition-colors cursor-pointer">
               View Feedback
             </button>
           )}
-          <div className="text-[8px] text-white/20">
+          <div className="text-[8px] text-white">
             &copy; 2026 Stone The Game. All rights reserved.
           </div>
         </div>
