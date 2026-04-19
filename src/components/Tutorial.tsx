@@ -278,74 +278,61 @@ export default function Tutorial({ onFinish }: TutorialProps) {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-1 overflow-hidden">
+    <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
       {/* Header */}
       <header className="shrink-0">
-        <img src="/logo.png" alt="STONE" className="h-10 sm:h-14 lg:h-20 object-contain" />
+        <img src="/logo.png" alt="STONE" className="h-8 sm:h-12 lg:h-20 object-contain" />
       </header>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         {steps.map((_, i) => (
-          <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === stepIdx ? 'bg-amber-400' : i < stepIdx ? 'bg-amber-600/50' : 'bg-white/20'}`} />
+          <div key={i} className={`w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full transition-colors ${i === stepIdx ? 'bg-amber-400' : i < stepIdx ? 'bg-amber-600/50' : 'bg-white/20'}`} />
         ))}
       </div>
 
-      {/* Tutorial content */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-2 w-full max-w-[1050px] min-h-0">
-        {/* Info card */}
-        <div className="bg-[#504840] border-2 border-amber-600/40 rounded-xl p-4 shadow-2xl max-w-md w-full text-center shrink-0">
-          <h2 className="text-amber-400 font-heading text-base lg:text-lg mb-1">{step.title}</h2>
-          <p className="text-white text-xs lg:text-sm leading-relaxed">{step.description}</p>
-        </div>
-
-        {/* Game board (for action steps) */}
-        {!step.autoAdvance && (
-          <>
-            {/* Dice */}
-            {state.phase === 'rolling' && (
-              <div className="shrink-0">
-                <DiceArea
-                  dice={state.dice}
-                  phase={state.phase}
-                  currentPlayer={1}
-                  onRoll={handleRoll}
-                  isAITurn={false}
-                />
-              </div>
-            )}
-            {state.phase === 'moving' && (
-              <div className="shrink-0">
-                <DiceArea
-                  dice={state.dice}
-                  phase={state.phase}
-                  currentPlayer={1}
-                  onRoll={() => {}}
-                  isAITurn={true}
-                />
-              </div>
-            )}
-
-            {/* Board */}
-            {state.phase === 'moving' && (
-              <div className="flex-1 w-full min-h-0">
-                <Board
-                  state={state}
-                  validMoves={validMoves}
-                  onSelectMove={handleSelectMove}
-                  hintsEnabled={true}
-                />
-              </div>
-            )}
-          </>
-        )}
+      {/* Info card */}
+      <div className="bg-[#504840] border-2 border-amber-600/40 rounded-xl px-3 py-2 lg:p-4 shadow-2xl max-w-md w-full text-center shrink-0">
+        <h2 className="text-amber-400 font-heading text-sm lg:text-lg mb-0.5 lg:mb-1">{step.title}</h2>
+        <p className="text-white text-[11px] lg:text-sm leading-relaxed">{step.description}</p>
       </div>
 
+      {/* Game area (for action steps) */}
+      {!step.autoAdvance && (
+        <>
+          {/* Dice */}
+          <div className="shrink-0">
+            <DiceArea
+              dice={state.dice}
+              phase={state.phase}
+              currentPlayer={1}
+              onRoll={state.phase === 'rolling' ? handleRoll : () => {}}
+              isAITurn={state.phase !== 'rolling'}
+            />
+          </div>
+
+          {/* Board */}
+          {state.phase === 'moving' && (
+            <div className="flex-1 w-full max-w-[1050px] min-h-0">
+              <Board
+                state={state}
+                validMoves={validMoves}
+                onSelectMove={handleSelectMove}
+                hintsEnabled={true}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Auto-advance spacer for welcome/done screens */}
+      {step.autoAdvance && <div className="flex-1" />}
+
       {/* Bottom buttons */}
-      <div className="flex items-center gap-3 shrink-0 py-2">
+      <div className="flex items-center gap-3 shrink-0 py-1 lg:py-2">
         {step.autoAdvance && (
           <button onClick={advance}
-            className="px-8 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+            className="px-6 lg:px-8 py-2.5 lg:py-3 rounded-xl font-heading text-sm uppercase tracking-wider
                        bg-amber-600 text-white border-2 border-amber-500
                        hover:bg-amber-500 hover:scale-105 active:scale-95
                        transition-all cursor-pointer shadow-lg">
@@ -353,7 +340,7 @@ export default function Tutorial({ onFinish }: TutorialProps) {
           </button>
         )}
         <button onClick={handleSkip}
-          className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+          className="px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg text-[10px] lg:text-xs font-heading uppercase tracking-wider
                      text-white/50 hover:text-white transition-colors cursor-pointer">
           {isLast ? 'Close' : 'Skip Tutorial'}
         </button>
