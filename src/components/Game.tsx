@@ -214,7 +214,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       )}
 
       {/* First-time rules overlay */}
-      {showFirstTimeRules && state.phase !== 'not_started' && !state.winner && (
+      {showFirstTimeRules && !state.winner && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
             <h2 className="text-white font-heading text-xl mb-3 text-center">How to Play</h2>
