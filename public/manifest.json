@@ -8,8 +8,14 @@
   "theme_color": "#302b26",
   "icons": [
     {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/logo.png",
-      "sizes": "512x512",
+      "sizes": "400x241",
       "type": "image/png",
       "purpose": "any"
     }

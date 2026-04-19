@@ -141,8 +141,9 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-white/40 text-sm animate-pulse">Loading...</div>
+      <div className="h-screen flex flex-col items-center justify-center gap-4" style={{ background: '#302b26' }}>
+        <img src="/logo.png" alt="STONE" className="h-28 sm:h-36 object-contain animate-pulse" />
+        <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
