@@ -8,13 +8,15 @@ import MyGames from './components/MyGames';
 import ColorPicker from './components/ColorPicker';
 import FriendsList from './components/FriendsList';
 import Notifications from './components/Notifications';
+import ErrorBoundary from './components/ErrorBoundary';
+import { TermsPage, PrivacyPage } from './components/LegalPages';
 import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -145,10 +147,13 @@ export default function App() {
   }
 
   return (
+    <ErrorBoundary>
     <PlayerContext.Provider value={playerHook}>
       {/* Username prompt for first-time visitors */}
       {!player && <UsernamePrompt />}
 
+      {screen === 'terms' && <TermsPage onBack={() => setScreen('game')} />}
+      {screen === 'privacy' && <PrivacyPage onBack={() => setScreen('game')} />}
       {screen === 'colors' && (
         <ColorPicker
           selectedId={stoneColor}
@@ -195,11 +200,14 @@ export default function App() {
           onShowFriends={() => setScreen('friends')}
           pendingNotifications={pendingNotifications}
           resumeGameId={resumeLocalGameId}
+          onShowTerms={() => setScreen('terms')}
+          onShowPrivacy={() => setScreen('privacy')}
         />
       )}
 
       {/* Notifications overlay - always rendered */}
       <Notifications onAcceptInvite={handleAcceptNotificationInvite} />
     </PlayerContext.Provider>
+    </ErrorBoundary>
   );
 }

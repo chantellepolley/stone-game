@@ -12,6 +12,19 @@ function generateDeviceToken(): string {
   return 'dev_' + crypto.randomUUID();
 }
 
+const BLOCKED_WORDS = ['fuck','shit','ass','bitch','dick','cock','pussy','nigger','nigga','faggot','retard','cunt','whore','slut'];
+function containsProfanity(name: string): boolean {
+  const lower = name.toLowerCase().replace(/[^a-z]/g, '');
+  return BLOCKED_WORDS.some(w => lower.includes(w));
+}
+
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + 'stone_salt_2026');
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export function usePlayer() {
   const [player, setPlayer] = useState<Player | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +57,10 @@ export function usePlayer() {
   }, []);
 
   const createPlayer = useCallback(async (username: string, password?: string): Promise<string | true> => {
+    if (containsProfanity(username)) {
+      return 'That username is not allowed. Please choose a different name.';
+    }
+
     // Check if username already exists
     const { data: existing } = await supabase
       .from('players')
@@ -59,7 +76,7 @@ export function usePlayer() {
 
     const { data, error } = await supabase
       .from('players')
-      .insert({ username, device_token: token, ...(password ? { password } : {}) })
+      .insert({ username, device_token: token, ...(password ? { password: await hashPassword(password) } : {}) })
       .select()
       .single();
 
@@ -145,7 +162,13 @@ export function usePlayer() {
     const data = matches.find(m => m.password) || matches[0];
 
     if (!data.password) return 'This account has no password. Please log in on your original device and set a password first.';
-    if (data.password !== password) return 'Incorrect password';
+    const hashed = await hashPassword(password);
+    // Support both hashed and legacy plaintext passwords
+    if (data.password !== hashed && data.password !== password) return 'Incorrect password';
+    // If matched plaintext, upgrade to hashed
+    if (data.password === password && data.password !== hashed) {
+      await supabase.from('players').update({ password: hashed }).eq('id', data.id);
+    }
 
     // Update device token to this device
     const token = generateDeviceToken();
@@ -164,9 +187,10 @@ export function usePlayer() {
 
   const updatePassword = useCallback(async (newPassword: string): Promise<boolean> => {
     if (!player) return false;
+    const hashed = await hashPassword(newPassword);
     const { error } = await supabase
       .from('players')
-      .update({ password: newPassword })
+      .update({ password: hashed })
       .eq('id', player.id);
     return !error;
   }, [player]);

@@ -1,0 +1,17 @@
+{
+  "name": "STONE - Ancient Temple Board Game",
+  "short_name": "STONE",
+  "description": "A 2-player board game with online multiplayer. Roll the Jester dice and bear off your stones first!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#302b26",
+  "theme_color": "#302b26",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

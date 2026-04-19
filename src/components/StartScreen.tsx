@@ -11,9 +11,11 @@ interface StartScreenProps {
   onShowColors?: () => void;
   onShowFriends?: () => void;
   pendingNotifications?: number;
+  onShowTerms?: () => void;
+  onShowPrivacy?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -287,6 +289,22 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
           )}
           {passwordMsg && <p className={`text-xs ${passwordMsg.includes('saved') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
+        </div>
+      )}
+
+      {/* Footer */}
+      {!showDifficulty && (
+        <div className="flex flex-col items-center gap-1 mt-2">
+          <div className="flex gap-3 text-[9px] text-white/30">
+            {onShowTerms && <button onClick={onShowTerms} className="hover:text-white/60 transition-colors cursor-pointer">Terms</button>}
+            <span>|</span>
+            {onShowPrivacy && <button onClick={onShowPrivacy} className="hover:text-white/60 transition-colors cursor-pointer">Privacy</button>}
+            <span>|</span>
+            <a href="mailto:support@stonethegame.com" className="hover:text-white/60 transition-colors">Support</a>
+          </div>
+          <div className="text-[8px] text-white/20">
+            &copy; 2026 Stone The Game. All rights reserved.
+          </div>
         </div>
       )}
     </div>

@@ -20,9 +20,11 @@ interface GameProps {
   onShowFriends?: () => void;
   pendingNotifications?: number;
   resumeGameId?: string | null;
+  onShowTerms?: () => void;
+  onShowPrivacy?: () => void;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
@@ -38,6 +40,20 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [showMobileRules, setShowMobileRules] = useState(false);
+
+  // Show rules automatically on first ever game
+  const [showFirstTimeRules, setShowFirstTimeRules] = useState(() => {
+    if (localStorage.getItem('stone_has_played')) return false;
+    return true;
+  });
+  useEffect(() => {
+    if (state.phase === 'rolling' && showFirstTimeRules) {
+      // Player started their first game — they'll see rules overlay
+    }
+    if (state.phase !== 'not_started' && !localStorage.getItem('stone_has_played')) {
+      localStorage.setItem('stone_has_played', '1');
+    }
+  }, [state.phase, showFirstTimeRules]);
   const prevPlayer = useRef(state.currentPlayer);
 
   // Play "your turn" sound when it becomes your turn
@@ -49,7 +65,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   }, [state.currentPlayer, state.phase, state.gameMode]);
 
   if (state.phase === 'not_started') {
-    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} />;
+    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} />;
   }
 
   return (
@@ -194,6 +210,24 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       {showMobileRules && (
         <div className="lg:hidden fixed bottom-10 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
           <RulesPanel defaultOpen />
+        </div>
+      )}
+
+      {/* First-time rules overlay */}
+      {showFirstTimeRules && state.phase !== 'not_started' && !state.winner && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <h2 className="text-white font-heading text-xl mb-3 text-center">How to Play</h2>
+            <RulesPanel defaultOpen />
+            <button
+              onClick={() => setShowFirstTimeRules(false)}
+              className="w-full mt-4 px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                         bg-amber-600 text-white border-2 border-amber-500
+                         hover:bg-amber-500 cursor-pointer shadow-lg"
+            >
+              Got it, let's play!
+            </button>
+          </div>
         </div>
       )}
 
