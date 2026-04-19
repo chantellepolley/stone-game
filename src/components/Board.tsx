@@ -454,11 +454,11 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
       {/* Deselect + mobile crowned toggle */}
       {selected && !busy && (
-        <div className="flex justify-center gap-2 py-1">
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-2 z-20">
           <button
             onClick={() => setSelected(null)}
-            className="px-3 py-0.5 rounded text-[10px] font-heading uppercase tracking-wider
-                       bg-white/10 text-white/70 hover:bg-white/20 transition-all cursor-pointer"
+            className="px-3 py-1 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                       bg-[#504840] text-white/90 border border-[#6b5f55] hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg"
           >
             Deselect
           </button>
