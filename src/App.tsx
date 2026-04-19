@@ -12,13 +12,14 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { TermsPage, PrivacyPage } from './components/LegalPages';
 import FeedbackPanel from './components/FeedbackPanel';
 import Tutorial from './components/Tutorial';
+import AdminFeedback from './components/AdminFeedback';
 import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -159,6 +160,7 @@ export default function App() {
       {screen === 'privacy' && <PrivacyPage onBack={() => setScreen('game')} />}
       {screen === 'feedback' && <FeedbackPanel onBack={() => setScreen('game')} />}
       {screen === 'tutorial' && <Tutorial onFinish={() => setScreen('game')} />}
+      {screen === 'admin-feedback' && <AdminFeedback onBack={() => setScreen('game')} />}
       {screen === 'colors' && (
         <ColorPicker
           selectedId={stoneColor}
@@ -209,6 +211,7 @@ export default function App() {
           onShowPrivacy={() => setScreen('privacy')}
           onShowFeedback={() => setScreen('feedback')}
           onShowTutorial={() => setScreen('tutorial')}
+          onShowAdminFeedback={() => setScreen('admin-feedback')}
         />
       )}
 

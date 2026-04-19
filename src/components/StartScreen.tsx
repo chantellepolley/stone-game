@@ -15,9 +15,10 @@ interface StartScreenProps {
   onShowPrivacy?: () => void;
   onShowFeedback?: () => void;
   onShowTutorial?: () => void;
+  onShowAdminFeedback?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -318,6 +319,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <span>|</span>
             <a href="mailto:support@stonethegame.com" className="hover:text-white/60 transition-colors">Support</a>
           </div>
+          {player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback && (
+            <button onClick={onShowAdminFeedback}
+              className="text-white/30 text-[9px] hover:text-white/60 transition-colors cursor-pointer">
+              View Feedback
+            </button>
+          )}
           <div className="text-[8px] text-white/20">
             &copy; 2026 Stone The Game. All rights reserved.
           </div>
