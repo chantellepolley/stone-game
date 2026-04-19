@@ -1,29 +1,26 @@
 import { useState, useCallback } from 'react';
-import type { GameState, GamePhase, Move, Piece } from '../types/game';
+import type { GameState, GamePhase, Move, Piece as PieceType } from '../types/game';
 import { GAME_CONFIG } from '../config/gameConfig';
-import { getValidMoves } from '../engine/moves';
-import { executeMove } from '../engine/moves';
-import { checkWinCondition } from '../engine/victory';
+import { getValidMoves, executeMove } from '../engine/moves';
 import Board from './Board';
 import DiceArea from './DiceArea';
-import Piece from './Piece';
 
 interface TutorialProps {
   onFinish: () => void;
 }
 
 // Helper to create a piece
-function piece(owner: 1 | 2, idx: number, routePos: number, crowned = false): Piece {
+function piece(owner: 1 | 2, idx: number, routePos: number, crowned = false): PieceType {
   return { id: `p${owner}-${idx}`, owner, crowned, routePos };
 }
 
 // Helper to create an empty board
-function emptyBoard(): Piece[][] {
+function emptyBoard(): PieceType[][] {
   return Array.from({ length: 20 }, () => []);
 }
 
 // Helper to place a piece on the board at its route position
-function placeOnBoard(board: Piece[][], p: Piece, player: 1 | 2) {
+function placeOnBoard(board: PieceType[][], p: PieceType, player: 1 | 2) {
   if (p.routePos >= 0 && p.routePos < 30) {
     const space = GAME_CONFIG.PLAYER_ROUTE[player][p.routePos];
     board[space].push(p);
@@ -103,19 +100,7 @@ function buildSteps(): TutorialStep[] {
     phase: 'moving' as GamePhase,
   });
 
-  // Step 5: Capture (opponent stone at routePos 4, our piece at routePos 1, roll is 3)
-  const captureBoard = emptyBoard();
-  const ourPiece = piece(1, 0, 1);
-  const theirPiece = piece(2, 0, 18); // P2 routePos 18 = board space 1 (they wrap around)
-  placeOnBoard(captureBoard, ourPiece, 1);
-  // Place opponent manually at space index 4 (P1's route position 4)
-  const oppSpace = GAME_CONFIG.PLAYER_ROUTE[1][4];
-  const oppPiece = piece(2, 1, -1); // we'll place manually
-  oppPiece.routePos = 4; // fake routePos for display
-  captureBoard[oppSpace].push(oppPiece);
-  // Actually we need to set up properly - P1 piece at routePos 1, roll 3, lands on routePos 4
-  // Space at routePos 4 for P1 = PLAYER_ROUTE[1][4] = 4
-  // We need an opponent piece there
+  // Step 5: Capture (P1 piece at routePos 1, roll 3, lands on routePos 4 where opponent is)
   const captureBoard2 = emptyBoard();
   const capturePiece1 = piece(1, 0, 1);
   placeOnBoard(captureBoard2, capturePiece1, 1);
