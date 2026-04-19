@@ -344,6 +344,13 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       onPointerMove={isMobile ? undefined : handleDragMove}
       onPointerUp={isMobile ? undefined : handleDragEnd}
     >
+      {/* Top row direction hint */}
+      <div className="flex items-center justify-center gap-1 h-3 lg:h-4">
+        <span className="text-amber-400/25 text-[7px] lg:text-[9px]">P1 →</span>
+        <div className="flex-1 h-px bg-amber-400/15" />
+        <span className="text-sky-400/25 text-[7px] lg:text-[9px]">← P2</span>
+      </div>
+
       {/* Top row */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
         <div ref={el => setRef('bench-1', el)} className="h-full">
@@ -373,12 +380,47 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         </div>
       </div>
 
-      {/* Jail */}
-      <div className="flex items-center justify-center py-1 lg:py-2 px-1">
+      {/* Direction arrows + Jail */}
+      <div className="flex items-center justify-between py-1 lg:py-2 px-1">
+        {/* Left side: wrap-around arrows */}
+        <div className="flex flex-col items-center gap-0.5 w-8 lg:w-12 shrink-0">
+          <span className="text-amber-400/30 text-[8px] lg:text-[10px] font-heading">P1</span>
+          <svg width="20" height="16" viewBox="0 0 20 16" className="text-amber-400/25 lg:w-6 lg:h-5">
+            <path d="M18 2 L10 8 L18 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M18 2 L18 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+          </svg>
+          <svg width="20" height="16" viewBox="0 0 20 16" className="text-sky-400/25 lg:w-6 lg:h-5">
+            <path d="M2 2 L10 8 L2 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 2 L2 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+          </svg>
+          <span className="text-sky-400/30 text-[8px] lg:text-[10px] font-heading">P2</span>
+        </div>
+
         <div ref={el => setRef('jail', el)}>
           <Jail jail={state.jail} validMoves={busy ? [] : validMoves}
             onClickJailPiece={handleClickJailPiece} currentPlayer={state.currentPlayer} />
         </div>
+
+        {/* Right side: direction to home */}
+        <div className="flex flex-col items-center gap-0.5 w-8 lg:w-12 shrink-0">
+          <span className="text-amber-400/30 text-[8px] lg:text-[10px] font-heading">P1</span>
+          <svg width="20" height="16" viewBox="0 0 20 16" className="text-amber-400/25 lg:w-6 lg:h-5">
+            <path d="M2 2 L10 8 L2 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 2 L2 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+          </svg>
+          <svg width="20" height="16" viewBox="0 0 20 16" className="text-sky-400/25 lg:w-6 lg:h-5">
+            <path d="M18 2 L10 8 L18 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M18 2 L18 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+          </svg>
+          <span className="text-sky-400/30 text-[8px] lg:text-[10px] font-heading">P2</span>
+        </div>
+      </div>
+
+      {/* Bottom row direction hint */}
+      <div className="flex items-center justify-center gap-1 h-3 lg:h-4">
+        <span className="text-sky-400/25 text-[7px] lg:text-[9px]">P2 →</span>
+        <div className="flex-1 h-px bg-sky-400/15" />
+        <span className="text-amber-400/25 text-[7px] lg:text-[9px]">← P1</span>
       </div>
 
       {/* Bottom row */}
