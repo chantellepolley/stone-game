@@ -24,7 +24,7 @@ export default function RulesPanel({ defaultOpen = false }: { defaultOpen?: bool
           <p><strong>Capturing:</strong> Land on a space occupied by a single opponent stone to capture it — it goes to The Stoned Dungeon (jail). If a space has 2 or more opponent stones, you cannot land there. Multi-step moves can capture at intermediate spaces along the way.</p>
           <p><strong>Jail:</strong> You must re-enter all jailed stones before making any other moves. Jailed stones re-enter from the start of your route using a die value. Captured stones lose their crowned status.</p>
           <p><strong>Crowning:</strong> When a stone enters the home stretch (last 10 spaces of your route), it becomes crowned and displays the Jester symbol.</p>
-          <p><strong>Bearing Off:</strong> Only crowned stones can bear off. An exact roll is needed to leave the board, unless ALL of your remaining board pieces are within the last 5 spaces — then any roll high enough will bear off your farthest piece.</p>
+          <p><strong>Bearing Off:</strong> Only crowned stones can bear off. An exact roll is needed to leave the board, unless ALL of your remaining board pieces are within the last 5 spaces — then any roll high enough will work, but you must bear off the farthest piece from home first.</p>
           <p><strong>Winning:</strong> First player to bear off all 13 stones wins!</p>
         </div>
       )}

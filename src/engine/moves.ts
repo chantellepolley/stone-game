@@ -47,6 +47,7 @@ function tryMove(
 
   // Bearing off — piece must ALREADY be crowned (on the home stretch).
   // Exact roll required UNLESS all board pieces are in the home quadrant (last 5 spaces).
+  // When overshooting, must bear off the farthest piece from home first.
   if (newPos >= ROUTE_LENGTH) {
     if (!piece.crowned) return null;
     const isExact = newPos === ROUTE_LENGTH;
@@ -59,6 +60,12 @@ function tryMove(
         )
       ) && state.bench[player].length === 0 && state.jail[player].length === 0;
       if (!allInHomeQuadrant) return null;
+
+      // Must bear off the farthest piece from home first
+      // (lowest routePos = farthest from home)
+      const boardPieces = getBoardPieces(state, player);
+      const farthestPos = Math.min(...boardPieces.map(p => p.routePos));
+      if (piece.routePos > farthestPos) return null; // not the farthest piece
     }
     return {
       pieceId: piece.id,
