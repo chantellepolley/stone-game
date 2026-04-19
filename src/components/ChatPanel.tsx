@@ -17,6 +17,14 @@ interface ChatPanelProps {
   unreadCount?: number;
 }
 
+function formatTime(ts: number): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (d.toDateString() === now.toDateString()) return time;
+  return `${d.getMonth() + 1}/${d.getDate()} ${time}`;
+}
+
 export default function ChatPanel({ messages, onSend, isOpen = true, onToggle, unreadCount = 0 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -79,7 +87,10 @@ export default function ChatPanel({ messages, onSend, isOpen = true, onToggle, u
               </div>
             )}
             <div className={`flex flex-col ${msg.isMine ? 'items-end' : 'items-start'}`}>
-              <span className="text-[8px] text-white/30">{msg.sender}</span>
+              <div className={`flex items-center gap-1 ${msg.isMine ? 'flex-row-reverse' : ''}`}>
+                <span className="text-[8px] text-white/30">{msg.sender}</span>
+                <span className="text-[7px] text-white/20">{formatTime(msg.timestamp)}</span>
+              </div>
               <div className={`px-2 py-1 rounded-lg text-[11px] max-w-[150px] break-words
                 ${msg.isMine
                   ? 'bg-amber-600/30 text-white/90'
