@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { usePlayerContext } from '../contexts/PlayerContext';
-
 interface FeedbackRow {
   id: string;
   username: string | null;
@@ -11,7 +9,6 @@ interface FeedbackRow {
 }
 
 export default function AdminFeedback({ onBack }: { onBack: () => void }) {
-  const { player } = usePlayerContext();
   const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
 
