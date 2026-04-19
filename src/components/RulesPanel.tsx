@@ -19,7 +19,7 @@ export default function RulesPanel({ defaultOpen = false }: { defaultOpen?: bool
           <p><strong>Starting:</strong> All stones begin in your starting area. Use a die value (1–5) to enter a stone onto the board — the value determines how far along your route it enters. You cannot enter with a 6 (Jester).</p>
           <p><strong>Movement:</strong> Each player travels 1.5 laps around the board (30 spaces total). You can use each die separately on different stones, or combine multiple dice to move one stone several steps.</p>
           <p><strong>Rolling:</strong> Roll 2 special dice with faces 1, 2, 3, 4, 5, and Jester (replaces the 6). Doubles grant 4 moves of that value.</p>
-          <p><strong>Jester:</strong> Rolling a Jester with any number X gives you 4 moves of X. The Jester value (6) cannot be used to enter the board or bear off.</p>
+          <p><strong>Jester:</strong> Rolling a Jester with any number X gives you 4 moves of X. A 6 (Jester) cannot be used to enter the board and cannot be used to bear off — it can only move stones already on the board.</p>
           <p><strong>Double Jesters:</strong> You must first use a 1 and a 2 move. Then choose any doubles value (1–5) and get 4 additional moves of that value.</p>
           <p><strong>Capturing:</strong> Land on a space occupied by a single opponent stone to capture it — it goes to The Stoned Dungeon (jail). If a space has 2 or more opponent stones, you cannot land there. Multi-step moves can capture at intermediate spaces along the way.</p>
           <p><strong>Jail:</strong> You must re-enter all jailed stones before making any other moves. Jailed stones re-enter from the start of your route using a die value. Captured stones lose their crowned status.</p>
