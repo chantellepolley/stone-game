@@ -72,7 +72,6 @@ export default function BoardSpace({
   const hasMixed = isSelected && playerPieces.length > 1 &&
     playerPieces.some(p => p.crowned) && playerPieces.some(p => !p.crowned);
   const [showPiecePopup, setShowPiecePopup] = useState(false);
-  const showPopupTrigger = pieces.length > 2 || hasMixedTypes;
 
   return (
     <div
