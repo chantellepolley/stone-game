@@ -309,18 +309,20 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     }
   };
 
-  // Flip board so "your" row is always on the bottom
-  // In local/AI: you are P1 (always bottom). In online: myPlayer prop determines.
-  // When current player switches in pass-and-play, the board flips for each player.
+  // Put "your" row on the bottom.
+  // Original layout: P1 row = top (spaces 0-9), P2 row = bottom (spaces 19-10).
+  // We flip so that YOUR row is always on the bottom.
   const me = myPlayer || state.currentPlayer;
-  const flipped = me === 2;
+  // When me=1, we need to flip (move P1 from top to bottom)
+  // When me=2, no flip needed (P2 is already on bottom)
+  const flipped = me === 1;
   const topPlayer: PlayerId = flipped ? 2 : 1;
   const botPlayer: PlayerId = flipped ? 1 : 2;
   const topIndices = flipped
-    ? Array.from({ length: 10 }, (_, i) => 19 - i) // P2's row (was bottom) now on top
+    ? Array.from({ length: 10 }, (_, i) => 19 - i) // P2's row on top
     : Array.from({ length: 10 }, (_, i) => i);       // P1's row on top (default)
   const bottomIndices = flipped
-    ? Array.from({ length: 10 }, (_, i) => i)         // P1's row now on bottom
+    ? Array.from({ length: 10 }, (_, i) => i)         // P1's row on bottom
     : Array.from({ length: 10 }, (_, i) => 19 - i);   // P2's row on bottom (default)
 
   function renderSpace(idx: number) {
