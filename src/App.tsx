@@ -13,6 +13,7 @@ import { TermsPage, PrivacyPage } from './components/LegalPages';
 import FeedbackPanel from './components/FeedbackPanel';
 import Tutorial from './components/Tutorial';
 import AdminFeedback from './components/AdminFeedback';
+import { usePushNotifications } from './hooks/usePushNotifications';
 import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
@@ -34,7 +35,17 @@ function getJoinCodeFromURL(): string | null {
 export default function App() {
   const playerHook = usePlayer();
   const { player, isLoading } = playerHook;
+  const { supported: pushSupported, permission: pushPermission, requestPermission } = usePushNotifications();
   const [screen, setScreen] = useState<AppScreen>('game');
+
+  // Ask for notification permission once player is logged in
+  useEffect(() => {
+    if (player && pushSupported && pushPermission === 'default') {
+      // Delay the prompt so it doesn't interrupt the initial experience
+      const timer = setTimeout(() => requestPermission(), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [player, pushSupported, pushPermission, requestPermission]);
   const [autoJoinCode, setAutoJoinCode] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2 } | null>(null);
   const [resumeLocalGameId, setResumeLocalGameId] = useState<string | null>(null);

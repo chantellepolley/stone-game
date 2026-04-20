@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { showNotification } from '../hooks/usePushNotifications';
 
 interface GameInvite {
   id: string;
@@ -18,6 +19,8 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
   const { player } = usePlayerContext();
   const [invites, setInvites] = useState<GameInvite[]>([]);
   const [friendRequests, setFriendRequests] = useState<number>(0);
+  const prevInviteCount = useRef(0);
+  const prevFriendCount = useRef(0);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const poll = useCallback(async () => {
@@ -60,7 +63,26 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
       .eq('friend_id', player.id)
       .eq('status', 'pending');
 
-    setFriendRequests(count || 0);
+    const newFriendCount = count || 0;
+    setFriendRequests(newFriendCount);
+
+    // Show system notifications for new items
+    const inviteCount = inviteData?.length || 0;
+    if (inviteCount > prevInviteCount.current && prevInviteCount.current >= 0) {
+      const newest = inviteData?.[0];
+      if (newest && document.visibilityState === 'hidden') {
+        const fromName = nameMap[newest.from_player_id] || 'Someone';
+        showNotification('STONE - Game Invite!', `${fromName} invited you to play!`, 'game-invite');
+      }
+    }
+    prevInviteCount.current = inviteCount;
+
+    if (newFriendCount > prevFriendCount.current && prevFriendCount.current >= 0) {
+      if (document.visibilityState === 'hidden') {
+        showNotification('STONE - Friend Request', 'You have a new friend request!', 'friend-request');
+      }
+    }
+    prevFriendCount.current = newFriendCount;
   }, [player]);
 
   useEffect(() => {

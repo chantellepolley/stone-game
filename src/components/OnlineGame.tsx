@@ -6,6 +6,7 @@ import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sou
 import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
+import { showNotification } from '../hooks/usePushNotifications';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -69,13 +70,17 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState(0);
   const chatUnread = chatOpen ? 0 : opponentMsgCount - lastSeenOpponentCount;
 
-  // Play "your turn" sound + vibrate when it becomes your turn
+  // Play "your turn" sound + vibrate + system notification
   useEffect(() => {
     if (isMyTurn && !prevIsMyTurn.current && onlinePhase === 'playing') {
       playYourTurnSound();
+      // Show system notification (works when app is backgrounded)
+      if (document.visibilityState === 'hidden') {
+        showNotification('STONE - Your Turn!', `${opponentName || 'Your opponent'} made their move. It's your turn!`, 'your-turn');
+      }
     }
     prevIsMyTurn.current = isMyTurn;
-  }, [isMyTurn, onlinePhase]);
+  }, [isMyTurn, onlinePhase, opponentName]);
 
   // Auto-join from URL or resume from My Games
   const [autoJoined, setAutoJoined] = useState(false);
