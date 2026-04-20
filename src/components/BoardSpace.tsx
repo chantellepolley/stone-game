@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Piece as PieceType, Move, PlayerId } from '../types/game';
 import Piece from './Piece';
 
@@ -70,6 +71,8 @@ export default function BoardSpace({
   const playerPieces = pieces.filter(p => p.owner === currentPlayer);
   const hasMixed = isSelected && playerPieces.length > 1 &&
     playerPieces.some(p => p.crowned) && playerPieces.some(p => !p.crowned);
+  const [showPiecePopup, setShowPiecePopup] = useState(false);
+  const showPopupTrigger = pieces.length > 2 || hasMixedTypes;
 
   return (
     <div
@@ -89,45 +92,73 @@ export default function BoardSpace({
           : 'linear-gradient(180deg, #6b6058 0%, #57504a 100%)',
       }}
     >
+      {/* Piece popup — zoomed view of all pieces on this space */}
+      {showPiecePopup && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={(e) => { e.stopPropagation(); setShowPiecePopup(false); }}>
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-4 shadow-2xl max-w-xs"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="text-white/50 text-[10px] font-heading uppercase tracking-wider text-center mb-2">
+              {pieces.length} pieces on this space
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {pieces.map(piece => {
+                const isThisPieceSelected = selectedPieceId === piece.id;
+                const isPlayerPiece = piece.owner === currentPlayer;
+                const canInteract = isValidSource || isValidTarget || (isSelected && isPlayerPiece);
+                const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
+                return (
+                  <div key={piece.id} className="flex flex-col items-center gap-0.5">
+                    <Piece
+                      piece={piece}
+                      size="lg"
+                      highlighted={showGlow}
+                      selected={isThisPieceSelected}
+                      onClick={isPlayerPiece ? (e?: React.MouseEvent) => {
+                        if (e) e.stopPropagation();
+                        onClickPiece(piece.id);
+                        setShowPiecePopup(false);
+                      } : undefined}
+                    />
+                    <span className="text-[8px] text-white/40">
+                      {piece.crowned ? 'Crowned' : 'Regular'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setShowPiecePopup(false)}
+              className="w-full mt-3 px-4 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-white/10 text-white/70 hover:bg-white/20 cursor-pointer transition-colors">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Pieces stack */}
       {hasMixedTypes ? (
-        /* Mixed view: single stack with crowned indicator badge */
-        <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}>
-          {/* Crowned count badge at top */}
+        /* Mixed: show top piece + count badge, tap to expand */
+        <div className="relative w-full flex flex-col items-center pb-1 cursor-pointer"
+          style={{ marginTop: 'auto' }}
+          onClick={(e) => { e.stopPropagation(); setShowPiecePopup(true); }}>
           <div className="flex items-center gap-0.5 mb-0.5">
-            <span className="text-[7px] text-amber-400/70">&#9812;</span>
-            <span className="text-[8px] font-bold text-amber-400/70">{crownedPieces.length}</span>
-            <span className="text-[7px] text-white/30 mx-0.5">|</span>
-            <span className="text-[8px] font-bold text-white/50">{uncrownedPieces.length}</span>
+            <span className="text-[7px] text-amber-400/70">&#9812;{crownedPieces.length}</span>
+            <span className="text-[6px] text-white/20">+</span>
+            <span className="text-[7px] text-white/50">{uncrownedPieces.length}</span>
           </div>
-          {/* Show top piece of each type, stacked vertically */}
-          {(() => {
-            // Show one crowned piece on top, one uncrowned below (or vice versa)
-            const display = [
-              ...crownedPieces.slice(-1),
-              ...uncrownedPieces.slice(-1),
-            ];
-            return display.map((piece, i) => {
-              const isThisPieceSelected = selectedPieceId === piece.id;
-              const isPlayerPiece = piece.owner === currentPlayer;
-              const canInteract = isValidSource || isValidTarget || (isSelected && isPlayerPiece);
-              const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
-              const allowIndividual = hasMixed && isPlayerPiece;
-              return (
-                <div key={piece.id} style={{ marginTop: i === 0 ? 0 : -4 }}
-                  onPointerDown={allowIndividual && onDragStart ? (e) => { e.stopPropagation(); onDragStart(piece.id, e); } : undefined}>
-                  <Piece piece={piece} size="sm" highlighted={showGlow} selected={isThisPieceSelected}
-                    onClick={allowIndividual ? (e?: React.MouseEvent) => { if (e) e.stopPropagation(); onClickPiece(piece.id); } : undefined} />
-                </div>
-              );
-            });
-          })()}
+          <Piece piece={pieces[pieces.length - 1]} size="sm"
+            highlighted={hintsEnabled && (isValidSource || isValidTarget)} />
+          {pieces.length > 1 && (
+            <div className="text-[8px] text-amber-400/50 mt-0.5">tap to view</div>
+          )}
         </div>
       ) : (
         /* Single stack (all same type) */
         <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}>
           {hiddenCount > 0 && (
-            <div className="text-[10px] font-bold text-stone-bg bg-stone-light/60 rounded-full w-5 h-5 flex items-center justify-center mb-0.5">
+            <div className="text-[10px] font-bold text-stone-bg bg-stone-light/60 rounded-full w-5 h-5 flex items-center justify-center mb-0.5 cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); setShowPiecePopup(true); }}>
               +{hiddenCount}
             </div>
           )}
