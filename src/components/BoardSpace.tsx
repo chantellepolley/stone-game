@@ -137,20 +137,24 @@ export default function BoardSpace({
 
       {/* Pieces stack */}
       {hasMixedTypes ? (
-        /* Mixed: show top piece + count badge, tap to expand */
-        <div className="relative w-full flex flex-col items-center pb-1 cursor-pointer"
-          style={{ marginTop: 'auto' }}
+        /* Mixed crowned/uncrowned: show normal stack, auto-popup on click for piece selection */
+        <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}
           onClick={(e) => { e.stopPropagation(); setShowPiecePopup(true); }}>
-          <div className="flex items-center gap-0.5 mb-0.5">
-            <span className="text-[7px] text-amber-400/70">&#9812;{crownedPieces.length}</span>
-            <span className="text-[6px] text-white/20">+</span>
-            <span className="text-[7px] text-white/50">{uncrownedPieces.length}</span>
-          </div>
-          <Piece piece={pieces[pieces.length - 1]} size="sm"
-            highlighted={hintsEnabled && (isValidSource || isValidTarget)} />
-          {pieces.length > 1 && (
-            <div className="text-[8px] text-amber-400/50 mt-0.5">tap to view</div>
+          {hiddenCount > 0 && (
+            <div className="text-[10px] font-bold text-stone-bg bg-stone-light/60 rounded-full w-5 h-5 flex items-center justify-center mb-0.5">
+              +{hiddenCount}
+            </div>
           )}
+          {visiblePieces.map((piece, i) => {
+            const isThisPieceSelected = selectedPieceId === piece.id;
+            const canInteract = isValidSource || isValidTarget || isSelected;
+            const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
+            return (
+              <div key={piece.id} style={{ marginTop: i === 0 ? 0 : -6 }}>
+                <Piece piece={piece} size="sm" highlighted={showGlow} selected={isThisPieceSelected} />
+              </div>
+            );
+          })}
         </div>
       ) : (
         /* Single stack (all same type) */
