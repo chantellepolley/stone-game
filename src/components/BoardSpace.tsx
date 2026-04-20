@@ -68,9 +68,6 @@ export default function BoardSpace({
   const visiblePieces = sorted.slice(-maxVisible);
   const hiddenCount = Math.max(0, sorted.length - maxVisible);
 
-  const playerPieces = pieces.filter(p => p.owner === currentPlayer);
-  const hasMixed = isSelected && playerPieces.length > 1 &&
-    playerPieces.some(p => p.crowned) && playerPieces.some(p => !p.crowned);
   const [showPiecePopup, setShowPiecePopup] = useState(false);
 
   return (
@@ -137,9 +134,16 @@ export default function BoardSpace({
 
       {/* Pieces stack */}
       {hasMixedTypes ? (
-        /* Mixed crowned/uncrowned: show normal stack, auto-popup on click for piece selection */
+        /* Mixed crowned/uncrowned: show normal stack, popup only when selecting a piece to move */
         <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}
-          onClick={(e) => { e.stopPropagation(); setShowPiecePopup(true); }}>
+          onClick={(e) => {
+            // Only show popup when this space is a valid source (need to pick which piece)
+            // Don't intercept if this is a move target or already selected
+            if (isValidSource && !isSelected && !isValidTarget) {
+              e.stopPropagation();
+              setShowPiecePopup(true);
+            }
+          }}>
           {hiddenCount > 0 && (
             <div className="text-[10px] font-bold text-stone-bg bg-stone-light/60 rounded-full w-5 h-5 flex items-center justify-center mb-0.5">
               +{hiddenCount}
@@ -170,13 +174,12 @@ export default function BoardSpace({
             const isPlayerPiece = piece.owner === currentPlayer;
             const canInteract = isValidSource || isValidTarget || (isSelected && isPlayerPiece);
             const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
-            const allowIndividual = hasMixed && isPlayerPiece;
 
             return (
               <div
                 key={piece.id}
-                style={{ marginTop: i === 0 ? 0 : hasMixed ? 1 : -6 }}
-                onPointerDown={allowIndividual && onDragStart ? (e) => {
+                style={{ marginTop: i === 0 ? 0 : -6 }}
+                onPointerDown={isPlayerPiece && onDragStart ? (e) => {
                   e.stopPropagation();
                   onDragStart(piece.id, e);
                 } : undefined}
@@ -186,10 +189,6 @@ export default function BoardSpace({
                   size="sm"
                   highlighted={showGlow}
                   selected={isThisPieceSelected}
-                  onClick={allowIndividual ? (e?: React.MouseEvent) => {
-                    if (e) e.stopPropagation();
-                    onClickPiece(piece.id);
-                  } : undefined}
                 />
               </div>
             );
