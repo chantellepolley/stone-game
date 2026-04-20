@@ -354,6 +354,17 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       onPointerMove={isMobile ? undefined : handleDragMove}
       onPointerUp={isMobile ? undefined : handleDragEnd}
     >
+      {/* Top row arrows (opponent returns right-to-left here) */}
+      <div className="flex items-center px-12 lg:px-16 h-3">
+        <div className="flex-1 flex items-center justify-center gap-1">
+          <svg width="16" height="8" viewBox="0 0 16 8" className="text-amber-400/20"><path d="M12 1 L4 4 L12 7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div className="flex-1 h-px bg-amber-400/10" />
+          <svg width="16" height="8" viewBox="0 0 16 8" className="text-amber-400/20"><path d="M12 1 L4 4 L12 7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div className="flex-1 h-px bg-amber-400/10" />
+          <svg width="16" height="8" viewBox="0 0 16 8" className="text-amber-400/20"><path d="M12 1 L4 4 L12 7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+      </div>
+
       {/* Top row (opponent's row) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
         <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full">
@@ -383,11 +394,35 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         </div>
       </div>
 
+      {/* Wrap-around arrows (your pieces go from top-right down to bottom-left) */}
+      <div className="flex items-center justify-between px-2 py-0.5">
+        <svg width="24" height="14" viewBox="0 0 24 14" className="text-amber-400/20">
+          <path d="M20 2 C12 2, 4 4, 4 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M6 9 L4 12 L8 11" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <div className="flex-1" />
+        <svg width="24" height="14" viewBox="0 0 24 14" className="text-amber-400/20">
+          <path d="M4 12 C12 12, 20 10, 20 2" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M18 5 L20 2 L16 3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
       {/* Jail */}
       <div className="flex items-center justify-center py-1 lg:py-2 px-1">
         <div ref={el => setRef('jail', el)}>
           <Jail jail={state.jail} validMoves={busy ? [] : validMoves}
             onClickJailPiece={handleClickJailPiece} currentPlayer={state.currentPlayer} />
+        </div>
+      </div>
+
+      {/* Bottom row arrows (your pieces move left-to-right) */}
+      <div className="flex items-center px-12 lg:px-16 h-3">
+        <div className="flex-1 flex items-center justify-center gap-1">
+          <svg width="16" height="8" viewBox="0 0 16 8" className="text-amber-400/20"><path d="M4 1 L12 4 L4 7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div className="flex-1 h-px bg-amber-400/10" />
+          <svg width="16" height="8" viewBox="0 0 16 8" className="text-amber-400/20"><path d="M4 1 L12 4 L4 7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div className="flex-1 h-px bg-amber-400/10" />
+          <svg width="16" height="8" viewBox="0 0 16 8" className="text-amber-400/20"><path d="M4 1 L12 4 L4 7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </div>
       </div>
 
