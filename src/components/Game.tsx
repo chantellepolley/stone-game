@@ -126,6 +126,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
             onSelectMove={selectMove}
             pendingAIMove={pendingAIMove}
             hintsEnabled={hintsEnabled}
+            myPlayer={1}
           />
         </div>
 

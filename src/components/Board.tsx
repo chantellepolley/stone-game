@@ -13,6 +13,8 @@ interface BoardProps {
   onSelectMove: (move: Move) => void;
   pendingAIMove?: Move | null;
   hintsEnabled?: boolean;
+  /** Which player "you" are — this player's row is always on the bottom */
+  myPlayer?: PlayerId;
 }
 
 type SelectedSource =
@@ -37,7 +39,7 @@ interface DragState {
 
 const ANIM_MS = 350;
 
-export default function Board({ state, validMoves, onSelectMove, pendingAIMove, hintsEnabled = true }: BoardProps) {
+export default function Board({ state, validMoves, onSelectMove, pendingAIMove, hintsEnabled = true, myPlayer }: BoardProps) {
   const isMobile = useIsMobile();
   const [selected, setSelected] = useState<SelectedSource>(null);
   const [anim, setAnim] = useState<AnimState | null>(null);
@@ -307,8 +309,11 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     }
   };
 
-  // Flip board so current player's row is always on the bottom
-  const flipped = state.currentPlayer === 2;
+  // Flip board so "your" row is always on the bottom
+  // In local/AI: you are P1 (always bottom). In online: myPlayer prop determines.
+  // When current player switches in pass-and-play, the board flips for each player.
+  const me = myPlayer || state.currentPlayer;
+  const flipped = me === 2;
   const topPlayer: PlayerId = flipped ? 2 : 1;
   const botPlayer: PlayerId = flipped ? 1 : 2;
   const topIndices = flipped

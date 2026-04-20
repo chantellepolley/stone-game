@@ -221,6 +221,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             onSelectMove={selectMove}
             pendingAIMove={pendingOpponentMove}
             hintsEnabled={hintsEnabled}
+            myPlayer={myPlayer || 1}
           />
         </div>
 

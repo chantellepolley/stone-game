@@ -304,6 +304,7 @@ export default function Tutorial({ onFinish }: TutorialProps) {
                 validMoves={validMoves}
                 onSelectMove={handleSelectMove}
                 hintsEnabled={true}
+                myPlayer={1}
               />
             </div>
           )}
