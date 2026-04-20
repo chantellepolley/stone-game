@@ -37,6 +37,13 @@ body {
   background: #1a1510 url('/stone-bg.jpg') center / auto fixed;
 }
 
+/* Brighten the app on mobile screens */
+@media (max-width: 1023px) {
+  #root {
+    filter: brightness(1.15) contrast(1.02);
+  }
+}
+
 #root {
   min-height: 100vh;
 }

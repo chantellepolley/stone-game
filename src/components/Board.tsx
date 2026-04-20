@@ -337,7 +337,9 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       ref={boardRef}
       className="relative flex flex-col gap-0 rounded-xl lg:rounded-2xl border-2 lg:border-4 border-stone-border bg-board-bg p-1.5 sm:p-2 lg:p-3 shadow-2xl select-none h-full max-h-full"
       style={{
-        background: 'linear-gradient(135deg, #3d3632 0%, #322d28 50%, #3d3632 100%)',
+        background: isMobile
+          ? 'linear-gradient(135deg, #4a4440 0%, #3d3835 50%, #4a4440 100%)'
+          : 'linear-gradient(135deg, #3d3632 0%, #322d28 50%, #3d3632 100%)',
         boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
         touchAction: isMobile ? 'auto' : 'none',
       }}
