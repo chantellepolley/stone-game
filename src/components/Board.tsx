@@ -401,24 +401,27 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         </div>
       </div>
 
-      {/* Wrap-around arrows (your pieces go from top-right down to bottom-left) */}
-      <div className="flex items-center justify-between px-2 py-0.5">
-        <svg width="24" height="14" viewBox="0 0 24 14" className="text-amber-400/20">
-          <path d="M20 2 C12 2, 4 4, 4 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M6 9 L4 12 L8 11" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <div className="flex-1" />
-        <svg width="24" height="14" viewBox="0 0 24 14" className="text-amber-400/20">
-          <path d="M4 12 C12 12, 20 10, 20 2" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M18 5 L20 2 L16 3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
+      {/* Jail + vertical wrap-around arrows at the edges */}
+      <div className="flex items-center justify-center py-1 lg:py-2 px-1 relative">
+        {/* Left arrow: down (pieces wrap from top-left down to bottom-left) */}
+        <div className="absolute left-1 lg:left-2 top-1/2 -translate-y-1/2">
+          <svg width="14" height="28" viewBox="0 0 14 28" className="text-amber-400/25">
+            <path d="M7 2 L7 22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M3 18 L7 24 L11 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
 
-      {/* Jail */}
-      <div className="flex items-center justify-center py-1 lg:py-2 px-1">
         <div ref={el => setRef('jail', el)}>
           <Jail jail={state.jail} validMoves={busy ? [] : validMoves}
             onClickJailPiece={handleClickJailPiece} currentPlayer={state.currentPlayer} />
+        </div>
+
+        {/* Right arrow: up (pieces wrap from bottom-right up to top-right) */}
+        <div className="absolute right-1 lg:right-2 top-1/2 -translate-y-1/2">
+          <svg width="14" height="28" viewBox="0 0 14 28" className="text-amber-400/25">
+            <path d="M7 26 L7 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M3 10 L7 4 L11 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
       </div>
 
