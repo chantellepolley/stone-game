@@ -91,45 +91,37 @@ export default function BoardSpace({
     >
       {/* Pieces stack */}
       {hasMixedTypes ? (
-        /* Split view: crowned left, uncrowned right */
-        <div className="relative w-full flex items-end justify-center gap-0.5 pb-1" style={{ marginTop: 'auto' }}>
-          {/* Crowned stack (left) */}
-          <div className="flex flex-col items-center">
-            <div className="text-[6px] text-amber-400/50 mb-0.5">&#9812;</div>
-            {crownedPieces.slice(-3).map((piece, i) => {
+        /* Mixed view: single stack with crowned indicator badge */
+        <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}>
+          {/* Crowned count badge at top */}
+          <div className="flex items-center gap-0.5 mb-0.5">
+            <span className="text-[7px] text-amber-400/70">&#9812;</span>
+            <span className="text-[8px] font-bold text-amber-400/70">{crownedPieces.length}</span>
+            <span className="text-[7px] text-white/30 mx-0.5">|</span>
+            <span className="text-[8px] font-bold text-white/50">{uncrownedPieces.length}</span>
+          </div>
+          {/* Show top piece of each type, stacked vertically */}
+          {(() => {
+            // Show one crowned piece on top, one uncrowned below (or vice versa)
+            const display = [
+              ...crownedPieces.slice(-1),
+              ...uncrownedPieces.slice(-1),
+            ];
+            return display.map((piece, i) => {
               const isThisPieceSelected = selectedPieceId === piece.id;
               const isPlayerPiece = piece.owner === currentPlayer;
               const canInteract = isValidSource || isValidTarget || (isSelected && isPlayerPiece);
               const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
               const allowIndividual = hasMixed && isPlayerPiece;
               return (
-                <div key={piece.id} style={{ marginTop: i === 0 ? 0 : -8 }}
+                <div key={piece.id} style={{ marginTop: i === 0 ? 0 : -4 }}
                   onPointerDown={allowIndividual && onDragStart ? (e) => { e.stopPropagation(); onDragStart(piece.id, e); } : undefined}>
                   <Piece piece={piece} size="sm" highlighted={showGlow} selected={isThisPieceSelected}
                     onClick={allowIndividual ? (e?: React.MouseEvent) => { if (e) e.stopPropagation(); onClickPiece(piece.id); } : undefined} />
                 </div>
               );
-            })}
-            {crownedPieces.length > 3 && <div className="text-[8px] text-white/50">+{crownedPieces.length - 3}</div>}
-          </div>
-          {/* Uncrowned stack (right) */}
-          <div className="flex flex-col items-center">
-            {uncrownedPieces.slice(-3).map((piece, i) => {
-              const isThisPieceSelected = selectedPieceId === piece.id;
-              const isPlayerPiece = piece.owner === currentPlayer;
-              const canInteract = isValidSource || isValidTarget || (isSelected && isPlayerPiece);
-              const showGlow = hintsEnabled && canInteract && !isThisPieceSelected;
-              const allowIndividual = hasMixed && isPlayerPiece;
-              return (
-                <div key={piece.id} style={{ marginTop: i === 0 ? 0 : -8 }}
-                  onPointerDown={allowIndividual && onDragStart ? (e) => { e.stopPropagation(); onDragStart(piece.id, e); } : undefined}>
-                  <Piece piece={piece} size="sm" highlighted={showGlow} selected={isThisPieceSelected}
-                    onClick={allowIndividual ? (e?: React.MouseEvent) => { if (e) e.stopPropagation(); onClickPiece(piece.id); } : undefined} />
-                </div>
-              );
-            })}
-            {uncrownedPieces.length > 3 && <div className="text-[8px] text-white/50">+{uncrownedPieces.length - 3}</div>}
-          </div>
+            });
+          })()}
         </div>
       ) : (
         /* Single stack (all same type) */
