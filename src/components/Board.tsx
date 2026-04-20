@@ -465,7 +465,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         </div>
       </div>
 
-      {/* Deselect + mobile crowned toggle */}
+      {/* Deselect + crowned toggle */}
       {selected && !busy && (
         <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-2 z-20">
           <button
@@ -475,19 +475,18 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           >
             Deselect
           </button>
-          {isMobile && selected.type === 'board' && hasMixedCrownedPieces(selected.index) && (
+          {selected.type === 'board' && hasMixedCrownedPieces(selected.index) && (
             <button
               onClick={() => {
                 setMobileCrownedToggle(prev => !prev);
-                // Re-select with the other piece type
                 const pp = state.board[selected.index].filter(p => p.owner === state.currentPlayer);
                 const next = !mobileCrownedToggle
                   ? pp.find(p => p.crowned)
                   : pp.find(p => !p.crowned);
                 if (next) setSelected({ type: 'board', index: selected.index, pieceId: next.id });
               }}
-              className="px-3 py-0.5 rounded text-[10px] font-heading uppercase tracking-wider
-                         bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all cursor-pointer"
+              className="px-3 py-1 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-all cursor-pointer shadow-lg"
             >
               {mobileCrownedToggle ? 'Move Regular' : 'Move Crowned'}
             </button>

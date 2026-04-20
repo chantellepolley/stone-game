@@ -66,7 +66,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
 
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4">
-      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={() => setShowDifficulty(false)} />
 
       {player && !editingName && (
         <div className="flex flex-col items-center gap-2">
