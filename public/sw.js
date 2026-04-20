@@ -56,7 +56,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache static assets for offline support
-const CACHE_NAME = 'stone-v1';
+const CACHE_NAME = 'stone-v2';
 const STATIC_ASSETS = [
   '/',
   '/logo.png',
@@ -84,15 +84,25 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for API calls, cache-first for assets
+  // Don't cache API calls or non-GET requests
   if (event.request.url.includes('supabase.co') || event.request.method !== 'GET') {
-    return; // Don't cache API calls
+    return;
   }
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request);
-    })
-  );
+
+  // Network-first for HTML/JS/CSS (so updates are always fresh)
+  // Cache-first only for images
+  const isAsset = event.request.url.match(/\.(png|jpg|jpeg|svg|webp)$/);
+
+  if (isAsset) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => cached || fetch(event.request))
+    );
+  } else {
+    // Network-first for everything else — prevents white screen from stale cache
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+  }
 });
 
 // Periodic background sync (if supported) to check for turn changes
