@@ -73,9 +73,15 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
 
   return (
     <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
-      {/* Logo — click to go home */}
-      <header className="shrink-0 cursor-pointer" onClick={restart}>
-        <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain" />
+      {/* Logo + Home button */}
+      <header className="shrink-0 flex items-center gap-2">
+        <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain cursor-pointer" onClick={restart} />
+        <button onClick={restart}
+          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                     bg-[#504840] text-white/70 border border-[#6b5f55] hover:text-white hover:bg-[#5e5549]
+                     cursor-pointer transition-colors shadow-md">
+          Home
+        </button>
       </header>
 
       {/* Turn indicator */}
