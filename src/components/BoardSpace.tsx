@@ -28,7 +28,7 @@ export default function BoardSpace({
   selectedPieceId,
   currentPlayer,
   hintsEnabled = true,
-  isMobile = false,
+  isMobile: _isMobile = false,
   onClickSpace,
   onClickPiece,
   onDragStart,
