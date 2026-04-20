@@ -307,8 +307,16 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     }
   };
 
-  const topIndices = Array.from({ length: 10 }, (_, i) => i);
-  const bottomIndices = Array.from({ length: 10 }, (_, i) => 19 - i);
+  // Flip board so current player's row is always on the bottom
+  const flipped = state.currentPlayer === 2;
+  const topPlayer: PlayerId = flipped ? 2 : 1;
+  const botPlayer: PlayerId = flipped ? 1 : 2;
+  const topIndices = flipped
+    ? Array.from({ length: 10 }, (_, i) => 19 - i) // P2's row (was bottom) now on top
+    : Array.from({ length: 10 }, (_, i) => i);       // P1's row on top (default)
+  const bottomIndices = flipped
+    ? Array.from({ length: 10 }, (_, i) => i)         // P1's row now on bottom
+    : Array.from({ length: 10 }, (_, i) => 19 - i);   // P2's row on bottom (default)
 
   function renderSpace(idx: number) {
     return (
@@ -346,94 +354,52 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       onPointerMove={isMobile ? undefined : handleDragMove}
       onPointerUp={isMobile ? undefined : handleDragEnd}
     >
-      {/* Top row direction hint */}
-      <div className="flex items-center justify-center gap-1 h-3 lg:h-4">
-        <span className="text-amber-400/25 text-[7px] lg:text-[9px]">P1 →</span>
-        <div className="flex-1 h-px bg-amber-400/15" />
-        <span className="text-sky-400/25 text-[7px] lg:text-[9px]">← P2</span>
-      </div>
-
-      {/* Top row */}
+      {/* Top row (opponent's row) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef('bench-1', el)} className="h-full">
-          <StoneBox player={1} pieces={state.bench[1]} label="Start"
-            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 1}
+        <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full">
+          <StoneBox player={topPlayer} pieces={state.bench[topPlayer]} label="Start"
+            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === topPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
-            onClick={() => handleClickBench(1)}
-            isSelected={selected?.type === 'bench' && selected.player === 1}
-            onDragStart={!isMobile && hasBenchMoves && state.currentPlayer === 1 ? handleDragStart : undefined}
+            onClick={() => handleClickBench(topPlayer)}
+            isSelected={selected?.type === 'bench' && selected.player === topPlayer}
+            onDragStart={!isMobile && hasBenchMoves && state.currentPlayer === topPlayer ? handleDragStart : undefined}
           />
         </div>
 
         <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
-          {topIndices.map(idx =>
-            idx === 5
+          {topIndices.map((idx, i) =>
+            i === 5
               ? [<div key="div-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx)]
               : renderSpace(idx)
           )}
         </div>
 
-        <div ref={el => setRef('home-1', el)} className="h-full">
-          <StoneBox player={1} pieces={state.home[1]} label="Home"
-            interactive={!busy && canBearOff && state.currentPlayer === 1}
-            hinting={hintsEnabled && anyBearOffP1} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
-            onClick={() => handleBearOff(1)}
+        <div ref={el => setRef(`home-${topPlayer}`, el)} className="h-full">
+          <StoneBox player={topPlayer} pieces={state.home[topPlayer]} label="Home"
+            interactive={!busy && canBearOff && state.currentPlayer === topPlayer}
+            hinting={hintsEnabled && (topPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
+            onClick={() => handleBearOff(topPlayer)}
           />
         </div>
       </div>
 
-      {/* Direction arrows + Jail */}
-      <div className="flex items-center justify-between py-1 lg:py-2 px-1">
-        {/* Left side: wrap-around arrows */}
-        <div className="flex flex-col items-center gap-0.5 w-8 lg:w-12 shrink-0">
-          <span className="text-amber-400/30 text-[8px] lg:text-[10px] font-heading">P1</span>
-          <svg width="20" height="16" viewBox="0 0 20 16" className="text-amber-400/25 lg:w-6 lg:h-5">
-            <path d="M18 2 L10 8 L18 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M18 2 L18 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <svg width="20" height="16" viewBox="0 0 20 16" className="text-sky-400/25 lg:w-6 lg:h-5">
-            <path d="M2 2 L10 8 L2 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M2 2 L2 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <span className="text-sky-400/30 text-[8px] lg:text-[10px] font-heading">P2</span>
-        </div>
-
+      {/* Jail */}
+      <div className="flex items-center justify-center py-1 lg:py-2 px-1">
         <div ref={el => setRef('jail', el)}>
           <Jail jail={state.jail} validMoves={busy ? [] : validMoves}
             onClickJailPiece={handleClickJailPiece} currentPlayer={state.currentPlayer} />
         </div>
-
-        {/* Right side: direction to home */}
-        <div className="flex flex-col items-center gap-0.5 w-8 lg:w-12 shrink-0">
-          <span className="text-amber-400/30 text-[8px] lg:text-[10px] font-heading">P1</span>
-          <svg width="20" height="16" viewBox="0 0 20 16" className="text-amber-400/25 lg:w-6 lg:h-5">
-            <path d="M2 2 L10 8 L2 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M2 2 L2 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <svg width="20" height="16" viewBox="0 0 20 16" className="text-sky-400/25 lg:w-6 lg:h-5">
-            <path d="M18 2 L10 8 L18 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M18 2 L18 14" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
-          </svg>
-          <span className="text-sky-400/30 text-[8px] lg:text-[10px] font-heading">P2</span>
-        </div>
       </div>
 
-      {/* Bottom row direction hint */}
-      <div className="flex items-center justify-center gap-1 h-3 lg:h-4">
-        <span className="text-sky-400/25 text-[7px] lg:text-[9px]">P2 →</span>
-        <div className="flex-1 h-px bg-sky-400/15" />
-        <span className="text-amber-400/25 text-[7px] lg:text-[9px]">← P1</span>
-      </div>
-
-      {/* Bottom row */}
+      {/* Bottom row (current player's row — always moves left to right here) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef('bench-2', el)} className="h-full">
-          <StoneBox player={2} pieces={state.bench[2]} label="Start"
-            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === 2}
+        <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full">
+          <StoneBox player={botPlayer} pieces={state.bench[botPlayer]} label="Start"
+            interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === botPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
-            onClick={() => handleClickBench(2)}
-            isSelected={selected?.type === 'bench' && selected.player === 2}
-            onDragStart={!isMobile && hasBenchMoves && state.currentPlayer === 2 ? handleDragStart : undefined}
+            onClick={() => handleClickBench(botPlayer)}
+            isSelected={selected?.type === 'bench' && selected.player === botPlayer}
+            onDragStart={!isMobile && hasBenchMoves && state.currentPlayer === botPlayer ? handleDragStart : undefined}
           />
         </div>
 
@@ -445,11 +411,11 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           )}
         </div>
 
-        <div ref={el => setRef('home-2', el)} className="h-full">
-          <StoneBox player={2} pieces={state.home[2]} label="Home"
-            interactive={!busy && canBearOff && state.currentPlayer === 2}
-            hinting={hintsEnabled && anyBearOffP2} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
-            onClick={() => handleBearOff(2)}
+        <div ref={el => setRef(`home-${botPlayer}`, el)} className="h-full">
+          <StoneBox player={botPlayer} pieces={state.home[botPlayer]} label="Home"
+            interactive={!busy && canBearOff && state.currentPlayer === botPlayer}
+            hinting={hintsEnabled && (botPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
+            onClick={() => handleBearOff(botPlayer)}
           />
         </div>
       </div>
