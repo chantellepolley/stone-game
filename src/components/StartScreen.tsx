@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { GameMode, AIDifficulty } from '../types/game';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
 interface StartScreenProps {
   onStart: (mode: GameMode, difficulty: AIDifficulty) => void;
@@ -31,6 +32,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [passwordMsg, setPasswordMsg] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { canInstall, isInstalled, install, showIOSInstructions, bannerDismissed, dismissBanner } = useInstallPrompt();
+  const [showIOSModal, setShowIOSModal] = useState(false);
 
   useEffect(() => {
     if (editingName && nameInputRef.current) nameInputRef.current.focus();
@@ -66,6 +69,51 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
 
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4">
+      {/* Install banner for first-time visitors */}
+      {!isInstalled && !bannerDismissed && (canInstall || showIOSInstructions) && (
+        <div className="fixed top-0 left-0 right-0 bg-amber-600 text-white px-4 py-2 flex items-center justify-center gap-3 z-50 shadow-lg">
+          <span className="text-xs font-heading">Install STONE on your device for the best experience!</span>
+          {canInstall && (
+            <button onClick={install}
+              className="px-3 py-1 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-white text-amber-700 hover:bg-amber-50 cursor-pointer transition-colors">
+              Install
+            </button>
+          )}
+          {showIOSInstructions && (
+            <button onClick={() => setShowIOSModal(true)}
+              className="px-3 py-1 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-white text-amber-700 hover:bg-amber-50 cursor-pointer transition-colors">
+              How
+            </button>
+          )}
+          <button onClick={dismissBanner}
+            className="text-white/70 hover:text-white text-sm cursor-pointer ml-1">
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* iOS install instructions modal */}
+      {showIOSModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <h2 className="text-white font-heading text-lg mb-3">Add to Home Screen</h2>
+            <div className="text-white/70 text-sm space-y-2 text-left">
+              <p>1. Tap the <strong>Share</strong> button <span className="text-lg">&#8593;</span> at the bottom of Safari</p>
+              <p>2. Scroll down and tap <strong>"Add to Home Screen"</strong></p>
+              <p>3. Tap <strong>"Add"</strong></p>
+            </div>
+            <p className="text-white/50 text-xs mt-3">STONE will appear as an app on your home screen!</p>
+            <button onClick={() => setShowIOSModal(false)}
+              className="mt-4 px-6 py-2 rounded-xl font-heading text-sm uppercase tracking-wider
+                         bg-amber-600 text-white hover:bg-amber-500 cursor-pointer shadow-lg">
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={() => setShowDifficulty(false)} />
 
       {player && !editingName && (
@@ -257,6 +305,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white hover:text-amber-400 transition-colors cursor-pointer">
               How to Play
+            </button>
+          )}
+          {!isInstalled && (canInstall || showIOSInstructions) && (
+            <button onClick={canInstall ? install : () => setShowIOSModal(true)}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer">
+              Install App
             </button>
           )}
           {onShowFeedback && (
