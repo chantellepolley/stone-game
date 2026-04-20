@@ -69,10 +69,8 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
     // Show system notifications for new items
     const inviteCount = inviteData?.length || 0;
     if (inviteCount > prevInviteCount.current && prevInviteCount.current >= 0) {
-      const newest = inviteData?.[0];
-      if (newest && document.visibilityState === 'hidden') {
-        const fromName = nameMap[newest.from_player_id] || 'Someone';
-        showNotification('STONE - Game Invite!', `${fromName} invited you to play!`, 'game-invite');
+      if (document.visibilityState === 'hidden') {
+        showNotification('STONE - Game Invite!', 'You have a new game invite!', 'game-invite');
       }
     }
     prevInviteCount.current = inviteCount;

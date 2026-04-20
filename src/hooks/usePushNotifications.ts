@@ -40,9 +40,8 @@ export function showNotification(title: string, body: string, tag = 'stone-notif
         icon: '/app-icon.png',
         badge: '/favicon.png',
         tag,
-        vibrate: [100, 50, 150],
         data: { url: '/' },
-      });
+      } as NotificationOptions);
     }).catch(() => {
       // Fallback to regular notification
       new Notification(title, { body, icon: '/app-icon.png', tag });
