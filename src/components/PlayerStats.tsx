@@ -23,6 +23,8 @@ interface GameHistoryRow {
   opp_captures: number;
   my_borne_off: number;
   turns: number;
+  my_jesters: number;
+  my_doubles: number;
 }
 
 interface HeadToHead {
@@ -105,6 +107,8 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
             opp_captures: captures[myPlayer === 1 ? 2 : 1] || 0,
             my_borne_off: state?.home?.[myPlayer]?.length || 0,
             turns: state?.turnCount || 0,
+            my_jesters: state?.jesterCount?.[myPlayer] || 0,
+            my_doubles: state?.doublesCount?.[myPlayer] || 0,
           };
         });
         setHistory(rows);
@@ -227,6 +231,9 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
                       <span>Captures: {g.my_captures}</span>
                       <span>Borne off: {g.my_borne_off}</span>
                       <span>{g.turns} turns</span>
+                      {(g.my_jesters > 0 || g.my_doubles > 0) && (
+                        <span>Jesters: {g.my_jesters} | Doubles: {g.my_doubles}</span>
+                      )}
                     </div>
                   </div>
                   <div className="text-white/30 text-[9px] shrink-0 ml-2">{timeAgo(g.updated_at)}</div>

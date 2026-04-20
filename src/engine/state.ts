@@ -30,5 +30,7 @@ export function createInitialState(): GameState {
     moveLog: [],
     turnCount: 1,
     captureCount: { 1: 0, 2: 0 },
+    jesterCount: { 1: 0, 2: 0 },
+    doublesCount: { 1: 0, 2: 0 },
   };
 }

@@ -42,6 +42,10 @@ export interface GameState {
   turnCount: number;
   /** Cumulative count of pieces each player has captured from their opponent */
   captureCount: Record<PlayerId, number>;
+  /** Count of jesters rolled per player */
+  jesterCount?: Record<PlayerId, number>;
+  /** Count of doubles rolled per player */
+  doublesCount?: Record<PlayerId, number>;
 }
 
 export type MoveSource =

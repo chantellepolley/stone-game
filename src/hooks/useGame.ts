@@ -11,7 +11,16 @@ import { supabase } from '../lib/supabase';
 function applyRoll(prev: GameState): GameState {
   if (prev.phase !== 'rolling') return prev;
   const dice = rollDice();
-  const newState: GameState = { ...prev, dice, phase: 'moving' };
+  const player = prev.currentPlayer;
+
+  // Track jester and doubles counts
+  const jesterCount = { ...(prev.jesterCount || { 1: 0, 2: 0 }) };
+  const doublesCount = { ...(prev.doublesCount || { 1: 0, 2: 0 }) };
+  const d1J = isJester(dice.values[0]), d2J = isJester(dice.values[1]);
+  if (d1J || d2J) jesterCount[player]++;
+  if (!d1J && !d2J && dice.values[0] === dice.values[1]) doublesCount[player]++;
+
+  const newState: GameState = { ...prev, dice, phase: 'moving', jesterCount, doublesCount };
 
   if (!canPlayerMove(newState)) {
     // Keep dice visible (hasRolled: true) so the roll is shown briefly
