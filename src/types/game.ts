@@ -10,7 +10,7 @@ export interface Piece {
 
 export type GamePhase = 'not_started' | 'rolling' | 'moving' | 'no_moves' | 'game_over';
 export type GameMode = 'pvp' | 'ai';
-export type AIDifficulty = 'easy' | 'medium' | 'hard';
+export type AIDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
 export interface DiceState {
   values: [number, number];

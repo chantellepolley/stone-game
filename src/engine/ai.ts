@@ -61,6 +61,98 @@ function getMovingPiece(state: GameState, move: Move): { routePos: number; crown
   return null;
 }
 
+/** Detect game phase */
+function getGamePhase(state: GameState, player: PlayerId): 'opening' | 'midgame' | 'endgame' {
+  const benchCount = state.bench[player].length;
+  if (benchCount > 6) return 'opening';
+  const crownedOnBoard = state.board.reduce((n, space) =>
+    n + space.filter(p => p.owner === player && p.crowned).length, 0);
+  if (benchCount === 0 && crownedOnBoard >= 3) return 'endgame';
+  return 'midgame';
+}
+
+/** Count consecutive spaces with 2+ friendly pieces (blocking chains) */
+function countBlockingChains(state: GameState, player: PlayerId): { chains: number; maxLen: number } {
+  const route = GAME_CONFIG.PLAYER_ROUTE[player];
+  let chains = 0, maxLen = 0, currentLen = 0;
+  for (let rp = 0; rp < ROUTE_LENGTH; rp++) {
+    const space = route[rp];
+    const friendly = state.board[space].filter(p => p.owner === player).length;
+    if (friendly >= 2) {
+      currentLen++;
+      if (currentLen > maxLen) maxLen = currentLen;
+    } else {
+      if (currentLen >= 2) chains++;
+      currentLen = 0;
+    }
+  }
+  if (currentLen >= 2) chains++;
+  return { chains, maxLen };
+}
+
+/** Calculate pip count (total remaining distance) for a player */
+function pipCount(state: GameState, player: PlayerId): number {
+  let pips = 0;
+  // Bench pieces need full route
+  pips += state.bench[player].length * ROUTE_LENGTH;
+  // Jail pieces need full route too
+  pips += state.jail[player].length * ROUTE_LENGTH;
+  // Board pieces need remaining distance
+  for (let i = 0; i < NUM_SPACES; i++) {
+    for (const p of state.board[i]) {
+      if (p.owner === player) pips += (ROUTE_LENGTH - p.routePos);
+    }
+  }
+  return pips;
+}
+
+/** Enhanced board evaluation for Expert AI */
+function evaluateBoardExpert(state: GameState, player: PlayerId): number {
+  let score = evaluateBoard(state, player);
+  const opponent: PlayerId = player === 1 ? 2 : 1;
+  const phase = getGamePhase(state, player);
+
+  // Blocking chain bonus
+  const { chains, maxLen } = countBlockingChains(state, player);
+  score += chains * 100;
+  if (maxLen >= 3) score += 200; // Prime bonus
+  if (maxLen >= 4) score += 300;
+
+  // Opponent blocking chain penalty
+  const oppChains = countBlockingChains(state, opponent);
+  score -= oppChains.chains * 80;
+  if (oppChains.maxLen >= 3) score -= 150;
+
+  // Pip count advantage
+  const myPips = pipCount(state, player);
+  const oppPips = pipCount(state, opponent);
+  score += (oppPips - myPips) * 2; // Bonus for being ahead in the race
+
+  // Phase-specific bonuses
+  if (phase === 'opening') {
+    // Penalize having too many pieces on bench
+    score -= state.bench[player].length * 50;
+  } else if (phase === 'endgame') {
+    // Crowned pieces more valuable
+    for (let i = 0; i < NUM_SPACES; i++) {
+      for (const p of state.board[i]) {
+        if (p.owner === player && p.crowned) score += 120; // extra on top of base 80
+      }
+    }
+    // Borne off pieces even more valuable in endgame
+    score += state.home[player].length * 200;
+  }
+
+  // Opponent progress penalty — pieces in their home stretch are dangerous
+  for (let i = 0; i < NUM_SPACES; i++) {
+    for (const p of state.board[i]) {
+      if (p.owner === opponent && p.crowned) score -= 60;
+    }
+  }
+
+  return score;
+}
+
 /**
  * Score a move for the AI. Higher = better.
  */
@@ -71,7 +163,9 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
 
   const player = state.currentPlayer;
   const opponent: PlayerId = player === 1 ? 2 : 1;
-  const isHard = difficulty === 'hard';
+  const isHard = difficulty === 'hard' || difficulty === 'expert';
+  const isExpert = difficulty === 'expert';
+  const phase = isExpert ? getGamePhase(state, player) : 'midgame';
   let score = 0;
 
   const movingPiece = getMovingPiece(state, move);
@@ -79,7 +173,15 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
   // ═══════════════════════════════════════════
   // BEARING OFF — always the best move
   // ═══════════════════════════════════════════
-  if (move.bearsOff) return 5000 + Math.random() * 10;
+  if (move.bearsOff) {
+    if (isExpert) {
+      // Expert: prefer bearing off farthest piece first
+      const movingP = getMovingPiece(state, move);
+      const distBonus = movingP ? (ROUTE_LENGTH - movingP.routePos) * 10 : 0;
+      return 5000 + distBonus + Math.random() * 5;
+    }
+    return 5000 + Math.random() * 10;
+  }
 
   // ═══════════════════════════════════════════
   // CAPTURES — value depends on context
@@ -105,9 +207,9 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
       } else {
         // Exposed after capture — only worth it if the captured piece was very advanced
         if (capturedProgress > 15) {
-          score += captureValue * 0.4; // Still somewhat worth it
+          score += captureValue * (isExpert ? 0.3 : 0.4);
         } else {
-          score -= 50; // Not worth risking our piece for a low-value capture
+          score -= isExpert ? 150 : 50; // Expert is much more cautious about risky captures
         }
       }
     } else {
@@ -126,9 +228,16 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
   // ═══════════════════════════════════════════
   if (move.from.type === 'bench') {
     const onBoard = piecesOnBoard(state, player);
-    if (onBoard < 3) score += 250;       // Very high priority when few pieces out
-    else if (onBoard < 6) score += 150;   // Still important
-    else score += 60;                     // Less urgent later
+    if (isExpert && phase === 'opening') {
+      // Expert opening: very aggressive bench entry
+      if (onBoard < 3) score += 400;
+      else if (onBoard < 6) score += 300;
+      else score += 150;
+    } else {
+      if (onBoard < 3) score += 250;
+      else if (onBoard < 6) score += 150;
+      else score += 60;
+    }
 
     // Bonus if entering onto a space with a friendly piece (safe entry)
     if (move.to.type === 'board') {
@@ -155,13 +264,18 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
         if (threats === 0) {
           score += 30; // No threats, acceptable
         } else {
-          score -= 150 * threats; // Heavy penalty per threat
+          score -= (isExpert ? 250 : 150) * threats;
         }
 
-        // Extra penalty for lone pieces far from home (long way to go = more exposure)
+        // Extra penalty for lone pieces far from home
         const distFromHome = ROUTE_LENGTH - destRoutePos;
-        if (distFromHome > 15) score -= 100; // Very far from home, very risky
-        else if (distFromHome > 10) score -= 50;
+        if (isExpert) {
+          if (distFromHome > 15) score -= 200;
+          else if (distFromHome > 10) score -= 100;
+        } else {
+          if (distFromHome > 15) score -= 100;
+          else if (distFromHome > 10) score -= 50;
+        }
       } else {
         score -= 50; // Medium: mild lone penalty
       }
@@ -179,7 +293,7 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
       const leftBehind = newState.board[move.from.index].find(p => p.owner === player);
       if (leftBehind) {
         const threats = countThreats(newState, leftBehind.routePos, player);
-        score -= 80 + threats * 60; // Heavy penalty for breaking a safe pair under threat
+        score -= isExpert ? (200 + threats * 100) : (80 + threats * 60);
       }
     }
   }
@@ -224,8 +338,27 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
     }
   }
 
+  // ═══════════════════════════════════════════
+  // EXPERT: Blocking chain creation bonus
+  // ═══════════════════════════════════════════
+  if (isExpert && move.to.type === 'board') {
+    const newState = executeMove(state, move);
+    const newChains = countBlockingChains(newState, player);
+    const oldChains = countBlockingChains(state, player);
+    // Bonus for creating or extending chains
+    if (newChains.maxLen > oldChains.maxLen) score += 150;
+    if (newChains.chains > oldChains.chains) score += 80;
+  }
+
+  // ═══════════════════════════════════════════
+  // EXPERT: Endgame crowned advancement
+  // ═══════════════════════════════════════════
+  if (isExpert && phase === 'endgame' && movingPiece?.crowned) {
+    score += 150; // Strong push to bear off crowned pieces
+  }
+
   // Small random factor to avoid predictability
-  score += Math.random() * 8;
+  score += Math.random() * (isExpert ? 3 : 8);
 
   return score;
 }
@@ -286,7 +419,7 @@ export function chooseBestMove(state: GameState, validMoves: Move[], difficulty:
   if (validMoves.length === 0) return null;
 
   // Easy/Medium: just pick the best single move
-  if (difficulty !== 'hard') {
+  if (difficulty !== 'hard' && difficulty !== 'expert') {
     let bestMove = validMoves[0];
     let bestScore = -Infinity;
     for (const move of validMoves) {
@@ -365,10 +498,35 @@ export function chooseBestMove(state: GameState, validMoves: Move[], difficulty:
       continue;
     }
 
-    // Find the best second move
+    // Find the best second move (and for expert, look at third moves too)
     for (const secondMove of secondMoves) {
       const stateAfterBoth = executeMove(stateAfterFirst, secondMove);
-      const boardScore = evaluateBoard(stateAfterBoth, player);
+
+      // Expert: 3-move look-ahead if dice remain
+      if (difficulty === 'expert' && stateAfterBoth.currentPlayer === player && stateAfterBoth.dice.remaining.length > 0) {
+        const thirdMoves: Move[] = [];
+        const seen3 = new Set<string>();
+        for (const dv of stateAfterBoth.dice.remaining) {
+          for (const m of getValidMoves(stateAfterBoth, dv)) {
+            const key = `${m.pieceId}:${m.to.type === 'home' ? 'H' : m.to.index}:${m.diceValue}`;
+            if (!seen3.has(key)) { seen3.add(key); thirdMoves.push(m); }
+          }
+        }
+        if (thirdMoves.length > 0) {
+          for (const thirdMove of thirdMoves) {
+            const stateAfterThree = executeMove(stateAfterBoth, thirdMove);
+            const boardScore = evaluateBoardExpert(stateAfterThree, player);
+            if (boardScore > bestPairScore) {
+              bestPairScore = boardScore;
+              bestFirstMove = firstMove;
+            }
+          }
+          continue;
+        }
+      }
+
+      const evalFn = difficulty === 'expert' ? evaluateBoardExpert : evaluateBoard;
+      const boardScore = evalFn(stateAfterBoth, player);
       if (boardScore > bestPairScore) {
         bestPairScore = boardScore;
         bestFirstMove = firstMove;
@@ -377,10 +535,11 @@ export function chooseBestMove(state: GameState, validMoves: Move[], difficulty:
   }
 
   // Also consider combined moves (using both dice at once) as alternatives
+  const evalFn = difficulty === 'expert' ? evaluateBoardExpert : evaluateBoard;
   const combinedMoves = validMoves.filter(m => m.diceCount >= 2);
   for (const combined of combinedMoves) {
     const stateAfter = executeMove(state, combined);
-    const boardScore = evaluateBoard(stateAfter, player);
+    const boardScore = evalFn(stateAfter, player);
     if (boardScore > bestPairScore) {
       bestPairScore = boardScore;
       bestFirstMove = combined;
@@ -398,10 +557,11 @@ export function chooseBestJesterValue(state: GameState, difficulty: AIDifficulty
     return Math.floor(Math.random() * 5) + 1;
   }
 
+  const player = state.currentPlayer;
   let bestValue = 5;
   let bestScore = -Infinity;
 
-  for (let v = 1; v <= 6; v++) {
+  for (let v = 1; v <= 5; v++) {
     const simState: GameState = {
       ...state,
       dice: { ...state.dice, remaining: [v, v, v, v], pendingDoubleJester: false },
@@ -414,16 +574,48 @@ export function chooseBestJesterValue(state: GameState, difficulty: AIDifficulty
 
     if (moves.length === 0) continue;
 
-    let moveScore = 0;
-    for (const move of moves) {
-      const s = scoreMove(simState, move, difficulty);
-      if (s > moveScore) moveScore = s;
-    }
-
-    const totalScore = moveScore + v * 5 + Math.random() * 5;
-    if (totalScore > bestScore) {
-      bestScore = totalScore;
-      bestValue = v;
+    if (difficulty === 'expert') {
+      // Expert: simulate best 2-move sequence for each value
+      let bestSeqScore = -Infinity;
+      const singleMoves = moves.filter(m => m.diceCount === 1);
+      for (const m1 of singleMoves) {
+        const s1 = executeMove(simState, m1);
+        if (s1.currentPlayer !== player) {
+          const bs = evaluateBoardExpert(s1, player);
+          if (bs > bestSeqScore) bestSeqScore = bs;
+          continue;
+        }
+        // Try second move
+        for (const dv of s1.dice.remaining) {
+          for (const m2 of getValidMoves(s1, dv)) {
+            const s2 = executeMove(s1, m2);
+            const bs = evaluateBoardExpert(s2, player);
+            if (bs > bestSeqScore) bestSeqScore = bs;
+          }
+        }
+      }
+      // Also try combined moves
+      for (const mc of moves.filter(m => m.diceCount >= 2)) {
+        const sc = executeMove(simState, mc);
+        const bs = evaluateBoardExpert(sc, player);
+        if (bs > bestSeqScore) bestSeqScore = bs;
+      }
+      if (bestSeqScore > bestScore) {
+        bestScore = bestSeqScore;
+        bestValue = v;
+      }
+    } else {
+      // Medium/Hard: single best move score
+      let moveScore = 0;
+      for (const move of moves) {
+        const s = scoreMove(simState, move, difficulty);
+        if (s > moveScore) moveScore = s;
+      }
+      const totalScore = moveScore + v * 5 + Math.random() * 5;
+      if (totalScore > bestScore) {
+        bestScore = totalScore;
+        bestValue = v;
+      }
     }
   }
 

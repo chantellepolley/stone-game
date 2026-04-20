@@ -180,11 +180,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       ) : (
         <div className="flex flex-col items-center gap-4">
           <p className="text-white text-sm font-heading tracking-wider">Select difficulty</p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             {([
               { level: 'easy' as AIDifficulty, label: 'Easy', desc: 'Random moves' },
               { level: 'medium' as AIDifficulty, label: 'Medium', desc: 'Smart strategy' },
               { level: 'hard' as AIDifficulty, label: 'Hard', desc: 'Looks ahead' },
+              { level: 'expert' as AIDifficulty, label: 'Expert', desc: 'Master tactics' },
             ]).map(({ level, label, desc }) => (
               <button
                 key={level}
