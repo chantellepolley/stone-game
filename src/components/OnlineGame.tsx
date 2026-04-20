@@ -236,7 +236,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
           />
         </div>
 
-        <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center">
+        <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center z-10">
           <DiceArea
             dice={state.dice} phase={state.phase} currentPlayer={state.currentPlayer}
             onRoll={roll}
