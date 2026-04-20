@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Piece as PieceType, Move, PlayerId } from '../types/game';
 import Piece from './Piece';
 
@@ -88,9 +89,9 @@ export default function BoardSpace({
           : 'linear-gradient(180deg, #6b6058 0%, #57504a 100%)',
       }}
     >
-      {/* Piece popup — zoomed view of all pieces on this space */}
-      {showPiecePopup && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+      {/* Piece popup — rendered via portal to escape board's stacking context */}
+      {showPiecePopup && createPortal(
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center" style={{ zIndex: 9999 }}
           onClick={(e) => { e.stopPropagation(); setShowPiecePopup(false); }}>
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-4 shadow-2xl max-w-xs"
             onClick={(e) => e.stopPropagation()}>
@@ -129,7 +130,8 @@ export default function BoardSpace({
               Close
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Pieces stack */}
