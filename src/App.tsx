@@ -100,7 +100,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [pollNotifications]);
 
-  const handleInviteToPlay = useCallback(async (toPlayerId: string) => {
+  const handleInviteToPlay = useCallback(async (toPlayerId: string, wager = 0) => {
     if (!player) return;
 
     // Generate room code
@@ -115,6 +115,7 @@ export default function App() {
       mode: 'online',
       state: { ...createInitialState(), phase: 'rolling', gameMode: 'pvp' },
       status: 'waiting',
+      wager,
     }).select('id').single();
 
     if (gameErr || !game) {
@@ -134,7 +135,7 @@ export default function App() {
     if (inviteErr) {
       alert(inviteErr.message);
     } else {
-      alert('Game invite sent!');
+      alert(wager > 0 ? `Game invite sent! (${wager} coin wager)` : 'Game invite sent!');
     }
   }, [player]);
 
@@ -217,6 +218,7 @@ export default function App() {
           onBack={() => { setScreen('game'); setAutoJoinCode(null); setResumeData(null); setResumeLocalGameId(null); }}
           autoJoinCode={autoJoinCode}
           resumeData={resumeData}
+          onInviteFriend={handleInviteToPlay}
         />
       )}
       {screen === 'game' && (

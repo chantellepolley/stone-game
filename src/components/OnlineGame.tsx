@@ -21,9 +21,10 @@ interface OnlineGameProps {
   onBack: () => void;
   autoJoinCode?: string | null;
   resumeData?: { gameId: string; roomCode: string; player: 1 | 2 } | null;
+  onInviteFriend?: (playerId: string, wager: number) => void;
 }
 
-export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineGameProps) {
+export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteFriend }: OnlineGameProps) {
   const {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
@@ -154,6 +155,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         onJoinRoom={joinRoom}
         onBack={() => { leave(); onBack(); }}
         gameWager={gameWager}
+        onInviteFriend={onInviteFriend}
       />
     );
   }

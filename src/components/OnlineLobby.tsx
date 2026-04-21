@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ONLINE_WAGER_TIERS } from '../lib/coins';
 import { useCoins } from '../contexts/CoinsContext';
+import { useFriends, type Friend } from '../hooks/useFriends';
 import JesterCoin from './JesterCoin';
 
 interface OnlineLobbyProps {
@@ -12,6 +13,7 @@ interface OnlineLobbyProps {
   onJoinRoom: (code: string) => void;
   onBack: () => void;
   gameWager?: number;
+  onInviteFriend?: (playerId: string, wager: number) => void;
 }
 
 function getJoinUrl(code: string): string {
@@ -44,12 +46,30 @@ async function shareInvite(code: string) {
 
 export default function OnlineLobby({
   onlinePhase, roomCode, opponentConnected, error,
-  onCreateRoom, onJoinRoom, onBack, gameWager,
+  onCreateRoom, onJoinRoom, onBack, gameWager, onInviteFriend,
 }: OnlineLobbyProps) {
   const [joinCode, setJoinCode] = useState('');
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'failed'>('idle');
   const [selectedWager, setSelectedWager] = useState(0);
-  const { coins } = useCoins();
+  const { coins, spend } = useCoins();
+  const { friends, loadFriends } = useFriends();
+  const [invitingFriend, setInvitingFriend] = useState<Friend | null>(null);
+  const [friendInviteWager, setFriendInviteWager] = useState(0);
+
+  useEffect(() => {
+    if (onlinePhase === 'idle') loadFriends();
+  }, [onlinePhase, loadFriends]);
+
+  const handleFriendInvite = async () => {
+    if (!invitingFriend || !onInviteFriend) return;
+    if (friendInviteWager > 0) {
+      const ok = await spend(friendInviteWager);
+      if (!ok) return;
+    }
+    onInviteFriend(invitingFriend.playerId, friendInviteWager);
+    setInvitingFriend(null);
+    setFriendInviteWager(0);
+  };
 
   const handleShare = async () => {
     const result = await shareInvite(roomCode);
@@ -236,6 +256,42 @@ export default function OnlineLobby({
           <p className="text-red-400 text-xs">{error}</p>
         )}
 
+        {/* Invite a friend */}
+        {onInviteFriend && friends.length > 0 && (
+          <>
+            <div className="flex items-center gap-3 w-full">
+              <div className="flex-1 h-px bg-white/20" />
+              <span className="text-white/40 text-xs">OR INVITE A FRIEND</span>
+              <div className="flex-1 h-px bg-white/20" />
+            </div>
+
+            <div className="w-full space-y-1.5 max-h-[30vh] overflow-y-auto">
+              {friends.map(f => (
+                <div key={f.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-black/20">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${f.isOnline ? 'bg-green-400' : 'bg-white/20'}`} />
+                    {f.avatarUrl ? (
+                      <img src={f.avatarUrl} alt="" className="w-6 h-6 rounded-full object-cover border border-[#6b5f55]" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
+                        <span className="text-[9px] text-white/40 font-heading">{f.username[0].toUpperCase()}</span>
+                      </div>
+                    )}
+                    <span className={`text-sm font-heading ${f.isOnline ? 'text-white' : 'text-white/60'}`}>{f.username}</span>
+                  </div>
+                  <button
+                    onClick={() => { setInvitingFriend(f); setFriendInviteWager(0); }}
+                    className="px-2 py-1 rounded text-[9px] font-heading uppercase tracking-wider
+                               bg-amber-600/60 text-white hover:bg-amber-600 cursor-pointer transition-colors"
+                  >
+                    Invite
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         <button
           onClick={onBack}
           className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-2"
@@ -243,6 +299,52 @@ export default function OnlineLobby({
           Back
         </button>
       </div>
+
+      {/* Friend invite wager modal */}
+      {invitingFriend && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm mx-4 text-center">
+            <h2 className="text-white font-heading text-lg mb-1">Invite {invitingFriend.username}</h2>
+            <p className="text-white/50 text-[10px] font-heading mb-2 mt-3">Set wager</p>
+            <div className="flex gap-2 justify-center mb-4">
+              {ONLINE_WAGER_TIERS.map(tier => {
+                const canAfford = tier === 0 || (coins !== null && coins >= tier);
+                return (
+                  <button
+                    key={tier}
+                    onClick={() => canAfford && setFriendInviteWager(tier)}
+                    disabled={!canAfford}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-heading transition-all cursor-pointer
+                      ${friendInviteWager === tier
+                        ? 'bg-amber-600 text-white border-2 border-amber-400'
+                        : 'bg-black/30 text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
+                      disabled:opacity-30 disabled:cursor-not-allowed`}
+                  >
+                    {tier === 0 ? 'Free' : <span className="flex items-center gap-1">{tier} <JesterCoin size={12} /></span>}
+                  </button>
+                );
+              })}
+            </div>
+            {coins !== null && (
+              <p className="text-white/40 text-[10px] mb-4 flex items-center gap-1 justify-center">
+                Balance: {coins} <JesterCoin size={12} />
+              </p>
+            )}
+            <div className="flex gap-3 justify-center">
+              <button onClick={handleFriendInvite}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
+                Send Invite
+              </button>
+              <button onClick={() => { setInvitingFriend(null); setFriendInviteWager(0); }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
