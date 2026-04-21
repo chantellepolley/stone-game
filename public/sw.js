@@ -27,13 +27,23 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(data.title, options).then(() => {
+      // Set app icon badge when push arrives (works even when app is closed)
+      if (self.navigator && self.navigator.setAppBadge) {
+        self.navigator.setAppBadge().catch(() => {});
+      }
+    })
   );
 });
 
 // Handle notification click — open the app
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  // Clear app icon badge when notification is tapped
+  if (self.navigator && self.navigator.setAppBadge) {
+    self.navigator.clearAppBadge().catch(() => {});
+  }
 
   const urlToOpen = event.notification.data?.url || '/';
 
@@ -56,7 +66,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache static assets for offline support
-const CACHE_NAME = 'stone-v2';
+const CACHE_NAME = 'stone-v3';
 const STATIC_ASSETS = [
   '/',
   '/logo.png',
