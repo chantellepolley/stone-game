@@ -2,7 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useGame } from '../hooks/useGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { useCoins } from '../contexts/CoinsContext';
+import { AI_WAGER } from '../lib/coins';
 import { setSoundEnabled, isSoundEnabled, playYourTurnSound } from '../utils/sounds';
+import type { GameMode, AIDifficulty } from '../types/game';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -29,6 +32,9 @@ interface GameProps {
 
 export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
+  const { spend, earn } = useCoins();
+  const [currentWager, setCurrentWager] = useState(0);
+  const coinsAwarded = useRef(false);
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
   const [hasResumed, setHasResumed] = useState(false);
@@ -39,6 +45,48 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     }
   }, [resumeGameId, hasResumed, loadGame, state.phase]);
   const { player } = usePlayerContext();
+
+  // Handle starting an AI game with coin deduction
+  const handleStart = async (mode: GameMode, difficulty: AIDifficulty) => {
+    if (mode === 'ai') {
+      const wager = AI_WAGER[difficulty];
+      const ok = await spend(wager);
+      if (!ok) return; // shouldn't happen — buttons are disabled
+      setCurrentWager(wager);
+      coinsAwarded.current = false;
+    } else {
+      setCurrentWager(0);
+      coinsAwarded.current = false;
+    }
+    startGame(mode, difficulty);
+  };
+
+  // Award coins on AI game win
+  useEffect(() => {
+    if (state.phase === 'game_over' && state.winner && state.gameMode === 'ai' && !coinsAwarded.current) {
+      coinsAwarded.current = true;
+      if (state.winner === 1 && currentWager > 0) {
+        // Player won — get back wager + win wager = 2x wager total (net gain = wager)
+        earn(currentWager * 2);
+      }
+      // If player lost, coins already deducted at start
+    }
+  }, [state.phase, state.winner, state.gameMode, currentWager, earn]);
+
+  const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
+
+  const handleForfeit = async () => {
+    setShowForfeitConfirm(false);
+    // Coins already deducted at start, nothing to refund — just end the game
+    handleRestart();
+  };
+
+  // Reset coins tracking when going back to start
+  const handleRestart = () => {
+    setCurrentWager(0);
+    coinsAwarded.current = false;
+    restart();
+  };
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
@@ -68,15 +116,15 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   }, [state.currentPlayer, state.phase, state.gameMode]);
 
   if (state.phase === 'not_started') {
-    return <StartScreen onStart={startGame} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} onShowTutorial={onShowTutorial} onShowAdminFeedback={onShowAdminFeedback} />;
+    return <StartScreen onStart={handleStart} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} onShowTutorial={onShowTutorial} onShowAdminFeedback={onShowAdminFeedback} />;
   }
 
   return (
     <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
       {/* Logo + Home button */}
       <header className="shrink-0 flex items-center gap-2">
-        <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain cursor-pointer" onClick={restart} />
-        <button onClick={restart}
+        <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain cursor-pointer" onClick={handleRestart} />
+        <button onClick={handleRestart}
           className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
                      bg-[#504840] text-white/70 border border-[#6b5f55] hover:text-white hover:bg-[#5e5549]
                      cursor-pointer transition-colors shadow-md">
@@ -118,7 +166,15 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
         <div className="hidden lg:flex flex-col gap-3 w-[200px] shrink-0">
           <MoveLog entries={state.moveLog} />
           <RulesPanel />
-          <GameControls onRestart={restart} />
+          <GameControls onRestart={handleRestart} />
+          {state.gameMode === 'ai' && state.phase !== 'game_over' && currentWager > 0 && (
+            <button onClick={() => setShowForfeitConfirm(true)}
+              className="w-full px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-red-900/40 text-red-400 border border-red-800/40 hover:bg-red-900/60
+                         cursor-pointer transition-colors">
+              Forfeit (-{currentWager} &#x1FA99;)
+            </button>
+          )}
           <div className="text-[9px] text-white/30 text-center mt-auto">
             © 2026 Stone The Game. All rights reserved.
           </div>
@@ -169,7 +225,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       {/* Mobile: bottom bar — always pinned */}
       <div className="lg:hidden flex items-center gap-1 py-0.5 shrink-0">
         {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
-        <GameControls onRestart={restart} />
+        <GameControls onRestart={handleRestart} />
         <button
           onClick={() => setHintsEnabled(h => !h)}
           className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
@@ -253,10 +309,32 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
         </div>
       )}
 
+      {/* Forfeit confirmation */}
+      {showForfeitConfirm && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm mx-4 text-center">
+            <h2 className="text-white font-heading text-lg mb-2">Forfeit Game?</h2>
+            <p className="text-white/60 text-sm mb-4">You will lose your {currentWager} coin wager.</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={handleForfeit}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-red-600 text-white hover:bg-red-500 cursor-pointer transition-colors">
+                Forfeit
+              </button>
+              <button onClick={() => setShowForfeitConfirm(false)}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Victory overlay */}
       {state.winner && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={restart}>
+          onClick={handleRestart}>
           <div className="bg-board-bg border-4 border-stone-border rounded-2xl p-6 lg:p-8 text-center shadow-2xl max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="text-5xl lg:text-6xl mb-4">
@@ -269,11 +347,16 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
                   ? 'Computer Wins!'
                   : `${GAME_CONFIG.PLAYER_NAMES[state.winner]} Wins!`}
             </h2>
-            <p className="text-white/60 mb-4 lg:mb-6 text-sm">
+            <p className="text-white/60 mb-2 text-sm">
               All stones have been borne off. The temple is sealed.
             </p>
+            {state.gameMode === 'ai' && currentWager > 0 && (
+              <p className={`text-sm font-heading mb-2 ${state.winner === 1 ? 'text-green-400' : 'text-red-400'}`}>
+                {state.winner === 1 ? `+${currentWager} coins won!` : `-${currentWager} coins lost`} &#x1FA99;
+              </p>
+            )}
             <button
-              onClick={restart}
+              onClick={handleRestart}
               className="px-6 py-3 rounded-lg font-heading text-sm uppercase tracking-wider
                          bg-highlight-selected text-stone-bg
                          hover:brightness-110 transition-all cursor-pointer shadow-lg"

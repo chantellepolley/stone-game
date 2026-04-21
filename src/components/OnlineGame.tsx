@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { useCoins } from '../contexts/CoinsContext';
 import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
 import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
@@ -27,8 +28,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
     awaitingJesterChoice, chooseJesterDoubles,
     onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor,
     error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
-    chatMessages, sendChat,
+    chatMessages, sendChat, gameWager, forfeit,
   } = useOnlineGame();
+  const { spend, earn } = useCoins();
+  const coinsHandled = useRef(false);
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
@@ -36,6 +39,25 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   const { player } = usePlayerContext();
   const { addFriendById, getFriendStatus } = useFriends();
   const [friendStatus, setFriendStatus] = useState<'none' | 'pending' | 'accepted' | 'sent'>('none');
+
+  // Deduct coins from joiner when they enter a wagered game
+  const joinerDeducted = useRef(false);
+  useEffect(() => {
+    if (onlinePhase === 'playing' && myPlayer === 2 && gameWager > 0 && !joinerDeducted.current) {
+      joinerDeducted.current = true;
+      spend(gameWager);
+    }
+  }, [onlinePhase, myPlayer, gameWager, spend]);
+
+  // Award coins on game end
+  useEffect(() => {
+    if (state.phase === 'game_over' && state.winner && gameWager > 0 && !coinsHandled.current) {
+      coinsHandled.current = true;
+      if (state.winner === myPlayer) {
+        earn(gameWager * 2); // winner takes all (their own wager back + opponent's)
+      }
+    }
+  }, [state.phase, state.winner, gameWager, myPlayer, earn]);
 
   // Check friend status with opponent
   useEffect(() => {
@@ -103,6 +125,23 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
   }, [onlinePhase, state.phase]);
 
   // Show lobby if not playing yet
+  const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
+
+  const handleForfeit = () => {
+    setShowForfeitConfirm(false);
+    forfeit(); // broadcasts game_over to opponent, triggers coin award via existing effect
+  };
+
+  const handleCreateRoom = async (wager: number) => {
+    if (wager > 0) {
+      const ok = await spend(wager);
+      if (!ok) return;
+    }
+    coinsHandled.current = false;
+    joinerDeducted.current = false;
+    createRoom(wager);
+  };
+
   if (onlinePhase !== 'playing') {
     return (
       <OnlineLobby
@@ -110,9 +149,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         roomCode={roomCode}
         opponentConnected={opponentConnected}
         error={error}
-        onCreateRoom={createRoom}
+        onCreateRoom={handleCreateRoom}
         onJoinRoom={joinRoom}
         onBack={() => { leave(); onBack(); }}
+        gameWager={gameWager}
       />
     );
   }
@@ -160,6 +200,12 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
       {/* Online status bar */}
       <div className="flex items-center gap-2 shrink-0 text-[9px]">
         <span className="text-white">Room: <span className="text-amber-400 font-heading tracking-wider">{roomCode}</span></span>
+        {gameWager > 0 && (
+          <>
+            <span className="text-white/50">|</span>
+            <span className="text-amber-400/80">&#x1FA99; {gameWager} wager</span>
+          </>
+        )}
         <span className="text-white/50">|</span>
         <span className="text-white">You: {playerLabel}</span>
         <span className="text-white/50">|</span>
@@ -253,6 +299,12 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer">
             Sound: {soundOn ? 'ON' : 'OFF'}
           </button>
+          {state.phase !== 'game_over' && (
+            <button onClick={() => setShowForfeitConfirm(true)}
+              className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors cursor-pointer mt-2">
+              Forfeit {gameWager > 0 && `(-${gameWager} coins)`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -279,6 +331,14 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
                      bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
           {showMobileLog ? 'Hide Log' : 'Log'}
         </button>
+        {state.phase !== 'game_over' && (
+          <button onClick={() => setShowForfeitConfirm(true)}
+            className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                       bg-red-900/40 text-red-400 border border-red-800/40
+                       cursor-pointer shadow-md whitespace-nowrap">
+            Forfeit
+          </button>
+        )}
         <ChatPanel
           messages={chatMessages}
           onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
@@ -305,6 +365,32 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         </div>
       )}
 
+      {/* Forfeit confirmation */}
+      {showForfeitConfirm && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm mx-4 text-center">
+            <h2 className="text-white font-heading text-lg mb-2">Forfeit Game?</h2>
+            <p className="text-white/60 text-sm mb-4">
+              {gameWager > 0
+                ? `You will lose your ${gameWager} coin wager and your opponent wins.`
+                : 'Your opponent will be declared the winner.'}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={handleForfeit}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-red-600 text-white hover:bg-red-500 cursor-pointer transition-colors">
+                Forfeit
+              </button>
+              <button onClick={() => setShowForfeitConfirm(false)}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Victory */}
       {state.winner && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -318,6 +404,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             <p className="text-white/60 mb-2 text-sm">
               {state.winner === myPlayer ? 'Congratulations!' : 'Better luck next time!'}
             </p>
+            {gameWager > 0 && (
+              <p className={`text-sm font-heading mb-2 ${state.winner === myPlayer ? 'text-green-400' : 'text-red-400'}`}>
+                {state.winner === myPlayer ? `+${gameWager} coins won!` : `-${gameWager} coins lost`} &#x1FA99;
+              </p>
+            )}
             <button onClick={() => { leave(); onBack(); }}
               className="px-6 py-3 rounded-lg font-heading text-sm uppercase tracking-wider
                          bg-highlight-selected text-stone-bg hover:brightness-110 cursor-pointer shadow-lg mt-4">

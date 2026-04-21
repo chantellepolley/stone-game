@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import type { GameMode, AIDifficulty } from '../types/game';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { useCoins } from '../contexts/CoinsContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { AI_WAGER } from '../lib/coins';
 
 interface StartScreenProps {
   onStart: (mode: GameMode, difficulty: AIDifficulty) => void;
@@ -21,6 +23,7 @@ interface StartScreenProps {
 
 export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
+  const { coins, dailyBonusClaimed, dailyBonusAmount, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
@@ -114,6 +117,20 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
+      {/* Daily bonus toast */}
+      {dailyBonusClaimed && dailyBonusAmount && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-[slideIn_0.3s_ease-out]">
+          <div className="bg-[#504840] border-2 border-amber-600/60 rounded-xl px-5 py-3 shadow-2xl flex items-center gap-3">
+            <span className="text-2xl">&#x1FA99;</span>
+            <div>
+              <p className="text-amber-400 font-heading text-sm">Daily Bonus!</p>
+              <p className="text-white/70 text-xs">+{dailyBonusAmount} coins added</p>
+            </div>
+            <button onClick={dismissDailyBonus} className="text-white/40 hover:text-white/70 text-sm cursor-pointer ml-2">x</button>
+          </div>
+        </div>
+      )}
+
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={() => setShowDifficulty(false)} />
 
       {player && !editingName && (
@@ -157,6 +174,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </svg>
             </button>
           </div>
+          {coins !== null && (
+            <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-full border border-amber-600/40">
+              <span className="text-amber-400 text-sm">&#x1FA99;</span>
+              <span className="text-amber-400 font-heading text-sm">{coins}</span>
+            </div>
+          )}
         </div>
       )}
       {player && editingName && (
@@ -234,19 +257,26 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               { level: 'medium' as AIDifficulty, label: 'Medium', desc: 'Smart strategy' },
               { level: 'hard' as AIDifficulty, label: 'Hard', desc: 'Looks ahead' },
               { level: 'expert' as AIDifficulty, label: 'Expert', desc: 'Master tactics' },
-            ]).map(({ level, label, desc }) => (
-              <button
-                key={level}
-                onClick={() => onStart('ai', level)}
-                className="px-6 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
-                           bg-[#504840] text-white border-2 border-[#6b5f55]
-                           hover:bg-[#5e5549] hover:scale-105 active:scale-95
-                           transition-all cursor-pointer shadow-lg flex flex-col items-center gap-1"
-              >
-                <span>{label}</span>
-                <span className="text-[10px] text-white/40 normal-case">{desc}</span>
-              </button>
-            ))}
+            ]).map(({ level, label, desc }) => {
+              const cost = AI_WAGER[level];
+              const canAfford = coins !== null && coins >= cost;
+              return (
+                <button
+                  key={level}
+                  onClick={() => canAfford ? onStart('ai', level) : undefined}
+                  disabled={!canAfford}
+                  className="px-6 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] hover:scale-105 active:scale-95
+                             transition-all cursor-pointer shadow-lg flex flex-col items-center gap-1
+                             disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  <span>{label}</span>
+                  <span className="text-[10px] text-white/40 normal-case">{desc}</span>
+                  <span className="text-[10px] text-amber-400/80 normal-case">&#x1FA99; {cost} coins</span>
+                </button>
+              );
+            })}
           </div>
           <button
             onClick={() => setShowDifficulty(false)}

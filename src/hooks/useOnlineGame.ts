@@ -46,6 +46,7 @@ export function useOnlineGame() {
   const [opponentColor, setOpponentColor] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
+  const [gameWager, setGameWager] = useState(0);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const undoStack = useRef<GameState[]>([]);
   const pingRef = useRef<number | null>(null);
@@ -365,11 +366,12 @@ export function useOnlineGame() {
 
   // ── Actions ──
 
-  const createRoom = useCallback(async () => {
+  const createRoom = useCallback(async (wager = 0) => {
     const code = generateRoomCode();
     setRoomCode(code);
     setMyPlayer(1);
     setOnlinePhase('waiting');
+    setGameWager(wager);
     statsRecorded.current = false;
 
     const initialState: GameState = {
@@ -387,6 +389,7 @@ export function useOnlineGame() {
       mode: 'online',
       state: initialState,
       status: 'waiting',
+      wager,
     }).select('id').single();
 
     if (data) gameDbId.current = data.id;
@@ -410,10 +413,12 @@ export function useOnlineGame() {
 
     const { data: game } = await supabase
       .from('games')
-      .select('id, state, player1_id')
+      .select('id, state, player1_id, wager')
       .eq('room_code', upperCode)
       .in('status', ['waiting', 'active'])
       .maybeSingle();
+
+    if (game?.wager) setGameWager(game.wager);
 
     if (game) {
       gameDbId.current = game.id;
@@ -491,9 +496,11 @@ export function useOnlineGame() {
 
     const { data: game, error: gameErr } = await supabase
       .from('games')
-      .select('state, status, player1_id, player2_id')
+      .select('state, status, player1_id, player2_id, wager')
       .eq('id', gameId)
       .single();
+
+    if (game?.wager) setGameWager(game.wager);
 
     if (gameErr) {
       console.error('[STONE] Resume failed:', gameErr.message);
@@ -716,6 +723,7 @@ export function useOnlineGame() {
     setOpponentName(null);
     setOpponentColor(null);
     setChatMessages([]);
+    setGameWager(0);
     setRoomCode('');
     stateReceivedRef.current = false;
     gameDbId.current = null;
@@ -794,6 +802,27 @@ export function useOnlineGame() {
     return { gameId: game.id, roomCode: code };
   }, []);
 
+  const forfeit = useCallback(() => {
+    if (!myPlayer) return;
+    const opponentPlayer = (myPlayer === 1 ? 2 : 1) as 1 | 2;
+    const forfeitState: GameState = {
+      ...state,
+      winner: opponentPlayer,
+      phase: 'game_over',
+      moveLog: [
+        ...state.moveLog,
+        {
+          turn: state.turnCount,
+          player: myPlayer,
+          action: `${GAME_CONFIG.PLAYER_NAMES[myPlayer]} forfeited the game`,
+          timestamp: Date.now(),
+        },
+      ],
+    };
+    setState(forfeitState);
+    broadcastState(forfeitState);
+  }, [myPlayer, state]);
+
   const awaitingJesterChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0 && state.phase === 'moving';
 
   const validMoves = useMemo(() => {
@@ -822,6 +851,6 @@ export function useOnlineGame() {
     onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor, error,
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
-    chatMessages, sendChat, sendInvite,
+    chatMessages, sendChat, sendInvite, gameWager, forfeit,
   };
 }

@@ -17,6 +17,7 @@ import { usePushNotifications } from './hooks/usePushNotifications';
 import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
+import { CoinsProvider } from './contexts/CoinsContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
 
@@ -173,6 +174,7 @@ export default function App() {
   return (
     <ErrorBoundary>
     <PlayerContext.Provider value={playerHook}>
+    <CoinsProvider>
       {/* Username prompt for first-time visitors */}
       {!player && <UsernamePrompt />}
 
@@ -237,6 +239,7 @@ export default function App() {
 
       {/* Notifications overlay - always rendered */}
       <Notifications onAcceptInvite={handleAcceptNotificationInvite} />
+    </CoinsProvider>
     </PlayerContext.Provider>
     </ErrorBoundary>
   );

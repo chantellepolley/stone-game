@@ -1,13 +1,16 @@
 import { useState } from 'react';
+import { ONLINE_WAGER_TIERS } from '../lib/coins';
+import { useCoins } from '../contexts/CoinsContext';
 
 interface OnlineLobbyProps {
   onlinePhase: 'idle' | 'waiting' | 'connecting' | 'playing' | 'error';
   roomCode: string;
   opponentConnected: boolean;
   error: string;
-  onCreateRoom: () => void;
+  onCreateRoom: (wager: number) => void;
   onJoinRoom: (code: string) => void;
   onBack: () => void;
+  gameWager?: number;
 }
 
 function getJoinUrl(code: string): string {
@@ -40,10 +43,12 @@ async function shareInvite(code: string) {
 
 export default function OnlineLobby({
   onlinePhase, roomCode, opponentConnected, error,
-  onCreateRoom, onJoinRoom, onBack,
+  onCreateRoom, onJoinRoom, onBack, gameWager,
 }: OnlineLobbyProps) {
   const [joinCode, setJoinCode] = useState('');
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'failed'>('idle');
+  const [selectedWager, setSelectedWager] = useState(0);
+  const { coins } = useCoins();
 
   const handleShare = async () => {
     const result = await shareInvite(roomCode);
@@ -128,6 +133,9 @@ export default function OnlineLobby({
             </div>
           </div>
 
+          {gameWager !== undefined && gameWager > 0 && (
+            <p className="text-amber-400/80 text-xs font-heading mt-1">Wager: {gameWager} &#x1FA99; each (winner takes {gameWager * 2})</p>
+          )}
           <p className="text-white/40 text-xs mt-2">
             {opponentConnected ? 'Opponent connected!' : 'Waiting for opponent to join...'}
           </p>
@@ -155,14 +163,41 @@ export default function OnlineLobby({
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
 
       <div className="flex flex-col items-center gap-6 max-w-sm w-full">
+        {/* Wager selection */}
+        <div className="w-full flex flex-col items-center gap-2">
+          <p className="text-white/60 text-xs font-heading">Wager</p>
+          <div className="flex gap-2">
+            {ONLINE_WAGER_TIERS.map(tier => {
+              const canAfford = tier === 0 || (coins !== null && coins >= tier);
+              return (
+                <button
+                  key={tier}
+                  onClick={() => canAfford && setSelectedWager(tier)}
+                  disabled={!canAfford}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-heading transition-all cursor-pointer
+                    ${selectedWager === tier
+                      ? 'bg-amber-600 text-white border-2 border-amber-400'
+                      : 'bg-[#504840] text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
+                    disabled:opacity-30 disabled:cursor-not-allowed`}
+                >
+                  {tier === 0 ? 'Free' : `${tier}`} {tier > 0 && <span className="text-amber-400/80">&#x1FA99;</span>}
+                </button>
+              );
+            })}
+          </div>
+          {coins !== null && (
+            <p className="text-white/40 text-[10px]">Your balance: {coins} &#x1FA99;</p>
+          )}
+        </div>
+
         <button
-          onClick={onCreateRoom}
+          onClick={() => onCreateRoom(selectedWager)}
           className="w-full px-6 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
                      bg-[#504840] text-white border-2 border-[#6b5f55]
                      hover:bg-[#5e5549] hover:scale-105 active:scale-95
                      transition-all cursor-pointer shadow-lg"
         >
-          Create Game
+          Create Game {selectedWager > 0 && `(${selectedWager} coins)`}
         </button>
 
         <div className="flex items-center gap-3 w-full">
