@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sounds';
 import { recordGameResult } from '../lib/statsTracker';
 import { loadPlayerColor } from '../utils/stoneColors';
+import { sendPushNotification } from './usePushNotifications';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /** Validate and repair a game state loaded from DB */
@@ -303,6 +304,61 @@ export function useOnlineGame() {
     }
     // Save to DB
     saveGameState(newState);
+
+    // Send push notification to opponent when turn changes
+    if (gameDbId.current && newState.currentPlayer !== stateRef.current.currentPlayer && newState.phase !== 'game_over') {
+      notifyOpponentTurn(newState);
+    }
+    // Send push for game over
+    if (newState.phase === 'game_over' && newState.winner) {
+      notifyGameOver(newState);
+    }
+  }
+
+  async function notifyOpponentTurn(newState: GameState) {
+    if (!gameDbId.current) return;
+    try {
+      const { data: game } = await supabase
+        .from('games')
+        .select('player1_id, player2_id')
+        .eq('id', gameDbId.current)
+        .single();
+      if (!game) return;
+      // The new current player is the one who needs to be notified
+      const targetId = newState.currentPlayer === 1 ? game.player1_id : game.player2_id;
+      if (targetId) {
+        const senderName = myUsernameRef.current || 'Your opponent';
+        sendPushNotification(
+          targetId,
+          'STONE - Your Turn!',
+          `${senderName} made their move. It's your turn!`,
+          'your-turn'
+        );
+      }
+    } catch { /* silent */ }
+  }
+
+  async function notifyGameOver(newState: GameState) {
+    if (!gameDbId.current || !newState.winner) return;
+    try {
+      const { data: game } = await supabase
+        .from('games')
+        .select('player1_id, player2_id')
+        .eq('id', gameDbId.current)
+        .single();
+      if (!game) return;
+      // Notify the loser
+      const loserId = newState.winner === 1 ? game.player2_id : game.player1_id;
+      if (loserId) {
+        const winnerName = myUsernameRef.current || 'Your opponent';
+        sendPushNotification(
+          loserId,
+          'STONE - Game Over!',
+          `${winnerName} won the game!`,
+          'game-over'
+        );
+      }
+    } catch { /* silent */ }
   }
 
   // ── Actions ──
