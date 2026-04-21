@@ -8,6 +8,7 @@ import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
 import { showNotification } from '../hooks/usePushNotifications';
+import JesterCoin from './JesterCoin';
 import Board from './Board';
 import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
@@ -203,7 +204,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
         {gameWager > 0 && (
           <>
             <span className="text-white/50">|</span>
-            <span className="text-amber-400/80">&#x1FA99; {gameWager} wager</span>
+            <span className="text-amber-400/80 flex items-center gap-1"><JesterCoin size={12} /> {gameWager} wager</span>
           </>
         )}
         <span className="text-white/50">|</span>
@@ -406,7 +407,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData }: OnlineG
             </p>
             {gameWager > 0 && (
               <p className={`text-sm font-heading mb-2 ${state.winner === myPlayer ? 'text-green-400' : 'text-red-400'}`}>
-                {state.winner === myPlayer ? `+${gameWager} coins won!` : `-${gameWager} coins lost`} &#x1FA99;
+                {state.winner === myPlayer ? `+${gameWager} coins won!` : `-${gameWager} coins lost`} <JesterCoin size={16} />
               </p>
             )}
             <button onClick={() => { leave(); onBack(); }}

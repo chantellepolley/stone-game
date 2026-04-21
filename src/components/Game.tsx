@@ -13,6 +13,7 @@ import MoveLog from './MoveLog';
 import RulesPanel from './RulesPanel';
 import GameControls from './GameControls';
 import StartScreen from './StartScreen';
+import JesterCoin from './JesterCoin';
 
 interface GameProps {
   onPlayOnline?: () => void;
@@ -172,7 +173,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
               className="w-full px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
                          bg-red-900/40 text-red-400 border border-red-800/40 hover:bg-red-900/60
                          cursor-pointer transition-colors">
-              Forfeit (-{currentWager} &#x1FA99;)
+              Forfeit (-{currentWager} <JesterCoin size={12} />)
             </button>
           )}
           <div className="text-[9px] text-white/30 text-center mt-auto">
@@ -352,7 +353,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
             </p>
             {state.gameMode === 'ai' && currentWager > 0 && (
               <p className={`text-sm font-heading mb-2 ${state.winner === 1 ? 'text-green-400' : 'text-red-400'}`}>
-                {state.winner === 1 ? `+${currentWager} coins won!` : `-${currentWager} coins lost`} &#x1FA99;
+                {state.winner === 1 ? `+${currentWager} coins won!` : `-${currentWager} coins lost`} <JesterCoin size={16} />
               </p>
             )}
             <button

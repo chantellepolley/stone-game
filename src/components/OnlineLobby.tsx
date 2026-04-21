@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ONLINE_WAGER_TIERS } from '../lib/coins';
 import { useCoins } from '../contexts/CoinsContext';
+import JesterCoin from './JesterCoin';
 
 interface OnlineLobbyProps {
   onlinePhase: 'idle' | 'waiting' | 'connecting' | 'playing' | 'error';
@@ -134,7 +135,7 @@ export default function OnlineLobby({
           </div>
 
           {gameWager !== undefined && gameWager > 0 && (
-            <p className="text-amber-400/80 text-xs font-heading mt-1">Wager: {gameWager} &#x1FA99; each (winner takes {gameWager * 2})</p>
+            <p className="text-amber-400/80 text-xs font-heading mt-1 flex items-center gap-1 justify-center">Wager: {gameWager} <JesterCoin size={14} /> each (winner takes {gameWager * 2})</p>
           )}
           <p className="text-white/40 text-xs mt-2">
             {opponentConnected ? 'Opponent connected!' : 'Waiting for opponent to join...'}
@@ -180,13 +181,13 @@ export default function OnlineLobby({
                       : 'bg-[#504840] text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
                     disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
-                  {tier === 0 ? 'Free' : `${tier}`} {tier > 0 && <span className="text-amber-400/80">&#x1FA99;</span>}
+                  {tier === 0 ? 'Free' : <span className="flex items-center gap-1">{tier} <JesterCoin size={12} /></span>}
                 </button>
               );
             })}
           </div>
           {coins !== null && (
-            <p className="text-white/40 text-[10px]">Your balance: {coins} &#x1FA99;</p>
+            <p className="text-white/40 text-[10px] flex items-center gap-1 justify-center">Your balance: {coins} <JesterCoin size={12} /></p>
           )}
         </div>
 

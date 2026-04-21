@@ -4,6 +4,7 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { AI_WAGER } from '../lib/coins';
+import JesterCoin from './JesterCoin';
 
 interface StartScreenProps {
   onStart: (mode: GameMode, difficulty: AIDifficulty) => void;
@@ -121,7 +122,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       {dailyBonusClaimed && dailyBonusAmount && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-[slideIn_0.3s_ease-out]">
           <div className="bg-[#504840] border-2 border-amber-600/60 rounded-xl px-5 py-3 shadow-2xl flex items-center gap-3">
-            <span className="text-2xl">&#x1FA99;</span>
+            <JesterCoin size={32} />
             <div>
               <p className="text-amber-400 font-heading text-sm">Daily Bonus!</p>
               <p className="text-white/70 text-xs">+{dailyBonusAmount} coins added</p>
@@ -176,7 +177,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           </div>
           {coins !== null && (
             <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-full border border-amber-600/40">
-              <span className="text-amber-400 text-sm">&#x1FA99;</span>
+              <JesterCoin size={18} />
               <span className="text-amber-400 font-heading text-sm">{coins}</span>
             </div>
           )}
@@ -273,7 +274,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 >
                   <span>{label}</span>
                   <span className="text-[10px] text-white/40 normal-case">{desc}</span>
-                  <span className="text-[10px] text-amber-400/80 normal-case">&#x1FA99; {cost} coins</span>
+                  <span className="text-[10px] text-amber-400/80 normal-case flex items-center gap-1 justify-center"><JesterCoin size={12} /> {cost} coins</span>
                 </button>
               );
             })}
