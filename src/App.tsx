@@ -82,6 +82,15 @@ export default function App() {
     }
 
     setPendingNotifications(count);
+
+    // Update app icon badge (PWA home screen)
+    if ('setAppBadge' in navigator) {
+      if (count > 0) {
+        (navigator as any).setAppBadge(count).catch(() => {});
+      } else {
+        (navigator as any).clearAppBadge().catch(() => {});
+      }
+    }
   }, [player]);
 
   useEffect(() => {
