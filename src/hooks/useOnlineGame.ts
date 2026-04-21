@@ -320,7 +320,7 @@ export function useOnlineGame() {
     try {
       const { data: game } = await supabase
         .from('games')
-        .select('player1_id, player2_id')
+        .select('player1_id, player2_id, room_code')
         .eq('id', gameDbId.current)
         .single();
       if (!game) return;
@@ -332,7 +332,8 @@ export function useOnlineGame() {
           targetId,
           'STONE - Your Turn!',
           `${senderName} made their move. It's your turn!`,
-          'your-turn'
+          'your-turn',
+          `/join/${game.room_code}`
         );
       }
     } catch { /* silent */ }
@@ -343,7 +344,7 @@ export function useOnlineGame() {
     try {
       const { data: game } = await supabase
         .from('games')
-        .select('player1_id, player2_id')
+        .select('player1_id, player2_id, room_code')
         .eq('id', gameDbId.current)
         .single();
       if (!game) return;
@@ -355,7 +356,8 @@ export function useOnlineGame() {
           loserId,
           'STONE - Game Over!',
           `${winnerName} won the game!`,
-          'game-over'
+          'game-over',
+          `/join/${game.room_code}`
         );
       }
     } catch { /* silent */ }

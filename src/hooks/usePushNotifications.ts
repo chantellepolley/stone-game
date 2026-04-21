@@ -117,7 +117,8 @@ export async function sendPushNotification(
   playerId: string,
   title: string,
   body: string,
-  tag = 'stone-notification'
+  tag = 'stone-notification',
+  url = '/'
 ) {
   try {
     await fetch(
@@ -128,7 +129,7 @@ export async function sendPushNotification(
           'Content-Type': 'application/json',
           'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhYnN2bXNua2RsdHV6ZW5oZ2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDgzMTYsImV4cCI6MjA5MTg4NDMxNn0.jHLlIj_u998taHN-Qo4zp_ivjQi6UDA11kiKeqQ48Rc`,
         },
-        body: JSON.stringify({ playerId, title, body, tag }),
+        body: JSON.stringify({ playerId, title, body, tag, url }),
       }
     );
   } catch (err) {
