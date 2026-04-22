@@ -52,7 +52,8 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
   const handleSendInvite = async () => {
     if (!invitingId || !onInviteToPlay) return;
     if (inviteWager > 0) {
-      const ok = await spend(inviteWager, 'Online game wager (friend invite)');
+      const friendName = friends.find(f => f.playerId === invitingId)?.username || 'friend';
+      const ok = await spend(inviteWager, `Online game wager (invite to ${friendName})`);
       if (!ok) return;
     }
     onInviteToPlay(invitingId, inviteWager);

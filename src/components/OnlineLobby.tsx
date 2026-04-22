@@ -63,7 +63,7 @@ export default function OnlineLobby({
   const handleFriendInvite = async () => {
     if (!invitingFriend || !onInviteFriend) return;
     if (friendInviteWager > 0) {
-      const ok = await spend(friendInviteWager, 'Online game wager (friend invite)');
+      const ok = await spend(friendInviteWager, `Online game wager (invite to ${invitingFriend.username})`);
       if (!ok) return;
     }
     onInviteFriend(invitingFriend.playerId, friendInviteWager);
