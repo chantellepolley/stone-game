@@ -423,14 +423,45 @@ export function useOnlineGame() {
     if (game) {
       gameDbId.current = game.id;
 
-      // Update player2 — retry if myId is null (race condition with player creation)
+      // Check if we're already player 1 in this game — if so, resume as P1 instead
       let playerId = myId;
       if (!playerId) {
-        // Retry a few times with increasing delays
         for (let attempt = 0; attempt < 3 && !playerId; attempt++) {
           await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
           playerId = await getMyPlayerId();
         }
+      }
+
+      if (playerId && game.player1_id === playerId) {
+        // We're player 1 — resume as P1, don't overwrite player2
+        setMyPlayer(1);
+        if (game.state) {
+          const loadedState = validateState(game.state);
+          setState(loadedState);
+          stateRef.current = loadedState;
+          stateReceivedRef.current = true;
+          setOnlinePhase('playing');
+        }
+        // Fetch opponent (P2) name
+        const { data: gameData } = await supabase
+          .from('games')
+          .select('player2_id')
+          .eq('id', game.id)
+          .single();
+        if (gameData?.player2_id) {
+          const { data: opp } = await supabase.from('players').select('username').eq('id', gameData.player2_id).single();
+          if (opp) setOpponentName(opp.username);
+        }
+        localStorage.setItem('stone_active_game', JSON.stringify({
+          gameId: game.id, roomCode: upperCode, myPlayer: 1,
+        }));
+        joinChannel(upperCode, 1, true);
+        setTimeout(() => {
+          if (channelRef.current) {
+            channelRef.current.send({ type: 'broadcast', event: 'player_joined', payload: {} });
+          }
+        }, 500);
+        return;
       }
 
       if (playerId) {
