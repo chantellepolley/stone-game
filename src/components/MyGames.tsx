@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useFriends } from '../hooks/useFriends';
+import JesterCoin from './JesterCoin';
 
 interface GameRow {
   id: string;
@@ -15,6 +16,7 @@ interface GameRow {
   opponent_name: string;
   is_my_turn: boolean;
   winner_label: string | null;
+  wager: number;
 }
 
 interface InviteRow {
@@ -56,7 +58,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
       // Fetch games where this player is p1 or p2 (active + recent completed)
       const { data } = await supabase
         .from('games')
-        .select('id, room_code, player1_id, player2_id, status, state, updated_at, mode, winner_id')
+        .select('id, room_code, player1_id, player2_id, status, state, updated_at, mode, winner_id, wager')
         .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
         .in('status', ['active', 'waiting', 'completed'])
         .order('updated_at', { ascending: false })
@@ -113,6 +115,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           opponent_name: isAI ? `Computer (${((g.state as any)?.aiDifficulty || 'medium').charAt(0).toUpperCase() + ((g.state as any)?.aiDifficulty || 'medium').slice(1)})` : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Waiting...'),
           is_my_turn: g.status !== 'completed' && currentPlayer === myPlayer,
           winner_label: winnerLabel,
+          wager: g.wager || 0,
         };
       });
 
@@ -421,6 +424,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                         vs <span className="font-heading">{g.opponent_name}</span>
                         {g.mode === 'ai' && <span className="text-white/30 text-[10px] ml-1">(AI)</span>}
                         {g.mode === 'local' && <span className="text-white/30 text-[10px] ml-1">(Local)</span>}
+                        {g.wager > 0 && <span className="text-amber-400/70 text-[10px] ml-1 inline-flex items-center gap-0.5"><JesterCoin size={10} /> {g.wager}</span>}
                       </div>
                       <div className="text-white/40 text-[10px]">
                         {g.is_my_turn ? (
@@ -472,6 +476,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       vs <span className="font-heading">{g.opponent_name}</span>
                       {g.mode === 'ai' && <span className="text-white/30 text-[10px] ml-1">(AI)</span>}
                       {g.mode === 'local' && <span className="text-white/30 text-[10px] ml-1">(Local)</span>}
+                      {g.wager > 0 && <span className="text-amber-400/70 text-[10px] ml-1 inline-flex items-center gap-0.5"><JesterCoin size={10} /> {g.wager}</span>}
                     </div>
                     <div className="text-white/40 text-[10px]">
                       <span className={

@@ -656,7 +656,7 @@ export function useOnlineGame() {
           broadcastState(switched);
           return switched;
         });
-      }, 2500);
+      }, 3500);
       return;
     } else {
       const d1J = isJester(dice.values[0]), d2J = isJester(dice.values[1]);

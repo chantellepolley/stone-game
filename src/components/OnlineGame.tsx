@@ -94,6 +94,23 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState(0);
   const chatUnread = chatOpen ? 0 : opponentMsgCount - lastSeenOpponentCount;
 
+  // Show opponent's last move as a recap when entering the game
+  const [lastMoveRecap, setLastMoveRecap] = useState<string | null>(null);
+  const recapShown = useRef(false);
+  useEffect(() => {
+    if (onlinePhase === 'playing' && isMyTurn && !recapShown.current && state.moveLog.length > 0) {
+      recapShown.current = true;
+      // Find the last move by the opponent
+      const opponentPlayer = myPlayer === 1 ? 2 : 1;
+      const lastOpponentMoves = state.moveLog.filter(m => m.player === opponentPlayer);
+      const lastMove = lastOpponentMoves[lastOpponentMoves.length - 1];
+      if (lastMove) {
+        setLastMoveRecap(lastMove.action);
+        setTimeout(() => setLastMoveRecap(null), 4000);
+      }
+    }
+  }, [onlinePhase, isMyTurn, state.moveLog, myPlayer]);
+
   // Play "your turn" sound + vibrate + system notification
   useEffect(() => {
     if (isMyTurn && !prevIsMyTurn.current && onlinePhase === 'playing') {
@@ -365,6 +382,26 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             isOpen={true}
             onToggle={() => { setChatOpen(false); setLastSeenOpponentCount(opponentMsgCount); }}
           />
+        </div>
+      )}
+
+      {/* Opponent's last move recap */}
+      {lastMoveRecap && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-40 animate-[slideIn_0.3s_ease-out] max-w-sm w-full px-4">
+          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-xl px-4 py-2.5 shadow-2xl text-center">
+            <p className="text-white/50 text-[9px] font-heading uppercase tracking-wider mb-0.5">Last move</p>
+            <p className="text-amber-400 text-xs">{lastMoveRecap}</p>
+          </div>
+        </div>
+      )}
+
+      {/* No valid moves overlay */}
+      {state.phase === 'no_moves' && (
+        <div className="fixed top-1/4 left-1/2 -translate-x-1/2 z-40 animate-[slideIn_0.3s_ease-out]">
+          <div className="bg-[#504840] border-2 border-red-600/50 rounded-xl px-6 py-3 shadow-2xl text-center">
+            <p className="text-red-400 font-heading text-sm uppercase tracking-wider">No valid moves!</p>
+            <p className="text-white/50 text-[10px] mt-1">Skipping turn...</p>
+          </div>
         </div>
       )}
 

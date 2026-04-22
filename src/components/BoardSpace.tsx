@@ -127,8 +127,15 @@ export default function BoardSpace({
                 );
               })}
             </div>
+            {isValidTarget && (
+              <button onClick={(e) => { e.stopPropagation(); setShowPiecePopup(false); onClickSpace(); }}
+                className="w-full mt-3 px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+                Move Here
+              </button>
+            )}
             <button onClick={() => setShowPiecePopup(false)}
-              className="w-full mt-3 px-4 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+              className="w-full mt-2 px-4 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
                          bg-white/10 text-white/70 hover:bg-white/20 cursor-pointer transition-colors">
               Close
             </button>
@@ -142,9 +149,9 @@ export default function BoardSpace({
         /* Mixed crowned/uncrowned: show normal stack, popup only when selecting a piece to move */
         <div className="relative w-full flex flex-col items-center pb-1" style={{ marginTop: 'auto' }}
           onClick={(e) => {
-            // Only show popup when this space is a valid source (need to pick which piece)
-            // Don't intercept if this is a move target or already selected
-            if (isValidSource && !isSelected && !isValidTarget) {
+            // Show popup when this space is a valid source (need to pick which piece)
+            // OR when it's a valid target with lots of pieces (no room to click the space itself)
+            if ((isValidSource && !isSelected && !isValidTarget) || (isValidTarget && pieces.length >= 4)) {
               e.stopPropagation();
               setShowPiecePopup(true);
             }

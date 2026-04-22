@@ -26,6 +26,28 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const { coins, dailyBonusClaimed, dailyBonusAmount, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
+  const [showCoinRules, setShowCoinRules] = useState(false);
+  const [bonusCountdown, setBonusCountdown] = useState('');
+
+  // Countdown to next daily bonus (midnight local time)
+  useEffect(() => {
+    if (dailyBonusClaimed || !coins) return; // still available or no coins loaded
+    // Already claimed today — show countdown to tomorrow
+    const tick = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const diff = tomorrow.getTime() - now.getTime();
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setBonusCountdown(`${h}h ${m}m ${s}s`);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [dailyBonusClaimed, coins]);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
@@ -176,10 +198,18 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </button>
           </div>
           {coins !== null && (
-            <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-full border border-amber-600/40">
-              <JesterCoin size={18} />
-              <span className="text-amber-400 font-heading text-sm">{coins}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-full border border-amber-600/40">
+                <JesterCoin size={18} />
+                <span className="text-amber-400 font-heading text-sm">{coins}</span>
+              </div>
+              <button onClick={() => setShowCoinRules(true)}
+                className="text-white/30 hover:text-white/60 transition-colors cursor-pointer text-sm"
+                title="Coin rules">?</button>
             </div>
+          )}
+          {coins !== null && !dailyBonusClaimed && bonusCountdown && (
+            <p className="text-white/30 text-[9px]">Next bonus in {bonusCountdown}</p>
           )}
         </div>
       )}
@@ -414,6 +444,47 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           )}
           <div className="text-[8px] text-white">
             &copy; 2026 Stone The Game. All rights reserved.
+          </div>
+        </div>
+      )}
+
+      {/* Coin rules modal */}
+      {showCoinRules && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center gap-2 mb-4 justify-center">
+              <JesterCoin size={28} />
+              <h2 className="text-white font-heading text-lg">Coin Rules</h2>
+            </div>
+            <div className="text-white/70 text-xs space-y-3">
+              <div>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Daily Bonus</p>
+                <p>Open the app each day to receive <span className="text-amber-400">+20 coins</span>.</p>
+              </div>
+              <div>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">vs Computer</p>
+                <p>Each difficulty has a coin entry fee. Win to earn double your wager back!</p>
+                <div className="flex gap-2 mt-1 flex-wrap">
+                  <span className="bg-black/30 px-2 py-0.5 rounded text-[10px]">Easy: 5</span>
+                  <span className="bg-black/30 px-2 py-0.5 rounded text-[10px]">Medium: 10</span>
+                  <span className="bg-black/30 px-2 py-0.5 rounded text-[10px]">Hard: 15</span>
+                  <span className="bg-black/30 px-2 py-0.5 rounded text-[10px]">Expert: 20</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Online Games</p>
+                <p>The game creator sets the wager: <span className="text-white">Free, 5, 10, 25, or 50 coins</span>. Both players pay in, winner takes all!</p>
+              </div>
+              <div>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Forfeit</p>
+                <p>You can forfeit a game at any time, but you lose your wager and your opponent wins.</p>
+              </div>
+            </div>
+            <button onClick={() => setShowCoinRules(false)}
+              className="w-full mt-5 px-4 py-2 rounded-xl font-heading text-sm uppercase tracking-wider
+                         bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+              Got it
+            </button>
           </div>
         </div>
       )}

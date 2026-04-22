@@ -314,6 +314,16 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
         </div>
       )}
 
+      {/* No valid moves overlay */}
+      {state.phase === 'no_moves' && (
+        <div className="fixed top-1/4 left-1/2 -translate-x-1/2 z-40 animate-[slideIn_0.3s_ease-out]">
+          <div className="bg-[#504840] border-2 border-red-600/50 rounded-xl px-6 py-3 shadow-2xl text-center">
+            <p className="text-red-400 font-heading text-sm uppercase tracking-wider">No valid moves!</p>
+            <p className="text-white/50 text-[10px] mt-1">Skipping turn...</p>
+          </div>
+        </div>
+      )}
+
       {/* Forfeit confirmation */}
       {showForfeitConfirm && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">

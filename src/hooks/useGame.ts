@@ -196,7 +196,7 @@ export function useGame() {
         phase: 'rolling',
         turnCount: prev.turnCount + 1,
       }));
-    }, 2500); // Show the roll for 2.5 seconds
+    }, 3500); // Show the roll for 3.5 seconds
     return () => clearTimeout(timer);
   }, [state.phase]);
 
