@@ -692,6 +692,7 @@ export function useOnlineGame() {
     else if (move.crowns) playCrownedSound();
 
     let newState = executeMove(state, move);
+    newState = { ...newState, lastMove: move };
     const winner = checkWinCondition(newState);
     if (winner) newState = { ...newState, winner, phase: 'game_over' };
     if (newState.currentPlayer !== state.currentPlayer) undoStack.current = [];

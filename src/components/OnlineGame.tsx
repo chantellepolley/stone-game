@@ -94,22 +94,22 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState(0);
   const chatUnread = chatOpen ? 0 : opponentMsgCount - lastSeenOpponentCount;
 
-  // Show opponent's last move as a recap when entering the game
-  const [lastMoveRecap, setLastMoveRecap] = useState<string | null>(null);
+  // Replay opponent's last move animation when entering the game
   const recapShown = useRef(false);
+  const [replayMove, setReplayMove] = useState<typeof pendingOpponentMove>(null);
   useEffect(() => {
-    if (onlinePhase === 'playing' && isMyTurn && !recapShown.current && state.moveLog.length > 0) {
+    if (onlinePhase === 'playing' && isMyTurn && !recapShown.current && state.lastMove) {
       recapShown.current = true;
-      // Find the last move by the opponent
-      const opponentPlayer = myPlayer === 1 ? 2 : 1;
-      const lastOpponentMoves = state.moveLog.filter(m => m.player === opponentPlayer);
-      const lastMove = lastOpponentMoves[lastOpponentMoves.length - 1];
-      if (lastMove) {
-        setLastMoveRecap(lastMove.action);
-        setTimeout(() => setLastMoveRecap(null), 4000);
+      // Only replay if the last move was by the opponent
+      const lastMovePiece = [...state.board.flat(), ...Object.values(state.home).flat(), ...Object.values(state.jail).flat()]
+        .find(p => p.id === state.lastMove?.pieceId);
+      if (lastMovePiece && lastMovePiece.owner !== myPlayer) {
+        // Briefly show the move animation
+        setReplayMove(state.lastMove);
+        setTimeout(() => setReplayMove(null), 800);
       }
     }
-  }, [onlinePhase, isMyTurn, state.moveLog, myPlayer]);
+  }, [onlinePhase, isMyTurn, state.lastMove, myPlayer]);
 
   // Play "your turn" sound + vibrate + system notification
   useEffect(() => {
@@ -296,7 +296,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             state={state}
             validMoves={isMyTurn ? validMoves : []}
             onSelectMove={selectMove}
-            pendingAIMove={pendingOpponentMove}
+            pendingAIMove={pendingOpponentMove || replayMove}
             hintsEnabled={hintsEnabled}
             myPlayer={myPlayer || 1}
           />
@@ -382,16 +382,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             isOpen={true}
             onToggle={() => { setChatOpen(false); setLastSeenOpponentCount(opponentMsgCount); }}
           />
-        </div>
-      )}
-
-      {/* Opponent's last move recap */}
-      {lastMoveRecap && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-40 animate-[slideIn_0.3s_ease-out] max-w-sm w-full px-4">
-          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-xl px-4 py-2.5 shadow-2xl text-center">
-            <p className="text-white/50 text-[9px] font-heading uppercase tracking-wider mb-0.5">Last move</p>
-            <p className="text-amber-400 text-xs">{lastMoveRecap}</p>
-          </div>
         </div>
       )}
 

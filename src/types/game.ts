@@ -46,6 +46,8 @@ export interface GameState {
   jesterCount?: Record<PlayerId, number>;
   /** Count of doubles rolled per player */
   doublesCount?: Record<PlayerId, number>;
+  /** Last move made (for replay on reconnect) */
+  lastMove?: Move | null;
 }
 
 export type MoveSource =

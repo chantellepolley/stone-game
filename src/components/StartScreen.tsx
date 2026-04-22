@@ -198,18 +198,16 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </button>
           </div>
           {coins !== null && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-full border border-amber-600/40">
-                <JesterCoin size={18} />
-                <span className="text-amber-400 font-heading text-sm">{coins}</span>
-              </div>
-              <button onClick={() => setShowCoinRules(true)}
-                className="text-white/30 hover:text-white/60 transition-colors cursor-pointer text-sm"
-                title="Coin rules">?</button>
-            </div>
+            <button onClick={() => setShowCoinRules(true)}
+              className="flex items-center gap-1.5 bg-black/30 px-3 py-1 rounded-full border border-amber-600/40
+                         cursor-pointer transition-all hover:scale-105 hover:border-amber-400
+                         shadow-[0_0_8px_rgba(255,191,0,0.25)] hover:shadow-[0_0_14px_rgba(255,191,0,0.4)]">
+              <JesterCoin size={18} />
+              <span className="text-amber-400 font-heading text-sm">{coins}</span>
+            </button>
           )}
           {coins !== null && !dailyBonusClaimed && bonusCountdown && (
-            <p className="text-white/30 text-[9px]">Next bonus in {bonusCountdown}</p>
+            <p className="text-white text-[9px]">Next bonus in {bonusCountdown}</p>
           )}
         </div>
       )}
