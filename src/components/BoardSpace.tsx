@@ -95,8 +95,11 @@ export default function BoardSpace({
           onClick={(e) => { e.stopPropagation(); setShowPiecePopup(false); }}>
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-4 shadow-2xl max-w-xs"
             onClick={(e) => e.stopPropagation()}>
-            <div className="text-white/50 text-[10px] font-heading uppercase tracking-wider text-center mb-2">
-              {pieces.length} pieces on this space
+            <div className="text-amber-400 text-xs font-heading uppercase tracking-wider text-center mb-1">
+              Choose which stone to move
+            </div>
+            <div className="text-white/40 text-[9px] text-center mb-2">
+              {pieces.length} stones on this space
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               {pieces.map(piece => {
