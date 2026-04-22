@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
-import { getCoinHistory } from '../lib/coins';
+import { getCoinHistory, AI_WAGER } from '../lib/coins';
 import JesterCoin from './JesterCoin';
+import type { AIDifficulty } from '../types/game';
 
 interface Stats {
   wins: number;
@@ -30,6 +31,7 @@ interface GameHistoryRow {
   my_doubles: number;
   opp_jesters: number;
   opp_doubles: number;
+  wager: number;
 }
 
 interface HeadToHead {
@@ -63,7 +65,7 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
       // Fetch completed games
       const { data: gamesData } = await supabase
         .from('games')
-        .select('id, mode, status, winner_id, updated_at, player1_id, player2_id, state')
+        .select('id, mode, status, winner_id, updated_at, player1_id, player2_id, state, wager')
         .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
         .eq('status', 'completed')
         .order('updated_at', { ascending: false })
@@ -119,6 +121,7 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
             my_doubles: state?.doublesCount?.[myPlayer] || 0,
             opp_jesters: state?.jesterCount?.[myPlayer === 1 ? 2 : 1] || 0,
             opp_doubles: state?.doublesCount?.[myPlayer === 1 ? 2 : 1] || 0,
+            wager: isAI ? (AI_WAGER[state?.aiDifficulty as AIDifficulty] || 0) : (g.wager || 0),
           };
         });
         setHistory(rows);
@@ -239,10 +242,13 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
                       {g.mode === 'ai' && <span className="text-white/30 text-[9px] ml-1">(AI)</span>}
                     </div>
                     <div className="flex flex-col gap-0.5 text-[9px] text-white/40 mt-0.5">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <span className={g.result === 'won' ? 'text-green-400' : g.result === 'canceled' ? 'text-white/30' : 'text-red-400'}>
                           {g.result === 'won' ? 'Won' : g.result === 'canceled' ? 'Canceled' : 'Lost'}
                         </span>
+                        {g.wager > 0 && (
+                          <span className="inline-flex items-center gap-0.5 text-amber-400/70"><JesterCoin size={10} /> {g.wager}</span>
+                        )}
                         <span>{g.turns} turns</span>
                       </div>
                       {g.result !== 'canceled' && (

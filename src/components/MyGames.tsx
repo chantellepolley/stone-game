@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { AI_WAGER } from '../lib/coins';
+import type { AIDifficulty } from '../types/game';
 import { useFriends } from '../hooks/useFriends';
 import JesterCoin from './JesterCoin';
 
@@ -116,7 +118,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           opponent_name: isAI ? `Computer (${((g.state as any)?.aiDifficulty || 'medium').charAt(0).toUpperCase() + ((g.state as any)?.aiDifficulty || 'medium').slice(1)})` : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Waiting...'),
           is_my_turn: g.status !== 'completed' && currentPlayer === myPlayer,
           winner_label: winnerLabel,
-          wager: g.wager || 0,
+          wager: isAI ? (AI_WAGER[(g.state as any)?.aiDifficulty as AIDifficulty] || 0) : (g.wager || 0),
         };
       });
 
