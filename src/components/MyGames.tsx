@@ -36,6 +36,7 @@ interface SentInviteRow {
   to_username: string;
   status: string;
   created_at: string;
+  wager: number;
 }
 
 interface MyGamesProps {
@@ -159,13 +160,16 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
 
       if (sentData && sentData.length > 0) {
         const toIds = sentData.map(i => i.to_player_id);
-        const { data: toPlayers } = await supabase
-          .from('players')
-          .select('id, username')
-          .in('id', toIds);
+        const gameIds = sentData.map(i => i.game_id);
+        const [{ data: toPlayers }, { data: gameRows }] = await Promise.all([
+          supabase.from('players').select('id, username').in('id', toIds),
+          supabase.from('games').select('id, wager').in('id', gameIds),
+        ]);
 
         const toMap: Record<string, string> = {};
         toPlayers?.forEach(p => { toMap[p.id] = p.username; });
+        const wagerMap: Record<string, number> = {};
+        gameRows?.forEach(g => { wagerMap[g.id] = g.wager || 0; });
 
         setSentInvites(sentData.map(i => ({
           id: i.id,
@@ -175,6 +179,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           to_username: toMap[i.to_player_id] || 'Unknown',
           status: i.status,
           created_at: i.created_at,
+          wager: wagerMap[i.game_id] || 0,
         })));
       }
 
@@ -385,6 +390,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       </div>
                       <div className="text-white/40 text-[10px]">
                         <span className="text-amber-400/70">Pending</span>
+                        {si.wager > 0 && <span className="text-amber-400/70 ml-1 inline-flex items-center gap-0.5"><JesterCoin size={10} /> {si.wager}</span>}
                         {' · '}{timeAgo(si.created_at)}
                       </div>
                     </div>
