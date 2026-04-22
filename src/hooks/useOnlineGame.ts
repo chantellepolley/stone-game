@@ -139,22 +139,33 @@ export function useOnlineGame() {
       statsRecorded.current = true;
       // Game is done — clear active game from localStorage
       localStorage.removeItem('stone_active_game');
-      // Update game status in DB
       if (gameDbId.current) {
-        getMyPlayerId().then(myId => {
-          supabase.from('games').update({
-            status: 'completed',
-            state,
-            winner_id: state.winner === myPlayer ? myId : null,
-            updated_at: new Date().toISOString(),
-          }).eq('id', gameDbId.current!).then(() => {});
+        (async () => {
+          // Fetch game to check if already completed and get both player IDs
+          const { data: game } = await supabase
+            .from('games')
+            .select('player1_id, player2_id, status')
+            .eq('id', gameDbId.current!)
+            .single();
 
-          // Record stats for this player
-          if (myId) {
-            const isWinner = state.winner === myPlayer;
-            recordGameResult(state, state.winner!, isWinner ? myId : null, isWinner ? null : myId);
+          if (!game) return;
+
+          const winnerDbId = state.winner === 1 ? game.player1_id : game.player2_id;
+
+          // Update game status + record stats only if not already completed
+          // This prevents double-recording when both clients are online
+          if (game.status !== 'completed') {
+            await supabase.from('games').update({
+              status: 'completed',
+              state,
+              winner_id: winnerDbId,
+              updated_at: new Date().toISOString(),
+            }).eq('id', gameDbId.current!);
+
+            // Record stats for both players
+            recordGameResult(state, state.winner!, game.player1_id, game.player2_id);
           }
-        });
+        })();
       }
     }
   }, [state.phase, state.winner, myPlayer]);
