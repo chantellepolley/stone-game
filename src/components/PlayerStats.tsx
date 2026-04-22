@@ -18,7 +18,7 @@ interface GameHistoryRow {
   updated_at: string;
   opponent_name: string;
   my_player: 1 | 2;
-  result: 'won' | 'lost' | 'in_progress';
+  result: 'won' | 'lost' | 'in_progress' | 'canceled';
   my_captures: number;
   opp_captures: number;
   my_borne_off: number;
@@ -88,11 +88,12 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
           const isLocal = g.mode === 'local';
           const captures = state?.captureCount || { 1: 0, 2: 0 };
 
-          let result: 'won' | 'lost' | 'in_progress' = 'in_progress';
+          let result: 'won' | 'lost' | 'in_progress' | 'canceled' = 'in_progress';
           if (g.winner_id === player.id) result = 'won';
           else if (g.winner_id) result = 'lost';
           else if (state?.winner === myPlayer) result = 'won';
           else if (state?.winner) result = 'lost';
+          else if (g.status === 'completed') result = 'canceled';
 
           return {
             id: g.id,
@@ -218,15 +219,15 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
           ) : (
             <div className="w-full overflow-y-auto space-y-1.5 max-h-[45vh]">
               {history.map(g => (
-                <div key={g.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-black/20 text-left">
+                <div key={g.id} className={`flex items-center justify-between px-3 py-2 rounded-lg bg-black/20 text-left ${g.result === 'canceled' ? 'opacity-40' : ''}`}>
                   <div className="flex-1 min-w-0">
                     <div className="text-white text-xs">
                       vs <span className="font-heading">{g.opponent_name}</span>
                       {g.mode === 'ai' && <span className="text-white/30 text-[9px] ml-1">(AI)</span>}
                     </div>
                     <div className="flex gap-2 text-[9px] text-white/40 mt-0.5">
-                      <span className={g.result === 'won' ? 'text-green-400' : 'text-red-400'}>
-                        {g.result === 'won' ? 'Won' : 'Lost'}
+                      <span className={g.result === 'won' ? 'text-green-400' : g.result === 'canceled' ? 'text-white/30' : 'text-red-400'}>
+                        {g.result === 'won' ? 'Won' : g.result === 'canceled' ? 'Canceled' : 'Lost'}
                       </span>
                       <span>Captures: {g.my_captures}</span>
                       <span>Borne off: {g.my_borne_off}</span>
