@@ -144,7 +144,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
           phase={state.phase}
           winner={state.winner}
           player1Name={player?.username}
-          player2Name={state.gameMode === 'ai' ? 'Computer' : undefined}
+          player2Name={state.gameMode === 'ai' ? `Computer (${(state.aiDifficulty || 'medium').charAt(0).toUpperCase() + (state.aiDifficulty || 'medium').slice(1)})` : undefined}
         />
         {isAITurn && (
           <span className="text-[10px] lg:text-xs text-white/40 animate-pulse">AI thinking...</span>
@@ -349,7 +349,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
               {state.winner === 1 && player?.username
                 ? `${player.username} Wins!`
                 : state.winner === 2 && state.gameMode === 'ai'
-                  ? 'Computer Wins!'
+                  ? `Computer (${(state.aiDifficulty || 'medium').charAt(0).toUpperCase() + (state.aiDifficulty || 'medium').slice(1)}) Wins!`
                   : `${GAME_CONFIG.PLAYER_NAMES[state.winner]} Wins!`}
             </h2>
             <p className="text-white/60 mb-2 text-sm">

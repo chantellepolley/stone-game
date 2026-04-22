@@ -110,7 +110,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           mode,
           updated_at: g.updated_at,
           my_player: myPlayer as 1 | 2,
-          opponent_name: isAI ? 'Computer' : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Waiting...'),
+          opponent_name: isAI ? `Computer (${((g.state as any)?.aiDifficulty || 'medium').charAt(0).toUpperCase() + ((g.state as any)?.aiDifficulty || 'medium').slice(1)})` : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Waiting...'),
           is_my_turn: g.status !== 'completed' && currentPlayer === myPlayer,
           winner_label: winnerLabel,
         };

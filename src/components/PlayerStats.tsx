@@ -100,7 +100,7 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
             status: g.status,
             winner_id: g.winner_id,
             updated_at: g.updated_at,
-            opponent_name: isAI ? 'Computer' : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Unknown'),
+            opponent_name: isAI ? `Computer (${((g.state as any)?.aiDifficulty || 'medium').charAt(0).toUpperCase() + ((g.state as any)?.aiDifficulty || 'medium').slice(1)})` : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Unknown'),
             my_player: myPlayer as 1 | 2,
             result,
             my_captures: captures[myPlayer] || 0,
