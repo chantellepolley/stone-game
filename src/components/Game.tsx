@@ -35,6 +35,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
   const { spend, earn } = useCoins();
   const [currentWager, setCurrentWager] = useState(0);
+  const wagerRef = useRef(0);
   const coinsAwarded = useRef(false);
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
@@ -54,6 +55,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       const ok = await spend(wager);
       if (!ok) return; // shouldn't happen — buttons are disabled
       setCurrentWager(wager);
+      wagerRef.current = wager;
       coinsAwarded.current = false;
     } else {
       setCurrentWager(0);
@@ -66,13 +68,14 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   useEffect(() => {
     if (state.phase === 'game_over' && state.winner && state.gameMode === 'ai' && !coinsAwarded.current) {
       coinsAwarded.current = true;
-      if (state.winner === 1 && currentWager > 0) {
+      const wager = wagerRef.current;
+      if (state.winner === 1 && wager > 0) {
         // Player won — get back wager + win wager = 2x wager total (net gain = wager)
-        earn(currentWager * 2);
+        earn(wager * 2);
       }
       // If player lost, coins already deducted at start
     }
-  }, [state.phase, state.winner, state.gameMode, currentWager, earn]);
+  }, [state.phase, state.winner, state.gameMode, earn]);
 
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
 
@@ -85,6 +88,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   // Reset coins tracking when going back to start
   const handleRestart = () => {
     setCurrentWager(0);
+    wagerRef.current = 0;
     coinsAwarded.current = false;
     restart();
   };
