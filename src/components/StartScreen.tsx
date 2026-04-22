@@ -24,9 +24,11 @@ interface StartScreenProps {
 
 export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
-  const { coins, dailyBonusClaimed, dailyBonusAmount, dismissDailyBonus } = useCoins();
+  const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [showCoinRules, setShowCoinRules] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [refCopied, setRefCopied] = useState(false);
   const [bonusCountdown, setBonusCountdown] = useState('');
 
   // Countdown to next daily bonus (midnight local time)
@@ -64,6 +66,15 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   useEffect(() => {
     if (editingName && nameInputRef.current) nameInputRef.current.focus();
   }, [editingName]);
+
+  // Load referral code
+  useEffect(() => {
+    if (!player) return;
+    import('../lib/supabase').then(({ supabase }) => {
+      supabase.from('players').select('referral_code').eq('id', player.id).single()
+        .then(({ data }) => { if (data?.referral_code) setReferralCode(data.referral_code); });
+    });
+  }, [player]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -148,6 +159,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <div>
               <p className="text-amber-400 font-heading text-sm">Daily Bonus!</p>
               <p className="text-white/70 text-xs">+{dailyBonusAmount} coins added</p>
+              {dailyStreak > 1 && <p className="text-amber-400/70 text-[10px]">{dailyStreak}-day streak!</p>}
             </div>
             <button onClick={dismissDailyBonus} className="text-white/40 hover:text-white/70 text-sm cursor-pointer ml-2">x</button>
           </div>
@@ -421,6 +433,21 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
           )}
           {passwordMsg && <p className={`text-xs ${passwordMsg.includes('saved') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
+          {referralCode && (
+            <button
+              onClick={() => {
+                const text = `Join me on STONE! Use my referral code: ${referralCode}\nhttps://stonethegame.com`;
+                if (navigator.share) {
+                  navigator.share({ title: 'Join STONE!', text }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(text).then(() => { setRefCopied(true); setTimeout(() => setRefCopied(false), 2000); });
+                }
+              }}
+              className="text-amber-400/60 text-[10px] hover:text-amber-400 transition-colors cursor-pointer"
+            >
+              {refCopied ? 'Copied!' : `Refer a Friend (code: ${referralCode})`}
+            </button>
+          )}
         </div>
       )}
 
@@ -456,8 +483,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
             <div className="text-white/70 text-xs space-y-3">
               <div>
-                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Daily Bonus</p>
-                <p>Open the app each day to receive <span className="text-amber-400">+20 coins</span>.</p>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Daily Bonus + Login Streak</p>
+                <p>Open the app daily: <span className="text-amber-400">+20</span> base. Consecutive days: day 2 = <span className="text-amber-400">+25</span>, day 3+ = <span className="text-amber-400">+30</span>, day 7+ = <span className="text-amber-400">+50</span>!</p>
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">vs Computer</p>
@@ -472,6 +499,22 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Online Games</p>
                 <p>The game creator sets the wager: <span className="text-white">Free, 5, 10, 25, or 50 coins</span>. Both players pay in, winner takes all!</p>
+              </div>
+              <div>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Win Bonuses</p>
+                <p><span className="text-amber-400">+10</span> for 3-win streak, <span className="text-amber-400">+25</span> for 5-win streak</p>
+                <p><span className="text-amber-400">+15</span> perfect game (no pieces captured by opponent)</p>
+                <p><span className="text-amber-400">+10</span> speed win (under 30 turns)</p>
+                <p><span className="text-amber-400">+10</span> more double jesters than opponent</p>
+                <p><span className="text-amber-400">+5</span> more regular doubles than opponent</p>
+              </div>
+              <div>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Milestones</p>
+                <p><span className="text-amber-400">+50</span> every 10 wins, <span className="text-amber-400">+100</span> every 25 wins</p>
+              </div>
+              <div>
+                <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Refer a Friend</p>
+                <p>Share your referral code — you both get <span className="text-amber-400">+50 coins</span> when they join!</p>
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Forfeit</p>

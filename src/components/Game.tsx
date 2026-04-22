@@ -4,6 +4,7 @@ import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { AI_WAGER } from '../lib/coins';
+import { awardGameBonuses, type BonusResult } from '../lib/bonuses';
 import { setSoundEnabled, isSoundEnabled, playYourTurnSound } from '../utils/sounds';
 import type { GameMode, AIDifficulty } from '../types/game';
 import Board from './Board';
@@ -37,6 +38,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const [currentWager, setCurrentWager] = useState(0);
   const wagerRef = useRef(0);
   const coinsAwarded = useRef(false);
+  const [gameBonuses, setGameBonuses] = useState<BonusResult[]>([]);
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
   const [hasResumed, setHasResumed] = useState(false);
@@ -64,18 +66,23 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     startGame(mode, difficulty);
   };
 
-  // Award coins on AI game win
+  // Award coins + bonuses on AI game end
   useEffect(() => {
     if (state.phase === 'game_over' && state.winner && state.gameMode === 'ai' && !coinsAwarded.current) {
       coinsAwarded.current = true;
       const wager = wagerRef.current;
-      if (state.winner === 1 && wager > 0) {
-        // Player won — get back wager + win wager = 2x wager total (net gain = wager)
+      const isWin = state.winner === 1;
+      if (isWin && wager > 0) {
         earn(wager * 2, `AI game win (${state.aiDifficulty})`);
       }
-      // If player lost, coins already deducted at start
+      // Award bonuses (win or loss — handles streak reset on loss)
+      if (player) {
+        awardGameBonuses(player.id, state, state.winner, isWin).then(bonuses => {
+          setGameBonuses(bonuses);
+        });
+      }
     }
-  }, [state.phase, state.winner, state.gameMode, earn]);
+  }, [state.phase, state.winner, state.gameMode, earn, player]);
 
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
 
@@ -90,6 +97,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     setCurrentWager(0);
     wagerRef.current = 0;
     coinsAwarded.current = false;
+    setGameBonuses([]);
     restart();
   };
   const [hintsEnabled, setHintsEnabled] = useState(true);
@@ -369,6 +377,17 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
               <p className={`text-sm font-heading mb-2 ${state.winner === 1 ? 'text-green-400' : 'text-red-400'}`}>
                 {state.winner === 1 ? `+${currentWager} coins won!` : `-${currentWager} coins lost`} <JesterCoin size={16} />
               </p>
+            )}
+            {gameBonuses.length > 0 && (
+              <div className="space-y-1 mb-3">
+                {gameBonuses.map((b, i) => (
+                  <div key={i} className="flex items-center justify-center gap-1.5 text-xs">
+                    <span className="text-green-400 font-heading">+{b.amount}</span>
+                    <JesterCoin size={12} />
+                    <span className="text-amber-400/80">{b.label}</span>
+                  </div>
+                ))}
+              </div>
             )}
             <button
               onClick={handleRestart}

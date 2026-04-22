@@ -8,6 +8,7 @@ export default function UsernamePrompt() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [referralInput, setReferralInput] = useState('');
 
   const handleCreate = async () => {
     const trimmed = name.trim();
@@ -18,6 +19,10 @@ export default function UsernamePrompt() {
 
     setSubmitting(true);
     setError('');
+    // Store referral code before creating (usePlayer reads it from localStorage)
+    if (referralInput.trim()) {
+      localStorage.setItem('stone_referral_code', referralInput.trim().toUpperCase());
+    }
     const result = await createPlayer(trimmed, password);
     if (result !== true) {
       setError(result);
@@ -106,6 +111,20 @@ export default function UsernamePrompt() {
                        placeholder:text-white/30 placeholder:text-sm
                        focus:outline-none focus:border-amber-400 transition-colors"
           />
+
+          {mode === 'create' && (
+            <input
+              type="text"
+              value={referralInput}
+              onChange={e => setReferralInput(e.target.value)}
+              placeholder="Referral code (optional)"
+              maxLength={15}
+              className="w-full px-4 py-2 rounded-lg bg-black/30 border-2 border-[#6b5f55] text-white
+                         text-center text-sm font-heading
+                         placeholder:text-white/20 placeholder:text-xs
+                         focus:outline-none focus:border-amber-400 transition-colors"
+            />
+          )}
 
           {error && <p className="text-red-400 text-xs text-center">{error}</p>}
 

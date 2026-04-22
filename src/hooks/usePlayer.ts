@@ -74,9 +74,18 @@ export function usePlayer() {
 
     const token = generateDeviceToken();
 
+    // Generate referral code from username
+    const refCode = username.replace(/\s+/g, '').toUpperCase().slice(0, 6) + Math.random().toString(36).slice(2, 5).toUpperCase();
+
+    // Check for pending referral
+    const pendingRef = localStorage.getItem('stone_referral_code');
+
     const { data, error } = await supabase
       .from('players')
-      .insert({ username, device_token: token, ...(password ? { password: await hashPassword(password) } : {}) })
+      .insert({
+        username, device_token: token, referral_code: refCode,
+        ...(password ? { password: await hashPassword(password) } : {}),
+      })
       .select()
       .single();
 
@@ -86,6 +95,22 @@ export function usePlayer() {
 
       // Create stats row
       await supabase.from('player_stats').insert({ player_id: data.id });
+
+      // Handle referral bonus
+      if (pendingRef) {
+        localStorage.removeItem('stone_referral_code');
+        const { data: referrer } = await supabase
+          .from('players')
+          .select('id')
+          .eq('referral_code', pendingRef)
+          .single();
+        if (referrer && referrer.id !== data.id) {
+          await supabase.from('players').update({ referred_by: referrer.id }).eq('id', data.id);
+          // Import dynamically to avoid circular deps
+          const { awardReferralBonus } = await import('../lib/bonuses');
+          await awardReferralBonus(referrer.id, data.id);
+        }
+      }
 
       return true;
     }

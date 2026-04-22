@@ -8,6 +8,7 @@ import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
 import { showNotification } from '../hooks/usePushNotifications';
+import { awardGameBonuses, type BonusResult } from '../lib/bonuses';
 import JesterCoin from './JesterCoin';
 import Board from './Board';
 import DiceArea from './DiceArea';
@@ -34,6 +35,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   } = useOnlineGame();
   const { spend, earn } = useCoins();
   const coinsHandled = useRef(false);
+  const [gameBonuses, setGameBonuses] = useState<BonusResult[]>([]);
   const [hintsEnabled, setHintsEnabled] = useState(true);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
@@ -51,15 +53,21 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     }
   }, [onlinePhase, myPlayer, gameWager, spend]);
 
-  // Award coins on game end
+  // Award coins + bonuses on game end
   useEffect(() => {
-    if (state.phase === 'game_over' && state.winner && gameWager > 0 && !coinsHandled.current) {
+    if (state.phase === 'game_over' && state.winner && !coinsHandled.current) {
       coinsHandled.current = true;
-      if (state.winner === myPlayer) {
+      const isWin = state.winner === myPlayer;
+      if (isWin && gameWager > 0) {
         earn(gameWager * 2, 'Online game win');
       }
+      if (player) {
+        awardGameBonuses(player.id, state, state.winner, isWin).then(bonuses => {
+          setGameBonuses(bonuses);
+        });
+      }
     }
-  }, [state.phase, state.winner, gameWager, myPlayer, earn]);
+  }, [state.phase, state.winner, gameWager, myPlayer, earn, player]);
 
   // Check friend status with opponent
   useEffect(() => {
@@ -444,6 +452,17 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
               <p className={`text-sm font-heading mb-2 ${state.winner === myPlayer ? 'text-green-400' : 'text-red-400'}`}>
                 {state.winner === myPlayer ? `+${gameWager} coins won!` : `-${gameWager} coins lost`} <JesterCoin size={16} />
               </p>
+            )}
+            {gameBonuses.length > 0 && (
+              <div className="space-y-1 mb-3">
+                {gameBonuses.map((b, i) => (
+                  <div key={i} className="flex items-center justify-center gap-1.5 text-xs">
+                    <span className="text-green-400 font-heading">+{b.amount}</span>
+                    <JesterCoin size={12} />
+                    <span className="text-amber-400/80">{b.label}</span>
+                  </div>
+                ))}
+              </div>
             )}
             <button onClick={() => { leave(); onBack(); }}
               className="px-6 py-3 rounded-lg font-heading text-sm uppercase tracking-wider

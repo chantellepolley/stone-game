@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { getCoins, addCoins, deductCoins, claimDailyBonus, DAILY_BONUS } from '../lib/coins';
+import { getCoins, addCoins, deductCoins, claimDailyBonus } from '../lib/coins';
 import { usePlayerContext } from './PlayerContext';
 
 interface CoinsContextValue {
@@ -9,6 +9,7 @@ interface CoinsContextValue {
   earn: (amount: number, reason?: string) => Promise<void>;
   dailyBonusClaimed: boolean;
   dailyBonusAmount: number | null;
+  dailyStreak: number;
   dismissDailyBonus: () => void;
 }
 
@@ -19,6 +20,7 @@ const CoinsContext = createContext<CoinsContextValue>({
   earn: async () => {},
   dailyBonusClaimed: false,
   dailyBonusAmount: null,
+  dailyStreak: 0,
   dismissDailyBonus: () => {},
 });
 
@@ -27,6 +29,7 @@ export function CoinsProvider({ children }: { children: React.ReactNode }) {
   const [coins, setCoins] = useState<number | null>(null);
   const [dailyBonusAmount, setDailyBonusAmount] = useState<number | null>(null);
   const [dailyBonusClaimed, setDailyBonusClaimed] = useState(false);
+  const [dailyStreak, setDailyStreak] = useState(0);
   const bonusChecked = useRef(false);
 
   const refreshCoins = useCallback(async () => {
@@ -44,8 +47,9 @@ export function CoinsProvider({ children }: { children: React.ReactNode }) {
       // Try to claim daily bonus
       const result = await claimDailyBonus(player.id);
       if (result !== null) {
-        setCoins(result);
-        setDailyBonusAmount(DAILY_BONUS);
+        setCoins(result.balance);
+        setDailyBonusAmount(result.bonus);
+        setDailyStreak(result.streak);
         setDailyBonusClaimed(true);
       } else {
         // Already claimed today, just load balance
@@ -75,7 +79,7 @@ export function CoinsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <CoinsContext.Provider value={{ coins, refreshCoins, spend, earn, dailyBonusClaimed, dailyBonusAmount, dismissDailyBonus }}>
+    <CoinsContext.Provider value={{ coins, refreshCoins, spend, earn, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus }}>
       {children}
     </CoinsContext.Provider>
   );
