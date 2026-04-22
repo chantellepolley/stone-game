@@ -18,6 +18,16 @@ export const DAILY_BONUS = 20;
 /** Starting coins for new players */
 export const STARTING_COINS = 100;
 
+/** Log a coin transaction */
+async function logTransaction(playerId: string, amount: number, reason: string, balanceAfter: number) {
+  await supabase.from('coin_transactions').insert({
+    player_id: playerId,
+    amount,
+    reason,
+    balance_after: balanceAfter,
+  });
+}
+
 /** Get a player's current coin balance */
 export async function getCoins(playerId: string): Promise<number> {
   const { data } = await supabase
@@ -29,18 +39,19 @@ export async function getCoins(playerId: string): Promise<number> {
 }
 
 /** Add coins to a player's balance */
-export async function addCoins(playerId: string, amount: number): Promise<number> {
+export async function addCoins(playerId: string, amount: number, reason = 'Unknown'): Promise<number> {
   const current = await getCoins(playerId);
   const newBalance = current + amount;
   await supabase
     .from('player_stats')
     .update({ coins: newBalance, updated_at: new Date().toISOString() })
     .eq('player_id', playerId);
+  logTransaction(playerId, amount, reason, newBalance);
   return newBalance;
 }
 
 /** Deduct coins from a player's balance. Returns new balance, or -1 if insufficient funds. */
-export async function deductCoins(playerId: string, amount: number): Promise<number> {
+export async function deductCoins(playerId: string, amount: number, reason = 'Unknown'): Promise<number> {
   const current = await getCoins(playerId);
   if (current < amount) return -1;
   const newBalance = current - amount;
@@ -48,6 +59,7 @@ export async function deductCoins(playerId: string, amount: number): Promise<num
     .from('player_stats')
     .update({ coins: newBalance, updated_at: new Date().toISOString() })
     .eq('player_id', playerId);
+  logTransaction(playerId, -amount, reason, newBalance);
   return newBalance;
 }
 
@@ -74,5 +86,22 @@ export async function claimDailyBonus(playerId: string): Promise<number | null> 
     })
     .eq('player_id', playerId);
 
+  logTransaction(playerId, DAILY_BONUS, 'Daily login bonus', newBalance);
   return newBalance;
+}
+
+/** Get coin transaction history */
+export async function getCoinHistory(playerId: string, limit = 50): Promise<Array<{
+  amount: number;
+  reason: string;
+  balance_after: number;
+  created_at: string;
+}>> {
+  const { data } = await supabase
+    .from('coin_transactions')
+    .select('amount, reason, balance_after, created_at')
+    .eq('player_id', playerId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return data || [];
 }

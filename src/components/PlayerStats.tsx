@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { getCoinHistory } from '../lib/coins';
+import JesterCoin from './JesterCoin';
 
 interface Stats {
   wins: number;
@@ -22,9 +24,12 @@ interface GameHistoryRow {
   my_captures: number;
   opp_captures: number;
   my_borne_off: number;
+  opp_borne_off: number;
   turns: number;
   my_jesters: number;
   my_doubles: number;
+  opp_jesters: number;
+  opp_doubles: number;
 }
 
 interface HeadToHead {
@@ -40,8 +45,9 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
   const [stats, setStats] = useState<Stats | null>(null);
   const [history, setHistory] = useState<GameHistoryRow[]>([]);
   const [headToHead, setHeadToHead] = useState<HeadToHead[]>([]);
+  const [coinHistory, setCoinHistory] = useState<Array<{ amount: number; reason: string; balance_after: number; created_at: string }>>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'overview' | 'history' | 'rivals'>('overview');
+  const [tab, setTab] = useState<'overview' | 'history' | 'rivals' | 'coins'>('overview');
 
   useEffect(() => {
     if (!player) return;
@@ -107,9 +113,12 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
             my_captures: captures[myPlayer] || 0,
             opp_captures: captures[myPlayer === 1 ? 2 : 1] || 0,
             my_borne_off: state?.home?.[myPlayer]?.length || 0,
+            opp_borne_off: state?.home?.[myPlayer === 1 ? 2 : 1]?.length || 0,
             turns: state?.turnCount || 0,
             my_jesters: state?.jesterCount?.[myPlayer] || 0,
             my_doubles: state?.doublesCount?.[myPlayer] || 0,
+            opp_jesters: state?.jesterCount?.[myPlayer === 1 ? 2 : 1] || 0,
+            opp_doubles: state?.doublesCount?.[myPlayer === 1 ? 2 : 1] || 0,
           };
         });
         setHistory(rows);
@@ -137,6 +146,10 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
         }
         setHeadToHead(Object.values(h2h).sort((a, b) => b.total - a.total));
       }
+
+      // Load coin history
+      const txns = await getCoinHistory(player.id);
+      setCoinHistory(txns);
 
       setLoading(false);
     };
@@ -169,11 +182,11 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
 
         {/* Tab bar */}
         <div className="flex gap-1 bg-black/20 rounded-lg p-0.5 w-full">
-          {(['overview', 'history', 'rivals'] as const).map(t => (
+          {(['overview', 'history', 'rivals', 'coins'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer
                 ${tab === t ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
-              {t === 'overview' ? 'Overview' : t === 'history' ? 'Game History' : 'Rivals'}
+              {t === 'overview' ? 'Overview' : t === 'history' ? 'History' : t === 'rivals' ? 'Rivals' : 'Coins'}
             </button>
           ))}
         </div>
@@ -225,15 +238,22 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
                       vs <span className="font-heading">{g.opponent_name}</span>
                       {g.mode === 'ai' && <span className="text-white/30 text-[9px] ml-1">(AI)</span>}
                     </div>
-                    <div className="flex gap-2 text-[9px] text-white/40 mt-0.5">
-                      <span className={g.result === 'won' ? 'text-green-400' : g.result === 'canceled' ? 'text-white/30' : 'text-red-400'}>
-                        {g.result === 'won' ? 'Won' : g.result === 'canceled' ? 'Canceled' : 'Lost'}
-                      </span>
-                      <span>Captures: {g.my_captures}</span>
-                      <span>Borne off: {g.my_borne_off}</span>
-                      <span>{g.turns} turns</span>
-                      {(g.my_jesters > 0 || g.my_doubles > 0) && (
-                        <span>Jesters: {g.my_jesters} | Doubles: {g.my_doubles}</span>
+                    <div className="flex flex-col gap-0.5 text-[9px] text-white/40 mt-0.5">
+                      <div className="flex gap-2">
+                        <span className={g.result === 'won' ? 'text-green-400' : g.result === 'canceled' ? 'text-white/30' : 'text-red-400'}>
+                          {g.result === 'won' ? 'Won' : g.result === 'canceled' ? 'Canceled' : 'Lost'}
+                        </span>
+                        <span>{g.turns} turns</span>
+                      </div>
+                      {g.result !== 'canceled' && (
+                        <div className="flex gap-3">
+                          <span>You: {g.my_captures} cap, {g.my_borne_off} home, {g.my_jesters} jst, {g.my_doubles} dbl</span>
+                        </div>
+                      )}
+                      {g.result !== 'canceled' && (
+                        <div className="flex gap-3">
+                          <span>Opp: {g.opp_captures} cap, {g.opp_borne_off} home, {g.opp_jesters} jst, {g.opp_doubles} dbl</span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -242,7 +262,7 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
               ))}
             </div>
           )
-        ) : (
+        ) : tab === 'rivals' ? (
           /* ── Rivals tab (head-to-head) ── */
           headToHead.length === 0 ? (
             <p className="text-white/40 text-sm">No online opponents yet</p>
@@ -282,6 +302,29 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
                   </div>
                 );
               })}
+            </div>
+          )
+        ) : (
+          /* ── Coins tab ── */
+          coinHistory.length === 0 ? (
+            <p className="text-white/40 text-sm">No coin transactions yet</p>
+          ) : (
+            <div className="w-full overflow-y-auto space-y-1 max-h-[45vh]">
+              {coinHistory.map((tx, i) => (
+                <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-black/20">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white text-xs">{tx.reason}</div>
+                    <div className="text-[9px] text-white/30">{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className={`text-sm font-heading ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {tx.amount > 0 ? '+' : ''}{tx.amount}
+                    </span>
+                    <JesterCoin size={14} />
+                    <span className="text-[9px] text-white/30">{tx.balance_after}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )
         )}

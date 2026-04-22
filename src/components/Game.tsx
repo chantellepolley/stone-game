@@ -52,8 +52,8 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const handleStart = async (mode: GameMode, difficulty: AIDifficulty) => {
     if (mode === 'ai') {
       const wager = AI_WAGER[difficulty];
-      const ok = await spend(wager);
-      if (!ok) return; // shouldn't happen — buttons are disabled
+      const ok = await spend(wager, `AI game wager (${difficulty})`);
+      if (!ok) return;
       setCurrentWager(wager);
       wagerRef.current = wager;
       coinsAwarded.current = false;
@@ -71,7 +71,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       const wager = wagerRef.current;
       if (state.winner === 1 && wager > 0) {
         // Player won — get back wager + win wager = 2x wager total (net gain = wager)
-        earn(wager * 2);
+        earn(wager * 2, `AI game win (${state.aiDifficulty})`);
       }
       // If player lost, coins already deducted at start
     }

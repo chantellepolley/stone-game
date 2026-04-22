@@ -47,7 +47,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   useEffect(() => {
     if (onlinePhase === 'playing' && myPlayer === 2 && gameWager > 0 && !joinerDeducted.current) {
       joinerDeducted.current = true;
-      spend(gameWager);
+      spend(gameWager, 'Online game wager');
     }
   }, [onlinePhase, myPlayer, gameWager, spend]);
 
@@ -56,7 +56,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     if (state.phase === 'game_over' && state.winner && gameWager > 0 && !coinsHandled.current) {
       coinsHandled.current = true;
       if (state.winner === myPlayer) {
-        earn(gameWager * 2); // winner takes all (their own wager back + opponent's)
+        earn(gameWager * 2, 'Online game win');
       }
     }
   }, [state.phase, state.winner, gameWager, myPlayer, earn]);
@@ -91,8 +91,14 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const prevIsMyTurn = useRef(isMyTurn);
   // Only count unread messages from opponent (not your own)
   const opponentMsgCount = chatMessages.filter(m => !m.isMine).length;
-  const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState(0);
-  const chatUnread = chatOpen ? 0 : opponentMsgCount - lastSeenOpponentCount;
+  const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState<number | null>(null);
+  // Initialize to current count on first load so old messages don't show as unread
+  const chatUnread = lastSeenOpponentCount === null ? 0 : chatOpen ? 0 : opponentMsgCount - lastSeenOpponentCount;
+  useEffect(() => {
+    if (onlinePhase === 'playing' && lastSeenOpponentCount === null && chatMessages.length > 0) {
+      setLastSeenOpponentCount(opponentMsgCount);
+    }
+  }, [onlinePhase, chatMessages.length, lastSeenOpponentCount, opponentMsgCount]);
 
   // Replay opponent's last move animation when entering the game
   const recapShown = useRef(false);
@@ -153,7 +159,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
   const handleCreateRoom = async (wager: number) => {
     if (wager > 0) {
-      const ok = await spend(wager);
+      const ok = await spend(wager, 'Online game wager');
       if (!ok) return;
     }
     coinsHandled.current = false;

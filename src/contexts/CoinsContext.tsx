@@ -5,8 +5,8 @@ import { usePlayerContext } from './PlayerContext';
 interface CoinsContextValue {
   coins: number | null;
   refreshCoins: () => Promise<void>;
-  spend: (amount: number) => Promise<boolean>;
-  earn: (amount: number) => Promise<void>;
+  spend: (amount: number, reason?: string) => Promise<boolean>;
+  earn: (amount: number, reason?: string) => Promise<void>;
   dailyBonusClaimed: boolean;
   dailyBonusAmount: number | null;
   dismissDailyBonus: () => void;
@@ -55,17 +55,17 @@ export function CoinsProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [player]);
 
-  const spend = useCallback(async (amount: number): Promise<boolean> => {
+  const spend = useCallback(async (amount: number, reason = 'Game wager'): Promise<boolean> => {
     if (!player) return false;
-    const result = await deductCoins(player.id, amount);
+    const result = await deductCoins(player.id, amount, reason);
     if (result === -1) return false;
     setCoins(result);
     return true;
   }, [player]);
 
-  const earn = useCallback(async (amount: number) => {
+  const earn = useCallback(async (amount: number, reason = 'Game winnings') => {
     if (!player) return;
-    const result = await addCoins(player.id, amount);
+    const result = await addCoins(player.id, amount, reason);
     setCoins(result);
   }, [player]);
 

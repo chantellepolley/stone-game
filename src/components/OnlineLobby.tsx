@@ -63,7 +63,7 @@ export default function OnlineLobby({
   const handleFriendInvite = async () => {
     if (!invitingFriend || !onInviteFriend) return;
     if (friendInviteWager > 0) {
-      const ok = await spend(friendInviteWager);
+      const ok = await spend(friendInviteWager, 'Online game wager (friend invite)');
       if (!ok) return;
     }
     onInviteFriend(invitingFriend.playerId, friendInviteWager);
@@ -82,7 +82,7 @@ export default function OnlineLobby({
   if (onlinePhase === 'error') {
     return (
       <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
-        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
           <p className="text-red-400 text-sm font-heading text-center">{error || 'Something went wrong'}</p>
           <button
@@ -102,7 +102,7 @@ export default function OnlineLobby({
   if (onlinePhase === 'connecting') {
     return (
       <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
-        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
           <p className="text-white text-sm font-heading">Connecting to game...</p>
           <div className="flex gap-1">
@@ -125,7 +125,7 @@ export default function OnlineLobby({
   if (onlinePhase === 'waiting') {
     return (
       <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
-        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+        <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
 
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
           <p className="text-white text-sm font-heading">Invite your opponent:</p>
@@ -181,7 +181,7 @@ export default function OnlineLobby({
   // Default: show create/join options
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
-      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
+      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
 
       <div className="flex flex-col items-center gap-6 max-w-sm w-full">
         {/* Wager selection */}
