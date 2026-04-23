@@ -402,6 +402,7 @@ export function useOnlineGame() {
       state: initialState,
       status: 'waiting',
       wager,
+      p1_color: loadPlayerColor(),
     }).select('id').single();
 
     if (data) gameDbId.current = data.id;
@@ -425,7 +426,7 @@ export function useOnlineGame() {
 
     const { data: game } = await supabase
       .from('games')
-      .select('id, state, player1_id, player2_id, wager')
+      .select('id, state, player1_id, player2_id, wager, p1_color, p2_color')
       .eq('room_code', upperCode)
       .in('status', ['waiting', 'active'])
       .maybeSingle();
@@ -483,6 +484,7 @@ export function useOnlineGame() {
           await supabase.from('games').update({
             player2_id: playerId,
             status: 'active',
+            p2_color: loadPlayerColor(),
             updated_at: new Date().toISOString(),
           }).eq('id', game.id);
 
@@ -528,11 +530,12 @@ export function useOnlineGame() {
       }
     }
 
-    // Fetch opponent (P1) name
+    // Fetch opponent (P1) name and load color from DB
     if (game?.player1_id) {
       supabase.from('players').select('username').eq('id', game.player1_id).single()
         .then(({ data: p }) => { if (p) setOpponentName(p.username); });
     }
+    if (game?.p1_color) setOpponentColor(game.p1_color);
 
     // Always connect to the channel even if game not in DB yet
     // preserveStateReceived if we already loaded state from DB
@@ -548,7 +551,7 @@ export function useOnlineGame() {
 
     const { data: game, error: gameErr } = await supabase
       .from('games')
-      .select('state, status, player1_id, player2_id, wager')
+      .select('state, status, player1_id, player2_id, wager, p1_color, p2_color')
       .eq('id', gameId)
       .single();
 
@@ -568,6 +571,7 @@ export function useOnlineGame() {
         await supabase.from('games').update({
           player2_id: myId,
           status: 'active',
+          p2_color: loadPlayerColor(),
           updated_at: new Date().toISOString(),
         }).eq('id', gameId);
 
@@ -611,13 +615,15 @@ export function useOnlineGame() {
       }
     }
 
-    // Fetch opponent name
+    // Fetch opponent name and load color from DB
     if (game) {
       const opponentId = player === 1 ? game.player2_id : game.player1_id;
       if (opponentId) {
         const { data: opp } = await supabase.from('players').select('username').eq('id', opponentId).single();
         if (opp) setOpponentName(opp.username);
       }
+      const oppColor = player === 1 ? game.p2_color : game.p1_color;
+      if (oppColor) setOpponentColor(oppColor);
     }
 
     // preserveStateReceived=true so the P2 retry loop doesn't error out

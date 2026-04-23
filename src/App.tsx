@@ -117,6 +117,7 @@ export default function App() {
       state: initialState,
       status: 'waiting',
       wager,
+      p1_color: loadPlayerColor(),
     }).select('id').single();
 
     if (gameErr || !game) {

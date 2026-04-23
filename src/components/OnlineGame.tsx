@@ -82,12 +82,12 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
   // Resolve color conflict: P1 keeps their color, P2 gets a different one if same
   const myColor = loadPlayerColor();
-  let resolvedP1Color = myPlayer === 1 ? myColor : (opponentColor || 'slate');
-  let resolvedP2Color = myPlayer === 2 ? myColor : (opponentColor || 'slate');
+  let resolvedP1Color = myPlayer === 1 ? myColor : (opponentColor || 'sandstone');
+  let resolvedP2Color = myPlayer === 2 ? myColor : (opponentColor || 'sandstone');
   if (resolvedP1Color === resolvedP2Color) {
     // P2 (the joiner) gets a different color — pick the first different one
     const alt = STONE_COLORS.find(c => c.id !== resolvedP1Color);
-    resolvedP2Color = alt ? alt.id : 'slate';
+    resolvedP2Color = alt ? alt.id : 'sandstone';
   }
   const prevIsMyTurn = useRef(isMyTurn);
   // Only count unread messages from opponent (not your own)
