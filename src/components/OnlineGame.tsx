@@ -44,12 +44,21 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const { addFriendById, getFriendStatus } = useFriends();
   const [friendStatus, setFriendStatus] = useState<'none' | 'pending' | 'accepted' | 'sent'>('none');
 
-  // Deduct coins from joiner when they enter a wagered game
+  // Deduct coins from joiner when they FIRST enter a wagered game (not on resume)
   const joinerDeducted = useRef(false);
   useEffect(() => {
     if (onlinePhase === 'playing' && myPlayer === 2 && gameWager > 0 && !joinerDeducted.current) {
+      // Check localStorage to see if we already paid for this game
+      const gameId = localStorage.getItem('stone_active_game');
+      const parsed = gameId ? JSON.parse(gameId) : null;
+      const paidKey = parsed?.gameId ? `stone_wager_paid_${parsed.gameId}` : null;
+      if (paidKey && localStorage.getItem(paidKey)) {
+        joinerDeducted.current = true;
+        return; // Already paid
+      }
       joinerDeducted.current = true;
       spend(gameWager, 'Online game wager');
+      if (paidKey) localStorage.setItem(paidKey, '1');
     }
   }, [onlinePhase, myPlayer, gameWager, spend]);
 
