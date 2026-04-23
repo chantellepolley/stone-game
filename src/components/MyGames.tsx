@@ -209,10 +209,13 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     onResume(invite.game_id, invite.room_code, 2, 'online');
   };
 
+  const [confirmEndGameId, setConfirmEndGameId] = useState<string | null>(null);
+
   const handleEndGame = async (gameId: string) => {
     // End game — no winner, shows as "Ended" not a loss
     await supabase.from('games').update({ status: 'completed', winner_id: null, updated_at: new Date().toISOString() }).eq('id', gameId);
     setGames(prev => prev.map(g => g.id === gameId ? { ...g, status: 'completed', winner_label: 'Ended' } : g));
+    setConfirmEndGameId(null);
   };
 
   const handleCancelGame = async (gameId: string) => {
@@ -449,7 +452,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
                     </span>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleEndGame(g.id); }}
+                      onClick={(e) => { e.stopPropagation(); setConfirmEndGameId(g.id); }}
                       className="px-1.5 py-0.5 rounded text-[7px] font-heading uppercase
                                  bg-white/10 text-white/50 hover:text-white hover:bg-white/20 cursor-pointer transition-colors"
                       title="End game (no winner)"
@@ -520,6 +523,28 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           Back
         </button>
       </div>
+
+      {/* End game confirmation */}
+      {confirmEndGameId && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm mx-4 text-center">
+            <h2 className="text-white font-heading text-lg mb-2">End Game?</h2>
+            <p className="text-white/60 text-sm mb-4">This will end the game with no winner. This cannot be undone.</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => handleEndGame(confirmEndGameId)}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-red-600 text-white hover:bg-red-500 cursor-pointer transition-colors">
+                End Game
+              </button>
+              <button onClick={() => setConfirmEndGameId(null)}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
