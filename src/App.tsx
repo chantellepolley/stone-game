@@ -135,7 +135,9 @@ export default function App() {
     if (inviteErr) {
       alert(inviteErr.message);
     } else {
-      alert(wager > 0 ? `Game invite sent! (${wager} coin wager)` : 'Game invite sent!');
+      // Navigate to the game room so we're ready when opponent accepts
+      setResumeData({ gameId: game.id, roomCode: code, player: 1 });
+      setScreen('online');
     }
   }, [player]);
 
