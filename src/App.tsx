@@ -108,12 +108,13 @@ export default function App() {
     let code = '';
     for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
 
-    // Create the game
+    // Create the game — player 2 (invitee) rolls first so it's async-friendly
+    const initialState = { ...createInitialState(), phase: 'rolling', gameMode: 'pvp', currentPlayer: 2 as const };
     const { data: game, error: gameErr } = await supabase.from('games').insert({
       room_code: code,
       player1_id: player.id,
       mode: 'online',
-      state: { ...createInitialState(), phase: 'rolling', gameMode: 'pvp' },
+      state: initialState,
       status: 'waiting',
       wager,
     }).select('id').single();
@@ -135,9 +136,7 @@ export default function App() {
     if (inviteErr) {
       alert(inviteErr.message);
     } else {
-      // Navigate to the game room so we're ready when opponent accepts
-      setResumeData({ gameId: game.id, roomCode: code, player: 1 });
-      setScreen('online');
+      alert(wager > 0 ? `Game invite sent! (${wager} coin wager)` : 'Game invite sent! They will roll first.');
     }
   }, [player]);
 
