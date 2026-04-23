@@ -21,7 +21,7 @@ import ChatPanel from './ChatPanel';
 interface OnlineGameProps {
   onBack: () => void;
   autoJoinCode?: string | null;
-  resumeData?: { gameId: string; roomCode: string; player: 1 | 2 } | null;
+  resumeData?: { gameId: string; roomCode: string; player: 1 | 2; inviteId?: string } | null;
   onInviteFriend?: (playerId: string, wager: number) => void;
 }
 
@@ -130,18 +130,35 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     prevIsMyTurn.current = isMyTurn;
   }, [isMyTurn, onlinePhase, opponentName]);
 
-  // Auto-join from URL or resume from My Games
-  const [autoJoined, setAutoJoined] = useState(false);
+  // Auto-join from URL or resume from My Games / invite accept
+  const [autoJoined, setAutoJoined] = useState<string | null>(null);
   useEffect(() => {
-    if (autoJoined || onlinePhase !== 'idle') return;
-    if (resumeData) {
-      setAutoJoined(true);
-      setTimeout(() => resumeGame(resumeData.gameId, resumeData.roomCode, resumeData.player), 100);
-    } else if (autoJoinCode) {
-      setAutoJoined(true);
-      setTimeout(() => joinRoom(autoJoinCode), 100);
-    }
-  }, [autoJoined, onlinePhase, resumeData, autoJoinCode, resumeGame, joinRoom]);
+    // Build a unique key for this join target
+    const joinKey = resumeData ? `resume-${resumeData.gameId}` : autoJoinCode ? `join-${autoJoinCode}` : null;
+    if (!joinKey || autoJoined === joinKey) return;
+
+    const doJoin = async () => {
+      // If we're in the middle of another game, leave it first
+      if (onlinePhase !== 'idle') {
+        leave();
+        // Give it a moment to clean up
+        await new Promise(r => setTimeout(r, 200));
+      }
+
+      setAutoJoined(joinKey);
+      if (resumeData) {
+        await resumeGame(resumeData.gameId, resumeData.roomCode, resumeData.player);
+        // Mark invite as accepted now that we've successfully joined
+        if (resumeData.inviteId) {
+          const { supabase: sb } = await import('../lib/supabase');
+          await sb.from('game_invites').update({ status: 'accepted' }).eq('id', resumeData.inviteId);
+        }
+      } else if (autoJoinCode) {
+        joinRoom(autoJoinCode);
+      }
+    };
+    doJoin();
+  }, [resumeData, autoJoinCode, autoJoined, onlinePhase, resumeGame, joinRoom, leave]);
 
   // Safety log
   useEffect(() => {

@@ -48,7 +48,7 @@ export default function App() {
     }
   }, [player, pushSupported, pushPermission, requestPermission]);
   const [autoJoinCode, setAutoJoinCode] = useState<string | null>(null);
-  const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2 } | null>(null);
+  const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2; inviteId?: string } | null>(null);
   const [resumeLocalGameId, setResumeLocalGameId] = useState<string | null>(null);
   const [stoneColor, setStoneColor] = useState(loadPlayerColor());
   const [pendingNotifications, setPendingNotifications] = useState(0);
@@ -139,8 +139,8 @@ export default function App() {
     }
   }, [player]);
 
-  const handleAcceptNotificationInvite = useCallback((gameId: string, roomCode: string) => {
-    setResumeData({ gameId, roomCode, player: 2 });
+  const handleAcceptNotificationInvite = useCallback((gameId: string, roomCode: string, inviteId?: string) => {
+    setResumeData({ gameId, roomCode, player: 2, inviteId });
     setScreen('online');
   }, []);
 

@@ -12,7 +12,7 @@ interface GameInvite {
 }
 
 interface NotificationsProps {
-  onAcceptInvite?: (gameId: string, roomCode: string) => void;
+  onAcceptInvite?: (gameId: string, roomCode: string, inviteId?: string) => void;
 }
 
 export default function Notifications({ onAcceptInvite }: NotificationsProps) {
@@ -90,16 +90,12 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
   }, [poll]);
 
   const handleAcceptInvite = async (invite: GameInvite) => {
-    // Update invite status
-    await supabase
-      .from('game_invites')
-      .update({ status: 'accepted' })
-      .eq('id', invite.id);
-
+    // Don't mark as accepted yet — that happens when we successfully join the game
+    // Just dismiss from UI and navigate to the game
     setDismissed(prev => new Set(prev).add(invite.id));
 
     if (onAcceptInvite) {
-      onAcceptInvite(invite.gameId, invite.roomCode);
+      onAcceptInvite(invite.gameId, invite.roomCode, invite.id);
     }
   };
 

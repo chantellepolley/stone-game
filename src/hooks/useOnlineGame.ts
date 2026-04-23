@@ -570,6 +570,11 @@ export function useOnlineGame() {
           status: 'active',
           updated_at: new Date().toISOString(),
         }).eq('id', gameId);
+
+        // Deduct wager on first join
+        if (game.wager && game.wager > 0) {
+          await deductCoins(myId, game.wager, 'Online game wager');
+        }
       }
     }
 
