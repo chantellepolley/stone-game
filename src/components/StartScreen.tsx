@@ -7,7 +7,7 @@ import { AI_WAGER } from '../lib/coins';
 import JesterCoin from './JesterCoin';
 
 interface StartScreenProps {
-  onStart: (mode: GameMode, difficulty: AIDifficulty) => void;
+  onStart: (mode: GameMode, difficulty: AIDifficulty, wager?: number) => void;
   onPlayOnline?: () => void;
   onShowStats?: () => void;
   onShowLeaderboard?: () => void;
@@ -26,6 +26,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
+  const [aiWagerEnabled, setAiWagerEnabled] = useState(true);
   const [showCoinRules, setShowCoinRules] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [refCopied, setRefCopied] = useState(false);
@@ -292,6 +293,21 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       ) : (
         <div className="flex flex-col items-center gap-4">
           <p className="text-white text-sm font-heading tracking-wider">Select difficulty</p>
+
+          {/* Free vs Wager toggle */}
+          <div className="flex gap-1 bg-black/20 rounded-lg p-0.5">
+            <button onClick={() => setAiWagerEnabled(false)}
+              className={`px-4 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer
+                ${!aiWagerEnabled ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
+              Free Play
+            </button>
+            <button onClick={() => setAiWagerEnabled(true)}
+              className={`px-4 py-1.5 rounded-md text-[10px] font-heading uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1
+                ${aiWagerEnabled ? 'bg-amber-600 text-white' : 'text-white/50 hover:text-white/70'}`}>
+              Wager <JesterCoin size={10} />
+            </button>
+          </div>
+
           <div className="flex flex-wrap justify-center gap-3">
             {([
               { level: 'easy' as AIDifficulty, label: 'Easy', desc: 'Random moves' },
@@ -299,12 +315,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               { level: 'hard' as AIDifficulty, label: 'Hard', desc: 'Looks ahead' },
               { level: 'expert' as AIDifficulty, label: 'Expert', desc: 'Master tactics' },
             ]).map(({ level, label, desc }) => {
-              const cost = AI_WAGER[level];
-              const canAfford = coins !== null && coins >= cost;
+              const cost = aiWagerEnabled ? AI_WAGER[level] : 0;
+              const canAfford = cost === 0 || (coins !== null && coins >= cost);
               return (
                 <button
                   key={level}
-                  onClick={() => canAfford ? onStart('ai', level) : undefined}
+                  onClick={() => canAfford ? onStart('ai', level, cost) : undefined}
                   disabled={!canAfford}
                   className="px-6 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
                              bg-[#504840] text-white border-2 border-[#6b5f55]
@@ -314,7 +330,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 >
                   <span>{label}</span>
                   <span className="text-[10px] text-white/40 normal-case">{desc}</span>
-                  <span className="text-[10px] text-amber-400/80 normal-case flex items-center gap-1 justify-center"><JesterCoin size={12} /> {cost} coins</span>
+                  {aiWagerEnabled && (
+                    <span className="text-[10px] text-amber-400/80 normal-case flex items-center gap-1 justify-center"><JesterCoin size={12} /> {cost} coins</span>
+                  )}
+                  {!aiWagerEnabled && (
+                    <span className="text-[10px] text-white/30 normal-case">Free</span>
+                  )}
                 </button>
               );
             })}

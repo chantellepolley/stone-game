@@ -51,13 +51,15 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const { player } = usePlayerContext();
 
   // Handle starting an AI game with coin deduction
-  const handleStart = async (mode: GameMode, difficulty: AIDifficulty) => {
+  const handleStart = async (mode: GameMode, difficulty: AIDifficulty, wager?: number) => {
     if (mode === 'ai') {
-      const wager = AI_WAGER[difficulty];
-      const ok = await spend(wager, `AI game wager (${difficulty})`);
-      if (!ok) return;
-      setCurrentWager(wager);
-      wagerRef.current = wager;
+      const actualWager = wager ?? AI_WAGER[difficulty];
+      if (actualWager > 0) {
+        const ok = await spend(actualWager, `AI game wager (${difficulty})`);
+        if (!ok) return;
+      }
+      setCurrentWager(actualWager);
+      wagerRef.current = actualWager;
       coinsAwarded.current = false;
     } else {
       setCurrentWager(0);
