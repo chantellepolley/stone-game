@@ -8,6 +8,7 @@ import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sound
 import { recordGameResult } from '../lib/statsTracker';
 import { loadPlayerColor } from '../utils/stoneColors';
 import { sendPushNotification } from './usePushNotifications';
+import { deductCoins } from '../lib/coins';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /** Validate and repair a game state loaded from DB */
@@ -424,7 +425,7 @@ export function useOnlineGame() {
 
     const { data: game } = await supabase
       .from('games')
-      .select('id, state, player1_id, wager')
+      .select('id, state, player1_id, player2_id, wager')
       .eq('room_code', upperCode)
       .in('status', ['waiting', 'active'])
       .maybeSingle();
@@ -476,11 +477,20 @@ export function useOnlineGame() {
       }
 
       if (playerId) {
-        await supabase.from('games').update({
-          player2_id: playerId,
-          status: 'active',
-          updated_at: new Date().toISOString(),
-        }).eq('id', game.id);
+        const isFirstJoin = !game.player2_id || game.player2_id !== playerId;
+
+        if (isFirstJoin) {
+          await supabase.from('games').update({
+            player2_id: playerId,
+            status: 'active',
+            updated_at: new Date().toISOString(),
+          }).eq('id', game.id);
+
+          // Deduct wager once on first join only
+          if (game.wager && game.wager > 0) {
+            await deductCoins(playerId, game.wager, 'Online game wager');
+          }
+        }
 
         // Persist active game so it appears in My Games even after navigating away
         localStorage.setItem('stone_active_game', JSON.stringify({
