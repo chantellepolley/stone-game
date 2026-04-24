@@ -63,9 +63,9 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         .from('games')
         .select('id, room_code, player1_id, player2_id, status, state, updated_at, mode, winner_id, wager')
         .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
-        .in('status', ['active', 'waiting', 'completed'])
+        .in('status', ['active', 'completed'])
         .order('updated_at', { ascending: false })
-        .limit(30);
+        .limit(50);
 
       if (!data) { setLoading(false); return; }
 
@@ -261,7 +261,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
-  // Filter out stale waiting games with no opponent (old abandoned rooms)
+  // Filter out waiting games with no opponent (abandoned rooms)
   const activeGames = games.filter(g => g.status !== 'completed' && g.opponent_name !== 'Waiting...');
   const pastGames = games.filter(g => g.status === 'completed');
   const incomingInviteCount = invites.length;  // only incoming game invites trigger badge
