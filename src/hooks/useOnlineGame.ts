@@ -8,7 +8,7 @@ import { playCrownedSound, playHomeSound, playJailedSound } from '../utils/sound
 import { recordGameResult } from '../lib/statsTracker';
 import { loadPlayerColor } from '../utils/stoneColors';
 import { sendPushNotification } from './usePushNotifications';
-import { deductCoins } from '../lib/coins';
+import { deductCoins, addCoins } from '../lib/coins';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /** Validate and repair a game state loaded from DB */
@@ -49,6 +49,7 @@ export function useOnlineGame() {
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const [gameWager, setGameWager] = useState(0);
   const [wagerProposal, setWagerProposal] = useState<{ amount: number; from: string } | null>(null);
+  const pendingProposalDiff = useRef(0); // how much the proposer paid upfront
   const [lastNudge, setLastNudge] = useState(0);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const undoStack = useRef<GameState[]>([]);
@@ -275,9 +276,17 @@ export function useOnlineGame() {
         if (payload?.amount) {
           setGameWager(payload.amount);
           setWagerProposal(null);
+          pendingProposalDiff.current = 0; // accepted, no refund needed
         }
       })
       .on('broadcast', { event: 'wager_declined' }, () => {
+        // Refund the proposer
+        if (pendingProposalDiff.current > 0) {
+          getMyPlayerId().then(myId => {
+            if (myId) addCoins(myId, pendingProposalDiff.current, 'Wager proposal declined — refund');
+            pendingProposalDiff.current = 0;
+          });
+        }
         setWagerProposal(null);
       })
       .on('broadcast', { event: 'nudge' }, () => {
@@ -946,6 +955,7 @@ export function useOnlineGame() {
         if (result === -1) return; // can't afford
       }
     }
+    pendingProposalDiff.current = diff;
     channelRef.current.send({
       type: 'broadcast', event: 'wager_proposal',
       payload: { amount, from: myUsernameRef.current },
