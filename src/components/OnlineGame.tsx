@@ -371,6 +371,12 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
       {/* Mobile bottom bar */}
       <div className="lg:hidden flex items-center gap-1 py-0.5 shrink-0">
+        {state.phase !== 'game_over' && (
+          <button onClick={() => setShowForfeitConfirm(true)}
+            className="text-[8px] text-red-400/40 hover:text-red-400 cursor-pointer whitespace-nowrap mr-1">
+            Forfeit
+          </button>
+        )}
         {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
         <button onClick={() => { leave(); onBack(); }}
           className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
@@ -400,14 +406,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                        cursor-pointer shadow-md whitespace-nowrap
                        disabled:opacity-30 disabled:cursor-not-allowed">
             Nudge
-          </button>
-        )}
-        {state.phase !== 'game_over' && (
-          <button onClick={() => setShowForfeitConfirm(true)}
-            className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
-                       bg-red-900/40 text-red-400 border border-red-800/40
-                       cursor-pointer shadow-md whitespace-nowrap">
-            Forfeit
           </button>
         )}
         <ChatPanel
