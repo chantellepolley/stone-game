@@ -48,6 +48,8 @@ export function useOnlineGame() {
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const [gameWager, setGameWager] = useState(0);
+  const [wagerProposal, setWagerProposal] = useState<{ amount: number; from: string } | null>(null);
+  const [lastNudge, setLastNudge] = useState(0);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const undoStack = useRef<GameState[]>([]);
   const pingRef = useRef<number | null>(null);
@@ -263,6 +265,23 @@ export function useOnlineGame() {
       })
       .on('broadcast', { event: 'player_left' }, () => {
         setOpponentConnected(false);
+      })
+      .on('broadcast', { event: 'wager_proposal' }, ({ payload }) => {
+        if (payload?.amount && payload?.from) {
+          setWagerProposal({ amount: payload.amount, from: payload.from });
+        }
+      })
+      .on('broadcast', { event: 'wager_accepted' }, ({ payload }) => {
+        if (payload?.amount) {
+          setGameWager(payload.amount);
+          setWagerProposal(null);
+        }
+      })
+      .on('broadcast', { event: 'wager_declined' }, () => {
+        setWagerProposal(null);
+      })
+      .on('broadcast', { event: 'nudge' }, () => {
+        // Handled in the component
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -814,21 +833,28 @@ export function useOnlineGame() {
       payload: { sender: senderName, text, timestamp: msg.timestamp, avatarUrl: senderAvatarUrl || null },
     });
 
-    // Persist chat to DB
+    // Persist chat to DB + send push notification
     if (gameDbId.current) {
       const chatEntry = { sender: senderName, text, timestamp: msg.timestamp, avatarUrl: senderAvatarUrl || null };
       supabase
         .from('games')
-        .select('chat')
+        .select('chat, player1_id, player2_id, room_code')
         .eq('id', gameDbId.current)
         .single()
         .then(({ data }) => {
-          const existing = (data?.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>) || [];
+          if (!data) return;
+          const existing = (data.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>) || [];
           existing.push(chatEntry);
           supabase.from('games').update({ chat: existing }).eq('id', gameDbId.current!).then(() => {});
+
+          // Send push notification for chat
+          const targetId = myPlayer === 1 ? data.player2_id : data.player1_id;
+          if (targetId) {
+            sendPushNotification(targetId, 'STONE - New Message', `${senderName}: ${text}`, 'chat-message', `/join/${data.room_code}`);
+          }
         });
     }
-  }, []);
+  }, [myPlayer]);
 
   const sendInvite = useCallback(async (toPlayerId: string): Promise<{ gameId: string; roomCode: string } | string> => {
     const code = generateRoomCode();
@@ -909,6 +935,72 @@ export function useOnlineGame() {
 
   const canUndo = undoStack.current.length > 0 && isMyTurn && state.phase === 'moving';
 
+  const proposeWager = useCallback(async (amount: number) => {
+    if (!channelRef.current || !myUsernameRef.current) return;
+    // Proposer pays the difference upfront
+    const diff = amount - gameWager;
+    if (diff > 0) {
+      const myId = await getMyPlayerId();
+      if (myId) {
+        const result = await deductCoins(myId, diff, `Wager proposal (${gameWager} → ${amount})`);
+        if (result === -1) return; // can't afford
+      }
+    }
+    channelRef.current.send({
+      type: 'broadcast', event: 'wager_proposal',
+      payload: { amount, from: myUsernameRef.current },
+    });
+  }, [gameWager]);
+
+  const acceptWager = useCallback(async () => {
+    if (!wagerProposal || !channelRef.current || !gameDbId.current) return;
+    const newWager = wagerProposal.amount;
+    // Both players need to pay the difference
+    const diff = newWager - gameWager;
+    if (diff > 0) {
+      const myId = await getMyPlayerId();
+      if (myId) await deductCoins(myId, diff, `Wager increase (${gameWager} → ${newWager})`);
+    }
+    // Update DB
+    await supabase.from('games').update({ wager: newWager }).eq('id', gameDbId.current);
+    setGameWager(newWager);
+    setWagerProposal(null);
+    channelRef.current.send({
+      type: 'broadcast', event: 'wager_accepted',
+      payload: { amount: newWager },
+    });
+  }, [wagerProposal, gameWager]);
+
+  const declineWager = useCallback(() => {
+    if (!channelRef.current) return;
+    setWagerProposal(null);
+    channelRef.current.send({ type: 'broadcast', event: 'wager_declined', payload: {} });
+  }, []);
+
+  const sendNudge = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastNudge < 60000) return; // 1 minute cooldown
+    setLastNudge(now);
+    if (channelRef.current) {
+      channelRef.current.send({ type: 'broadcast', event: 'nudge', payload: {} });
+    }
+    // Also send push notification
+    if (gameDbId.current) {
+      const { data: game } = await supabase
+        .from('games')
+        .select('player1_id, player2_id, room_code')
+        .eq('id', gameDbId.current)
+        .single();
+      if (game) {
+        const targetId = myPlayer === 1 ? game.player2_id : game.player1_id;
+        const senderName = myUsernameRef.current || 'Your opponent';
+        if (targetId) {
+          sendPushNotification(targetId, 'STONE - Nudge!', `${senderName} is waiting for you!`, 'nudge', `/join/${game.room_code}`);
+        }
+      }
+    }
+  }, [lastNudge, myPlayer]);
+
   return {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
@@ -916,5 +1008,7 @@ export function useOnlineGame() {
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, sendInvite, gameWager, forfeit,
+    wagerProposal, proposeWager, acceptWager, declineWager,
+    sendNudge, lastNudge,
   };
 }

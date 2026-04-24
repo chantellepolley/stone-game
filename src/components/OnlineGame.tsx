@@ -32,8 +32,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor,
     error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, gameWager, forfeit,
+    wagerProposal, proposeWager, acceptWager, declineWager,
+    sendNudge, lastNudge,
   } = useOnlineGame();
-  const { spend, earn } = useCoins();
+  const { coins, spend, earn } = useCoins();
   const coinsHandled = useRef(false);
   const [gameBonuses, setGameBonuses] = useState<BonusResult[]>([]);
   const [hintsEnabled, setHintsEnabled] = useState(true);
@@ -169,6 +171,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
   // Show lobby if not playing yet
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
+  const [showWagerPicker, setShowWagerPicker] = useState(false);
+  const [proposedAmount, setProposedAmount] = useState(0);
 
   const handleForfeit = () => {
     setShowForfeitConfirm(false);
@@ -343,10 +347,24 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             Sound: {soundOn ? 'ON' : 'OFF'}
           </button>
           {state.phase !== 'game_over' && (
-            <button onClick={() => setShowForfeitConfirm(true)}
-              className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors cursor-pointer mt-2">
-              Forfeit {gameWager > 0 && `(-${gameWager} coins)`}
-            </button>
+            <>
+              {!isMyTurn && (
+                <button onClick={sendNudge}
+                  disabled={Date.now() - lastNudge < 60000}
+                  className="text-[10px] text-amber-400/60 hover:text-amber-400 transition-colors cursor-pointer mt-2
+                             disabled:opacity-30 disabled:cursor-not-allowed">
+                  Nudge
+                </button>
+              )}
+              <button onClick={() => { setProposedAmount(gameWager > 0 ? gameWager * 2 : 5); setShowWagerPicker(true); }}
+                className="text-[10px] text-amber-400/60 hover:text-amber-400 transition-colors cursor-pointer">
+                {gameWager > 0 ? 'Raise Wager' : 'Add Wager'}
+              </button>
+              <button onClick={() => setShowForfeitConfirm(true)}
+                className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors cursor-pointer">
+                Forfeit {gameWager > 0 && `(-${gameWager} coins)`}
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -374,6 +392,16 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                      bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
           {showMobileLog ? 'Hide Log' : 'Log'}
         </button>
+        {state.phase !== 'game_over' && !isMyTurn && (
+          <button onClick={sendNudge}
+            disabled={Date.now() - lastNudge < 60000}
+            className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                       bg-[#504840] text-amber-400 border border-amber-600/40
+                       cursor-pointer shadow-md whitespace-nowrap
+                       disabled:opacity-30 disabled:cursor-not-allowed">
+            Nudge
+          </button>
+        )}
         {state.phase !== 'game_over' && (
           <button onClick={() => setShowForfeitConfirm(true)}
             className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
@@ -414,6 +442,71 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
           <div className="bg-[#504840] border-2 border-red-600/50 rounded-xl px-6 py-3 shadow-2xl text-center">
             <p className="text-red-400 font-heading text-sm uppercase tracking-wider">No valid moves!</p>
             <p className="text-white/50 text-[10px] mt-1">Skipping turn...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Incoming wager proposal from opponent */}
+      {wagerProposal && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-[slideIn_0.3s_ease-out] max-w-sm w-full px-4">
+          <div className="bg-[#504840] border-2 border-amber-600/60 rounded-xl p-4 shadow-2xl text-center">
+            <p className="text-amber-400 font-heading text-sm mb-1">Wager Proposal</p>
+            <p className="text-white/70 text-xs mb-3">
+              {wagerProposal.from} wants to {gameWager > 0 ? `raise the wager to` : `set a wager of`} <span className="text-amber-400 font-heading">{wagerProposal.amount}</span> <JesterCoin size={12} />
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={acceptWager}
+                className="px-4 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
+                Accept
+              </button>
+              <button onClick={declineWager}
+                className="px-4 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Propose wager picker */}
+      {showWagerPicker && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm mx-4 text-center">
+            <h2 className="text-white font-heading text-lg mb-1">{gameWager > 0 ? 'Raise Wager' : 'Propose Wager'}</h2>
+            <p className="text-white/50 text-xs mb-3">Your opponent must agree</p>
+            <div className="flex gap-2 justify-center mb-3 flex-wrap">
+              {[5, 10, 25, 50, 100].filter(v => v > gameWager).map(v => (
+                <button key={v} onClick={() => setProposedAmount(v)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-heading transition-all cursor-pointer
+                    ${proposedAmount === v
+                      ? 'bg-amber-600 text-white border-2 border-amber-400'
+                      : 'bg-black/30 text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
+                    ${(coins !== null && coins < v - gameWager) ? 'opacity-30 cursor-not-allowed' : ''}`}
+                  disabled={coins !== null && coins < v - gameWager}
+                >
+                  {v} <JesterCoin size={10} />
+                </button>
+              ))}
+            </div>
+            {gameWager > 0 && (
+              <p className="text-white/30 text-[9px] mb-3">Current wager: {gameWager}. You pay the difference.</p>
+            )}
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => { proposeWager(proposedAmount); setShowWagerPicker(false); }}
+                disabled={proposedAmount <= gameWager}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors
+                           disabled:opacity-40 disabled:cursor-not-allowed">
+                Propose
+              </button>
+              <button onClick={() => setShowWagerPicker(false)}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
