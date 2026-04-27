@@ -66,7 +66,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Cache static assets for offline support
-const CACHE_NAME = 'stone-v3';
+const CACHE_NAME = 'stone-v4';
 const STATIC_ASSETS = [
   '/',
   '/logo.png',

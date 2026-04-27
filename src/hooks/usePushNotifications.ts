@@ -23,7 +23,7 @@ export function usePushNotifications() {
   // Register service worker on mount
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => {});
   }, []);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
