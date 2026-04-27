@@ -63,7 +63,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
         backgroundSize: '100px',
         backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
         boxShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08) inset',
-        filter: 'brightness(1.3) contrast(1.1)',
+        filter: 'brightness(1.5) contrast(1.05)',
         border: `2px solid ${color.border}`,
       }}
     >
