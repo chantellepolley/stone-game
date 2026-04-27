@@ -191,7 +191,7 @@ export function useOnlineGame() {
     return data?.id || null;
   }
 
-  // ── Save my color to the game DB (backfills old games) ──
+  // ── Save my color to the game DB (always update to reflect current color choice) ──
   async function saveMyColor(player: PlayerId) {
     if (!gameDbId.current) return;
     const color = loadPlayerColor();
