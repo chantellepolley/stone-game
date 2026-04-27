@@ -395,7 +395,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
       {/* Top row (opponent's row) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(10px)' }}>
+        <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(20px)' }}>
           <StoneBox player={topPlayer} pieces={state.bench[topPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === topPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -413,7 +413,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           )}
         </div>
 
-        <div ref={el => setRef(`home-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(10px)' }}>
+        <div ref={el => setRef(`home-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(20px)' }}>
           <StoneBox player={topPlayer} pieces={state.home[topPlayer]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === topPlayer}
             hinting={hintsEnabled && (topPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -459,7 +459,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
       {/* Bottom row (current player's row — always moves left to right here) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-10px)' }}>
+        <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-20px)' }}>
           <StoneBox player={botPlayer} pieces={state.bench[botPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === botPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -477,7 +477,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           )}
         </div>
 
-        <div ref={el => setRef(`home-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-10px)' }}>
+        <div ref={el => setRef(`home-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-20px)' }}>
           <StoneBox player={botPlayer} pieces={state.home[botPlayer]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === botPlayer}
             hinting={hintsEnabled && (botPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
