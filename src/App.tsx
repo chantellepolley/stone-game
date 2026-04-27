@@ -13,6 +13,7 @@ import { TermsPage, PrivacyPage } from './components/LegalPages';
 import FeedbackPanel from './components/FeedbackPanel';
 import Tutorial from './components/Tutorial';
 import AdminFeedback from './components/AdminFeedback';
+import AdminPlayers from './components/AdminPlayers';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
@@ -21,7 +22,7 @@ import { CoinsProvider } from './contexts/CoinsContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -186,6 +187,7 @@ export default function App() {
       {screen === 'feedback' && <FeedbackPanel onBack={() => setScreen('game')} />}
       {screen === 'tutorial' && <Tutorial onFinish={() => setScreen('game')} />}
       {screen === 'admin-feedback' && <AdminFeedback onBack={() => setScreen('game')} />}
+      {screen === 'admin-players' && <AdminPlayers onBack={() => setScreen('game')} />}
       {screen === 'colors' && (
         <ColorPicker
           selectedId={stoneColor}
@@ -238,6 +240,7 @@ export default function App() {
           onShowFeedback={() => setScreen('feedback')}
           onShowTutorial={() => setScreen('tutorial')}
           onShowAdminFeedback={() => setScreen('admin-feedback')}
+          onShowAdminPlayers={() => setScreen('admin-players')}
         />
       )}
 

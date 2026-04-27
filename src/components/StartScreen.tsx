@@ -21,9 +21,10 @@ interface StartScreenProps {
   onShowFeedback?: () => void;
   onShowTutorial?: () => void;
   onShowAdminFeedback?: () => void;
+  onShowAdminPlayers?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
@@ -534,11 +535,21 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <span className="text-white/50">|</span>
             <a href="mailto:support@stonethegame.com" className="hover:text-amber-400 transition-colors">Support</a>
           </div>
-          {player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback && (
-            <button onClick={onShowAdminFeedback}
-              className="text-white text-[9px] hover:text-amber-400 transition-colors cursor-pointer">
-              View Feedback
-            </button>
+          {player?.username?.toLowerCase() === 'cpolley' && (
+            <div className="flex gap-3">
+              {onShowAdminFeedback && (
+                <button onClick={onShowAdminFeedback}
+                  className="text-white text-[9px] hover:text-amber-400 transition-colors cursor-pointer">
+                  View Feedback
+                </button>
+              )}
+              {onShowAdminPlayers && (
+                <button onClick={onShowAdminPlayers}
+                  className="text-white text-[9px] hover:text-amber-400 transition-colors cursor-pointer">
+                  View Players
+                </button>
+              )}
+            </div>
           )}
           <div className="text-[8px] text-white">
             &copy; 2026 Stone The Game. All rights reserved.

@@ -96,6 +96,17 @@ export function usePlayer() {
       // Create stats row
       await supabase.from('player_stats').insert({ player_id: data.id });
 
+      // Notify admin (cpolley) of new signup
+      const { sendPushNotification } = await import('./usePushNotifications');
+      const { data: admin } = await supabase
+        .from('players')
+        .select('id')
+        .ilike('username', 'cpolley')
+        .single();
+      if (admin) {
+        sendPushNotification(admin.id, 'STONE - New Player!', `${username} just signed up!`, 'new-signup');
+      }
+
       // Handle referral bonus
       if (pendingRef) {
         localStorage.removeItem('stone_referral_code');
