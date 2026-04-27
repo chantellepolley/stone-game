@@ -247,7 +247,16 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       {/* Online status bar */}
       <div className="flex items-center gap-2 shrink-0 text-[9px]">
         <span className="text-white">Room: <span className="text-amber-400 font-heading tracking-wider">{roomCode}</span></span>
-        {gameWager > 0 && (
+        {gameWager > 0 && state.phase !== 'game_over' && (
+          <>
+            <span className="text-white/50">|</span>
+            <button onClick={() => { setProposedAmount(gameWager * 2); setShowWagerPicker(true); }}
+              className="text-amber-400/80 flex items-center gap-1 cursor-pointer hover:text-amber-400 transition-colors">
+              <JesterCoin size={12} /> {gameWager} wager
+            </button>
+          </>
+        )}
+        {gameWager > 0 && state.phase === 'game_over' && (
           <>
             <span className="text-white/50">|</span>
             <span className="text-amber-400/80 flex items-center gap-1"><JesterCoin size={12} /> {gameWager} wager</span>

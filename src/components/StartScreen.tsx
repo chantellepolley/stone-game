@@ -334,9 +334,10 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
                            bg-[#504840] text-white border-2 border-amber-600/60
                            hover:bg-[#5e5549] hover:scale-105 active:scale-95
-                           transition-all cursor-pointer shadow-lg"
+                           transition-all cursor-pointer shadow-lg flex flex-col items-center gap-1"
               >
-                Play Online
+                <span>Play Online</span>
+                <span className="text-[10px] text-white/40 normal-case">(Challenge Your Friends)</span>
               </button>
             )}
           </div>
