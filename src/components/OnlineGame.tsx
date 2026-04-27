@@ -408,6 +408,14 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             Nudge
           </button>
         )}
+        {state.phase !== 'game_over' && (
+          <button onClick={() => { setProposedAmount(gameWager > 0 ? gameWager * 2 : 5); setShowWagerPicker(true); }}
+            className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
+                       bg-[#504840] text-amber-400 border border-amber-600/40
+                       cursor-pointer shadow-md whitespace-nowrap">
+            {gameWager > 0 ? 'Raise' : 'Wager'}
+          </button>
+        )}
         <ChatPanel
           messages={chatMessages}
           onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
