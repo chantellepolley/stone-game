@@ -12,9 +12,9 @@ interface PieceProps {
 }
 
 const sizes = {
-  sm: { box: 'w-7 h-7 sm:w-9 sm:h-9 lg:w-11 lg:h-11', px: 44, icon: 26 },
-  md: { box: 'w-9 h-9 sm:w-11 sm:h-11 lg:w-13 lg:h-13', px: 52, icon: 32 },
-  lg: { box: 'w-11 h-11 sm:w-13 sm:h-13 lg:w-15 lg:h-15', px: 60, icon: 38 },
+  sm: { box: 'w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-11 lg:h-11', px: 44, icon: 26 },
+  md: { box: 'w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 lg:w-13 lg:h-13', px: 52, icon: 32 },
+  lg: { box: 'w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 lg:w-15 lg:h-15', px: 60, icon: 38 },
 };
 
 // Default opponent color
@@ -66,6 +66,8 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
         boxShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08) inset',
         filter: 'brightness(1.5) contrast(1.05)',
         border: `${borderOverride ? '3px' : '2px'} solid ${borderOverride || color.border}`,
+        willChange: 'transform',
+        contain: 'layout style paint',
       }}
     >
       {/* Color tint overlay */}

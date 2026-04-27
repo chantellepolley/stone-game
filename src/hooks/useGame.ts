@@ -338,7 +338,7 @@ export function useGame() {
         // Handle Jester doubles choice
         const awaitingChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0;
         if (awaitingChoice) {
-          await delay(2000);
+          await delay(1200);
           if (cancelled) return;
           const value = chooseBestJesterValue(state, state.aiDifficulty);
           setState(prev => applyJesterChoice(prev, value));
@@ -350,12 +350,12 @@ export function useGame() {
         if (allMoves.length === 0) return;
 
         // Pick move, show animation, then execute
-        await delay(1500);
+        await delay(800);
         if (cancelled) return;
         const bestMove = chooseBestMove(state, allMoves, state.aiDifficulty);
         if (bestMove) {
           setPendingAIMove(bestMove);        // Board will animate this
-          await delay(500);                  // Wait for animation
+          await delay(400);                  // Wait for animation
           if (cancelled) return;
           setPendingAIMove(null);
           setState(prev => applyMove(prev, bestMove));

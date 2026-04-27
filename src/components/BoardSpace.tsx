@@ -90,6 +90,7 @@ export default function BoardSpace({
         backgroundSize: `${140 + (_index * 17) % 80}px`,
         backgroundPosition: `${(_index * 67 + 11) % 100}% ${(_index * 89 + 23) % 100}%`,
         filter: 'brightness(1.3) contrast(0.85) saturate(0.5)',
+        contain: 'strict',
       }} />
       {/* Warm tint overlay */}
       <div className="absolute inset-0 rounded-lg" style={{

@@ -507,6 +507,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
               ? `translate(${anim.toX - anim.fromX}px, ${anim.toY - anim.fromY}px)`
               : 'translate(0, 0)',
             transition: anim.phase === 'moving' ? `transform ${ANIM_MS}ms ease-out` : 'none',
+            willChange: 'transform',
           }}
         >
           <Piece piece={anim.piece} size="md" />
