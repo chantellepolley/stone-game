@@ -87,15 +87,16 @@ export default function BoardSpace({
       {/* Stone texture background — isolated so filter doesn't affect pieces */}
       <div className="absolute inset-0 rounded-lg" style={{
         backgroundImage: "url('/stone-bg.jpg')",
-        backgroundSize: '100px',
-        backgroundPosition: `${(_index * 37) % 100}% ${(_index * 53) % 100}%`,
-        filter: 'brightness(1.6) contrast(0.9) saturate(0.7)',
+        backgroundSize: `${80 + (_index * 13) % 60}px`,
+        backgroundPosition: `${(_index * 47 + 13) % 100}% ${(_index * 71 + 29) % 100}%`,
+        transform: `rotate(${(_index * 43) % 360}deg) scale(1.5)`,
+        filter: 'brightness(1.55) contrast(0.85) saturate(0.5)',
       }} />
-      {/* Subtle tint for light/dark variation */}
+      {/* Warm tint overlay */}
       <div className="absolute inset-0 rounded-lg" style={{
         background: variant === 'light'
-          ? 'rgba(210,195,170,0.2)'
-          : 'rgba(100,90,75,0.25)',
+          ? 'rgba(190,160,110,0.3)'
+          : 'rgba(150,120,80,0.3)',
       }} />
       {/* Piece popup — rendered via portal to escape board's stacking context */}
       {showPiecePopup && createPortal(
