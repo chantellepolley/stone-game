@@ -325,9 +325,26 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     ? Array.from({ length: 10 }, (_, i) => i)         // P1's row on bottom
     : Array.from({ length: 10 }, (_, i) => 19 - i);   // P2's row on bottom (default)
 
+  // Diamond shape offsets: top row angles up to center then down; bottom row mirrors
+  const diamondOffset = (idx: number): number => {
+    // Top row: indices 0-4 (left half) go up, 5-9 (right half) go down
+    // Bottom row: indices 19-15 (left half) go down, 14-10 (right half) go up
+    const topLeft = [12, 6, 0, -6, -12]; // spaces 0-4: start low, peak at center
+    const topRight = [-12, -6, 0, 6, 12]; // spaces 5-9: peak at center, end low
+    const botLeft = [-12, -6, 0, 6, 12]; // spaces 19-15: start high, dip at center
+    const botRight = [12, 6, 0, -6, -12]; // spaces 14-10: dip at center, end high
+
+    if (idx >= 0 && idx <= 4) return topLeft[idx];
+    if (idx >= 5 && idx <= 9) return topRight[idx - 5];
+    if (idx >= 10 && idx <= 14) return botRight[idx - 10];
+    if (idx >= 15 && idx <= 19) return botLeft[idx - 15];
+    return 0;
+  };
+
   function renderSpace(idx: number) {
+    const yOffset = diamondOffset(idx);
     return (
-      <div key={idx} ref={el => setRef(`space-${idx}`, el)} className="min-w-0 h-full">
+      <div key={idx} ref={el => setRef(`space-${idx}`, el)} className="min-w-0 h-full" style={{ transform: `translateY(${yOffset}px)` }}>
         <BoardSpace
           index={idx}
           pieces={state.board[idx]}
@@ -374,7 +391,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
       {/* Top row (opponent's row) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full">
+        <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(6px)' }}>
           <StoneBox player={topPlayer} pieces={state.bench[topPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === topPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -392,7 +409,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           )}
         </div>
 
-        <div ref={el => setRef(`home-${topPlayer}`, el)} className="h-full">
+        <div ref={el => setRef(`home-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(6px)' }}>
           <StoneBox player={topPlayer} pieces={state.home[topPlayer]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === topPlayer}
             hinting={hintsEnabled && (topPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -438,7 +455,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
       {/* Bottom row (current player's row — always moves left to right here) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full">
+        <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-6px)' }}>
           <StoneBox player={botPlayer} pieces={state.bench[botPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === botPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -456,7 +473,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           )}
         </div>
 
-        <div ref={el => setRef(`home-${botPlayer}`, el)} className="h-full">
+        <div ref={el => setRef(`home-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-6px)' }}>
           <StoneBox player={botPlayer} pieces={state.home[botPlayer]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === botPlayer}
             hinting={hintsEnabled && (botPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
