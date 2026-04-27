@@ -79,9 +79,9 @@ export const STONE_COLORS: StoneColor[] = [
   {
     id: 'ivory',
     name: 'Ivory',
-    tint: 'rgba(240, 230, 210, 0.3)',
-    tintCrowned: 'rgba(220, 210, 190, 0.35)',
-    border: 'rgba(200,190,170,0.5)',
+    tint: 'rgba(255, 250, 240, 0.45)',
+    tintCrowned: 'rgba(245, 240, 225, 0.5)',
+    border: 'rgba(230,225,210,0.7)',
     ring: 'ring-amber-200',
     pulse: 'pulse-gold',
   },

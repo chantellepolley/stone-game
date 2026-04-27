@@ -89,13 +89,13 @@ export default function BoardSpace({
         backgroundImage: "url('/stone-bg.jpg')",
         backgroundSize: `${140 + (_index * 17) % 80}px`,
         backgroundPosition: `${(_index * 67 + 11) % 100}% ${(_index * 89 + 23) % 100}%`,
-        filter: 'brightness(1.55) contrast(0.85) saturate(0.5)',
+        filter: 'brightness(1.3) contrast(0.85) saturate(0.5)',
       }} />
       {/* Warm tint overlay */}
       <div className="absolute inset-0 rounded-lg" style={{
         background: variant === 'light'
-          ? 'rgba(190,160,110,0.3)'
-          : 'rgba(150,120,80,0.3)',
+          ? 'rgba(170,140,90,0.35)'
+          : 'rgba(120,95,60,0.35)',
       }} />
       {/* Piece popup — rendered via portal to escape board's stacking context */}
       {showPiecePopup && createPortal(
