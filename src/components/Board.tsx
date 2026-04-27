@@ -371,7 +371,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
   return (
     <div
       ref={boardRef}
-      className="relative flex flex-col gap-0 rounded-xl lg:rounded-2xl border-2 lg:border-4 border-stone-border bg-board-bg p-1.5 sm:p-2 lg:p-3 shadow-2xl select-none h-full max-h-full"
+      className="relative flex flex-col gap-0 rounded-xl lg:rounded-2xl border-2 lg:border-4 border-stone-border bg-board-bg px-1.5 sm:px-2 lg:px-3 pt-4 sm:pt-5 lg:pt-6 pb-5 sm:pb-6 lg:pb-8 shadow-2xl select-none h-full max-h-full"
       style={{
         background: isMobile
           ? 'linear-gradient(135deg, #4a4440 0%, #3d3835 50%, #4a4440 100%)'
