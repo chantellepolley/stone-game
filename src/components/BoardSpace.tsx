@@ -75,20 +75,22 @@ export default function BoardSpace({
         rounded-lg
         h-full w-full min-h-0
         transition-all duration-200
-        hover:brightness-110
       `}
       onClick={onClickSpace}
       style={{
-        backgroundImage: "url('/stone-bg.jpg')",
-        backgroundSize: '100px',
-        backgroundPosition: `${(_index * 37) % 100}% ${(_index * 53) % 100}%`,
-        filter: 'brightness(1.6) contrast(0.9) saturate(0.7)',
         boxShadow: variant === 'light'
           ? '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
           : '0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
         border: '1px solid rgba(120,110,95,0.4)',
       }}
     >
+      {/* Stone texture background — isolated so filter doesn't affect pieces */}
+      <div className="absolute inset-0 rounded-lg" style={{
+        backgroundImage: "url('/stone-bg.jpg')",
+        backgroundSize: '100px',
+        backgroundPosition: `${(_index * 37) % 100}% ${(_index * 53) % 100}%`,
+        filter: 'brightness(1.6) contrast(0.9) saturate(0.7)',
+      }} />
       {/* Subtle tint for light/dark variation */}
       <div className="absolute inset-0 rounded-lg" style={{
         background: variant === 'light'
