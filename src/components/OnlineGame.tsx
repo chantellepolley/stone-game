@@ -86,9 +86,12 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const myColor = myGameColor || loadPlayerColor();
   let resolvedP1Color = myPlayer === 1 ? myColor : (opponentColor || 'sandstone');
   let resolvedP2Color = myPlayer === 2 ? myColor : (opponentColor || 'sandstone');
+  let p1BorderOverride: string | undefined;
+  let p2BorderOverride: string | undefined;
   if (resolvedP1Color === resolvedP2Color) {
-    const alt = STONE_COLORS.find(c => c.id !== resolvedP1Color);
-    resolvedP2Color = alt ? alt.id : 'sandstone';
+    // Same color — keep it, but give distinct borders so players can tell apart
+    p1BorderOverride = 'rgba(255, 200, 50, 0.7)';  // gold border
+    p2BorderOverride = 'rgba(180, 180, 220, 0.7)';  // silver border
   }
   const prevIsMyTurn = useRef(isMyTurn);
   // Only count unread messages from opponent (not your own)
@@ -220,7 +223,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const playerLabel = myPlayer === 1 ? 'Sunstone' : 'Moonstone';
   const waitingForOpponent = !isMyTurn && state.phase !== 'game_over';
 
-  const colorCtx = { p1ColorId: resolvedP1Color, p2ColorId: resolvedP2Color };
+  const colorCtx = { p1ColorId: resolvedP1Color, p2ColorId: resolvedP2Color, p1BorderOverride, p2BorderOverride };
 
   return (
     <StoneColorContext.Provider value={colorCtx}>

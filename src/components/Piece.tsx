@@ -30,6 +30,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
     ? (colorOverrides.p1ColorId || loadPlayerColor())
     : (colorOverrides.p2ColorId || DEFAULT_P2_COLOR);
   const color = getStoneColor(colorId);
+  const borderOverride = isP1 ? colorOverrides.p1BorderOverride : colorOverrides.p2BorderOverride;
 
   const tintOverlay = piece.crowned ? color.tintCrowned : color.tint;
 
@@ -64,7 +65,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
         backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
         boxShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08) inset',
         filter: 'brightness(1.5) contrast(1.05)',
-        border: `2px solid ${color.border}`,
+        border: `${borderOverride ? '3px' : '2px'} solid ${borderOverride || color.border}`,
       }}
     >
       {/* Color tint overlay */}
