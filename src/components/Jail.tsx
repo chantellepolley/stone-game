@@ -13,7 +13,8 @@ export default function Jail({ jail, validMoves, onClickJailPiece, currentPlayer
 
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2 lg:py-3 rounded-xl
-                    bg-[#3d3632] border-2 border-[#5e5549] min-w-[80px] lg:min-w-[100px] max-w-[200px] shadow-md">
+                    bg-[#3d3632] border-2 border-[#5e5549] min-w-[80px] lg:min-w-[100px] max-w-[200px] shadow-md
+                    max-h-[80px] lg:max-h-[100px] overflow-y-auto">
       <div className="text-[9px] lg:text-xs font-heading uppercase tracking-wider text-white/70">
         Stoned Dungeon
       </div>

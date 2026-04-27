@@ -402,7 +402,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       </div>
 
       {/* Jail + vertical wrap-around arrows at the edges */}
-      <div className="flex items-center justify-center py-1 lg:py-2 px-1 relative">
+      <div className="flex items-center justify-center py-0.5 lg:py-1 px-1 relative max-h-[80px] lg:max-h-[110px]">
         {/* Left arrow: down (pieces wrap from top-left down to bottom-left) */}
         <div className="absolute left-1 lg:left-2 top-1/2 -translate-y-1/2">
           <svg width="14" height="28" viewBox="0 0 14 28" className="text-amber-400/25">
