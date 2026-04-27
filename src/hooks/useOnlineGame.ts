@@ -188,6 +188,14 @@ export function useOnlineGame() {
     return data?.id || null;
   }
 
+  // ── Save my color to the game DB (backfills old games) ──
+  async function saveMyColor(player: PlayerId) {
+    if (!gameDbId.current) return;
+    const color = loadPlayerColor();
+    const field = player === 1 ? 'p1_color' : 'p2_color';
+    await supabase.from('games').update({ [field]: color }).eq('id', gameDbId.current);
+  }
+
   // ── Save state to DB on every change ──
   async function saveGameState(newState: GameState) {
     if (!gameDbId.current) return;
@@ -499,6 +507,7 @@ export function useOnlineGame() {
           gameId: game.id, roomCode: upperCode, myPlayer: 1,
         }));
         joinChannel(upperCode, 1, true);
+        saveMyColor(1);
         setTimeout(() => {
           if (channelRef.current) {
             channelRef.current.send({ type: 'broadcast', event: 'player_joined', payload: {} });
@@ -572,6 +581,9 @@ export function useOnlineGame() {
     // Always connect to the channel even if game not in DB yet
     // preserveStateReceived if we already loaded state from DB
     joinChannel(upperCode, 2, stateReceivedRef.current);
+
+    // Backfill color for old games that don't have it stored
+    saveMyColor(2);
   }, []);
 
   async function resumeGameInternal(gameId: string, code: string, player: PlayerId) {
@@ -665,6 +677,9 @@ export function useOnlineGame() {
     // preserveStateReceived=true so the P2 retry loop doesn't error out
     // when we already loaded state from DB
     joinChannel(code, player, true);
+
+    // Backfill color for old games that don't have it stored
+    saveMyColor(player);
 
     // Announce presence after a short delay so the channel is subscribed
     setTimeout(() => {
