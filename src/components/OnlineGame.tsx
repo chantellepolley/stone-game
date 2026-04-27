@@ -176,6 +176,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
   const [showWagerPicker, setShowWagerPicker] = useState(false);
   const [proposedAmount, setProposedAmount] = useState(0);
+  const [proposalDismissed, setProposalDismissed] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleForfeit = () => {
@@ -513,27 +514,31 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       )}
 
       {/* My outgoing proposal status */}
-      {myProposalStatus && !wagerProposal && (
+      {myProposalStatus && !wagerProposal && !proposalDismissed && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">
-          <div className={`rounded-xl p-3 shadow-2xl text-center border-2 ${
+          <div className={`rounded-xl p-3 shadow-2xl text-center border-2 relative ${
             myProposalStatus.status === 'accepted' ? 'bg-green-900/80 border-green-500/60' :
             myProposalStatus.status === 'declined' ? 'bg-red-900/80 border-red-500/60' :
             'bg-[#504840] border-amber-600/40'
           }`}>
-            <div className="flex items-center justify-center gap-2">
+            <button onClick={() => setProposalDismissed(true)}
+              className="absolute top-1 right-2 text-white/40 hover:text-white text-sm cursor-pointer">
+              x
+            </button>
+            <div className="flex items-center justify-center gap-2 pr-4">
               {myProposalStatus.status === 'pending' && (
                 <>
-                  <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
                   <span className="text-amber-400 text-xs font-heading">
-                    Wager proposal sent ({myProposalStatus.amount} <JesterCoin size={10} />) — waiting for response...
+                    Wager proposal sent ({myProposalStatus.amount} <JesterCoin size={10} />) — waiting...
                   </span>
                 </>
               )}
               {myProposalStatus.status === 'seen' && (
                 <>
-                  <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
                   <span className="text-amber-400 text-xs font-heading">
-                    Opponent saw your {myProposalStatus.amount} <JesterCoin size={10} /> wager proposal — deciding...
+                    Opponent saw your {myProposalStatus.amount} <JesterCoin size={10} /> proposal — deciding...
                   </span>
                 </>
               )}
@@ -576,7 +581,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
               <p className="text-white/30 text-[9px] mb-3">Current wager: {gameWager}. You pay the difference.</p>
             )}
             <div className="flex gap-3 justify-center">
-              <button onClick={() => { proposeWager(proposedAmount); setShowWagerPicker(false); }}
+              <button onClick={() => { proposeWager(proposedAmount); setShowWagerPicker(false); setProposalDismissed(false); }}
                 disabled={proposedAmount <= gameWager}
                 className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
                            bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors
