@@ -33,6 +33,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
+    myProposalStatus,
     sendNudge, lastNudge, myGameColor,
   } = useOnlineGame();
   const { coins, spend, earn } = useCoins();
@@ -506,6 +507,46 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                            bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
                 Decline
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* My outgoing proposal status */}
+      {myProposalStatus && !wagerProposal && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">
+          <div className={`rounded-xl p-3 shadow-2xl text-center border-2 ${
+            myProposalStatus.status === 'accepted' ? 'bg-green-900/80 border-green-500/60' :
+            myProposalStatus.status === 'declined' ? 'bg-red-900/80 border-red-500/60' :
+            'bg-[#504840] border-amber-600/40'
+          }`}>
+            <div className="flex items-center justify-center gap-2">
+              {myProposalStatus.status === 'pending' && (
+                <>
+                  <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-amber-400 text-xs font-heading">
+                    Wager proposal sent ({myProposalStatus.amount} <JesterCoin size={10} />) — waiting for response...
+                  </span>
+                </>
+              )}
+              {myProposalStatus.status === 'seen' && (
+                <>
+                  <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-amber-400 text-xs font-heading">
+                    Opponent saw your {myProposalStatus.amount} <JesterCoin size={10} /> wager proposal — deciding...
+                  </span>
+                </>
+              )}
+              {myProposalStatus.status === 'accepted' && (
+                <span className="text-green-400 text-xs font-heading">
+                  Wager raised to {myProposalStatus.amount} <JesterCoin size={10} />!
+                </span>
+              )}
+              {myProposalStatus.status === 'declined' && (
+                <span className="text-red-400 text-xs font-heading">
+                  Opponent declined your {myProposalStatus.amount} <JesterCoin size={10} /> wager — coins refunded
+                </span>
+              )}
             </div>
           </div>
         </div>

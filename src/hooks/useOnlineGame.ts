@@ -50,6 +50,8 @@ export function useOnlineGame() {
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const [gameWager, setGameWager] = useState(0);
   const [wagerProposal, setWagerProposal] = useState<{ amount: number; from: string } | null>(null);
+  const [myProposalStatus, setMyProposalStatus] = useState<{ amount: number; status: 'pending' | 'seen' | 'accepted' | 'declined' } | null>(null);
+  const proposalTimeoutRef = useRef<number | null>(null);
   const pendingProposalDiff = useRef(0); // how much the proposer paid upfront
   const [lastNudge, setLastNudge] = useState(0);
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -279,13 +281,22 @@ export function useOnlineGame() {
       .on('broadcast', { event: 'wager_proposal' }, ({ payload }) => {
         if (payload?.amount && payload?.from) {
           setWagerProposal({ amount: payload.amount, from: payload.from });
+          // Send acknowledgment that we received/saw it
+          channelRef.current?.send({ type: 'broadcast', event: 'wager_proposal_received', payload: {} });
         }
+      })
+      .on('broadcast', { event: 'wager_proposal_received' }, () => {
+        // Opponent saw our proposal
+        setMyProposalStatus(prev => prev ? { ...prev, status: 'seen' } : null);
       })
       .on('broadcast', { event: 'wager_accepted' }, ({ payload }) => {
         if (payload?.amount) {
           setGameWager(payload.amount);
           setWagerProposal(null);
+          setMyProposalStatus(prev => prev ? { ...prev, status: 'accepted' } : null);
           pendingProposalDiff.current = 0; // accepted, no refund needed
+          // Auto-clear after 3s
+          setTimeout(() => setMyProposalStatus(null), 3000);
         }
       })
       .on('broadcast', { event: 'wager_declined' }, () => {
@@ -297,6 +308,9 @@ export function useOnlineGame() {
           });
         }
         setWagerProposal(null);
+        setMyProposalStatus(prev => prev ? { ...prev, status: 'declined' } : null);
+        // Auto-clear after 4s
+        setTimeout(() => setMyProposalStatus(null), 4000);
       })
       .on('broadcast', { event: 'nudge' }, () => {
         // Handled in the component
@@ -984,11 +998,34 @@ export function useOnlineGame() {
       }
     }
     pendingProposalDiff.current = diff;
+    setMyProposalStatus({ amount, status: 'pending' });
+
+    // Clear any previous timeout
+    if (proposalTimeoutRef.current) clearTimeout(proposalTimeoutRef.current);
+
     channelRef.current.send({
       type: 'broadcast', event: 'wager_proposal',
       payload: { amount, from: myUsernameRef.current },
     });
-  }, [gameWager]);
+
+    // Send push notification so opponent sees it even if not in game
+    if (gameDbId.current) {
+      const { data: game } = await supabase
+        .from('games')
+        .select('player1_id, player2_id, room_code')
+        .eq('id', gameDbId.current)
+        .single();
+      if (game) {
+        const targetId = myPlayer === 1 ? game.player2_id : game.player1_id;
+        const senderName = myUsernameRef.current || 'Your opponent';
+        if (targetId) {
+          sendPushNotification(targetId, 'STONE - Wager Proposal!',
+            `${senderName} wants to ${gameWager > 0 ? 'raise the wager to' : 'set a wager of'} ${amount} coins`,
+            'wager-proposal', `/join/${game.room_code}`);
+        }
+      }
+    }
+  }, [gameWager, myPlayer]);
 
   const acceptWager = useCallback(async () => {
     if (!wagerProposal || !channelRef.current || !gameDbId.current) return;
@@ -1047,6 +1084,7 @@ export function useOnlineGame() {
     isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, sendInvite, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
+    myProposalStatus,
     sendNudge, lastNudge,
   };
 }
