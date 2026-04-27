@@ -4,7 +4,7 @@ import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
-import { loadPlayerColor, STONE_COLORS } from '../utils/stoneColors';
+import { loadPlayerColor } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
 import { showNotification } from '../hooks/usePushNotifications';
