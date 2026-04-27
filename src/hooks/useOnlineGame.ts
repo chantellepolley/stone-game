@@ -476,6 +476,8 @@ export function useOnlineGame() {
       if (playerId && game.player1_id === playerId) {
         // We're player 1 — resume as P1, don't overwrite player2
         setMyPlayer(1);
+        // Load opponent color before rendering
+        if (game.p2_color) setOpponentColor(game.p2_color);
         if (game.state) {
           const loadedState = validateState(game.state);
           setState(loadedState);
@@ -528,6 +530,9 @@ export function useOnlineGame() {
         }));
       }
 
+      // Load opponent color from DB BEFORE rendering the board
+      if (game.p1_color) setOpponentColor(game.p1_color);
+
       // Load saved state from DB so we have it ready
       if (game.state) {
         const loadedState = validateState(game.state);
@@ -558,12 +563,11 @@ export function useOnlineGame() {
       }
     }
 
-    // Fetch opponent (P1) name and load color from DB
+    // Fetch opponent (P1) name
     if (game?.player1_id) {
       supabase.from('players').select('username').eq('id', game.player1_id).single()
         .then(({ data: p }) => { if (p) setOpponentName(p.username); });
     }
-    if (game?.p1_color) setOpponentColor(game.p1_color);
 
     // Always connect to the channel even if game not in DB yet
     // preserveStateReceived if we already loaded state from DB
@@ -610,6 +614,12 @@ export function useOnlineGame() {
       }
     }
 
+    // Load opponent color BEFORE rendering the board
+    if (game) {
+      const oppColor = player === 1 ? game.p2_color : game.p1_color;
+      if (oppColor) setOpponentColor(oppColor);
+    }
+
     if (game?.state) {
       const loadedState = validateState(game.state);
       setState(loadedState);
@@ -643,15 +653,13 @@ export function useOnlineGame() {
       }
     }
 
-    // Fetch opponent name and load color from DB
+    // Fetch opponent name
     if (game) {
       const opponentId = player === 1 ? game.player2_id : game.player1_id;
       if (opponentId) {
         const { data: opp } = await supabase.from('players').select('username').eq('id', opponentId).single();
         if (opp) setOpponentName(opp.username);
       }
-      const oppColor = player === 1 ? game.p2_color : game.p1_color;
-      if (oppColor) setOpponentColor(oppColor);
     }
 
     // preserveStateReceived=true so the P2 retry loop doesn't error out
