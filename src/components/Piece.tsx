@@ -68,7 +68,11 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
       }}
     >
       {/* Color tint overlay */}
-      <div className="absolute inset-0 rounded-full" style={{ backgroundColor: tintOverlay }} />
+      <div className="absolute inset-0 rounded-full" style={
+        (piece.crowned ? color.gradientCrowned : color.gradient)
+          ? { background: piece.crowned ? color.gradientCrowned : color.gradient }
+          : { backgroundColor: tintOverlay }
+      } />
 
       {/* Chiseled stone inner shadow */}
       <div className="absolute inset-0 rounded-full"

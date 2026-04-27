@@ -6,6 +6,10 @@ export interface StoneColor {
   border: string;      // border color
   ring: string;        // tailwind ring class for highlights
   pulse: string;       // pulse animation class
+  gradient?: string;   // CSS gradient (replaces solid tint if set)
+  gradientCrowned?: string;
+  premium?: boolean;   // requires coin purchase
+  price?: number;      // coin cost to unlock
 }
 
 export const STONE_COLORS: StoneColor[] = [
@@ -80,6 +84,59 @@ export const STONE_COLORS: StoneColor[] = [
     border: 'rgba(200,190,170,0.5)',
     ring: 'ring-amber-200',
     pulse: 'pulse-gold',
+  },
+  // ── Premium colors (25 coins each) ──
+  {
+    id: 'rainbow',
+    name: 'Rainbow',
+    tint: 'rgba(200, 100, 100, 0.2)',
+    tintCrowned: 'rgba(200, 100, 100, 0.3)',
+    border: 'rgba(255,100,100,0.5)',
+    ring: 'ring-pink-400',
+    pulse: 'pulse-gold',
+    gradient: 'linear-gradient(135deg, rgba(255,0,0,0.25), rgba(255,165,0,0.25), rgba(255,255,0,0.25), rgba(0,200,0,0.25), rgba(0,100,255,0.25), rgba(140,0,255,0.25))',
+    gradientCrowned: 'linear-gradient(135deg, rgba(255,0,0,0.35), rgba(255,165,0,0.35), rgba(255,255,0,0.35), rgba(0,200,0,0.35), rgba(0,100,255,0.35), rgba(140,0,255,0.35))',
+    premium: true,
+    price: 25,
+  },
+  {
+    id: 'zebra',
+    name: 'Zebra',
+    tint: 'rgba(30, 30, 30, 0.2)',
+    tintCrowned: 'rgba(30, 30, 30, 0.3)',
+    border: 'rgba(100,100,100,0.5)',
+    ring: 'ring-gray-300',
+    pulse: 'pulse-gold',
+    gradient: 'repeating-linear-gradient(45deg, rgba(10,10,10,0.35) 0px, rgba(10,10,10,0.35) 4px, rgba(240,240,240,0.3) 4px, rgba(240,240,240,0.3) 8px)',
+    gradientCrowned: 'repeating-linear-gradient(45deg, rgba(10,10,10,0.45) 0px, rgba(10,10,10,0.45) 4px, rgba(240,240,240,0.35) 4px, rgba(240,240,240,0.35) 8px)',
+    premium: true,
+    price: 25,
+  },
+  {
+    id: 'infrared',
+    name: 'Infrared',
+    tint: 'rgba(160, 40, 120, 0.25)',
+    tintCrowned: 'rgba(140, 30, 100, 0.35)',
+    border: 'rgba(180,50,130,0.5)',
+    ring: 'ring-fuchsia-400',
+    pulse: 'pulse-blue',
+    gradient: 'linear-gradient(135deg, rgba(220,30,30,0.3), rgba(160,30,180,0.3))',
+    gradientCrowned: 'linear-gradient(135deg, rgba(220,30,30,0.4), rgba(160,30,180,0.4))',
+    premium: true,
+    price: 25,
+  },
+  {
+    id: 'arctic',
+    name: 'Arctic',
+    tint: 'rgba(80, 200, 180, 0.25)',
+    tintCrowned: 'rgba(60, 180, 160, 0.35)',
+    border: 'rgba(80,200,180,0.5)',
+    ring: 'ring-teal-400',
+    pulse: 'pulse-blue',
+    gradient: 'linear-gradient(135deg, rgba(100,220,140,0.3), rgba(60,160,220,0.3))',
+    gradientCrowned: 'linear-gradient(135deg, rgba(100,220,140,0.4), rgba(60,160,220,0.4))',
+    premium: true,
+    price: 25,
   },
 ];
 
