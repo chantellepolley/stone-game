@@ -172,6 +172,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
   const [showWagerPicker, setShowWagerPicker] = useState(false);
   const [proposedAmount, setProposedAmount] = useState(0);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const handleForfeit = () => {
     setShowForfeitConfirm(false);
@@ -368,61 +369,80 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         </div>
       </div>
 
-      {/* Mobile bottom bar */}
-      <div className="lg:hidden flex items-center gap-1 py-0.5 shrink-0">
-        {state.phase !== 'game_over' && (
-          <button onClick={() => setShowForfeitConfirm(true)}
-            className="text-[8px] text-red-400/40 hover:text-red-400 cursor-pointer whitespace-nowrap mr-1">
-            Forfeit
-          </button>
-        )}
+      {/* Mobile bottom bar — just Menu, Undo, and Chat */}
+      <div className="lg:hidden flex items-center gap-2 py-0.5 shrink-0 justify-center">
         {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
-        <button onClick={() => { leave(); onBack(); }}
-          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
-                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
-          Leave
+        <button onClick={() => { setShowMobileMenu(true); setChatOpen(false); setShowMobileLog(false); }}
+          className="px-4 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md">
+          Menu
         </button>
-        <button onClick={() => setHintsEnabled(h => !h)}
-          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
-                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
-          Hints {hintsEnabled ? 'ON' : 'OFF'}
-        </button>
-        <button onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); }}
-          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
-                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
-          {soundOn ? '🔊' : '🔇'}
-        </button>
-        <button onClick={() => { setShowMobileLog(v => !v); setChatOpen(false); }}
-          className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
-                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md whitespace-nowrap">
-          {showMobileLog ? 'Hide Log' : 'Log'}
-        </button>
-        {state.phase !== 'game_over' && !isMyTurn && (
-          <button onClick={sendNudge}
-            disabled={Date.now() - lastNudge < 60000}
-            className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
-                       bg-[#504840] text-amber-400 border border-amber-600/40
-                       cursor-pointer shadow-md whitespace-nowrap
-                       disabled:opacity-30 disabled:cursor-not-allowed">
-            Nudge
-          </button>
-        )}
-        {state.phase !== 'game_over' && (
-          <button onClick={() => { setProposedAmount(gameWager > 0 ? gameWager * 2 : 5); setShowWagerPicker(true); }}
-            className="px-2 py-1 rounded-lg text-[9px] font-heading uppercase tracking-wider
-                       bg-[#504840] text-amber-400 border border-amber-600/40
-                       cursor-pointer shadow-md whitespace-nowrap">
-            {gameWager > 0 ? 'Raise' : 'Wager'}
-          </button>
-        )}
         <ChatPanel
           messages={chatMessages}
           onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
           isOpen={false}
-          onToggle={() => { setChatOpen(v => !v); setShowMobileLog(false); setLastSeenOpponentCount(opponentMsgCount); }}
+          onToggle={() => { setChatOpen(v => !v); setShowMobileLog(false); setShowMobileMenu(false); setLastSeenOpponentCount(opponentMsgCount); }}
           unreadCount={chatUnread}
         />
       </div>
+
+      {/* Mobile menu popup */}
+      {showMobileMenu && (
+        <div className="lg:hidden fixed bottom-10 left-2 right-2 z-40 animate-[slideIn_0.2s_ease-out]">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-3 shadow-2xl">
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => { leave(); onBack(); setShowMobileMenu(false); }}
+                className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Leave Game
+              </button>
+              <button onClick={() => { setShowMobileLog(v => !v); setShowMobileMenu(false); }}
+                className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                {showMobileLog ? 'Hide Log' : 'Move Log'}
+              </button>
+              <button onClick={() => { setHintsEnabled(h => !h); setShowMobileMenu(false); }}
+                className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Hints {hintsEnabled ? 'ON' : 'OFF'}
+              </button>
+              <button onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); setShowMobileMenu(false); }}
+                className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Sound {soundOn ? 'ON' : 'OFF'}
+              </button>
+              {state.phase !== 'game_over' && !isMyTurn && (
+                <button onClick={() => { sendNudge(); setShowMobileMenu(false); }}
+                  disabled={Date.now() - lastNudge < 60000}
+                  className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                             bg-[#5e5549] text-amber-400 hover:bg-[#6b5f55] cursor-pointer transition-colors
+                             disabled:opacity-30 disabled:cursor-not-allowed">
+                  Nudge Opponent
+                </button>
+              )}
+              {state.phase !== 'game_over' && (
+                <button onClick={() => { setProposedAmount(gameWager > 0 ? gameWager * 2 : 5); setShowWagerPicker(true); setShowMobileMenu(false); }}
+                  className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                             bg-[#5e5549] text-amber-400 hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                  {gameWager > 0 ? 'Raise Wager' : 'Add Wager'}
+                </button>
+              )}
+              {state.phase !== 'game_over' && (
+                <button onClick={() => { setShowForfeitConfirm(true); setShowMobileMenu(false); }}
+                  className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                             bg-red-900/30 text-red-400/70 hover:text-red-400 hover:bg-red-900/50 cursor-pointer transition-colors">
+                  Forfeit
+                </button>
+              )}
+            </div>
+            <button onClick={() => setShowMobileMenu(false)}
+              className="w-full mt-2 px-3 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-white/10 text-white/60 hover:bg-white/20 cursor-pointer transition-colors">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {showMobileLog && (
         <div className="lg:hidden fixed bottom-10 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
