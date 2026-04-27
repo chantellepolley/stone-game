@@ -398,7 +398,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
               <button onClick={() => { leave(); onBack(); setShowMobileMenu(false); }}
                 className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
                            bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
-                Leave Game
+                Back to Menu
               </button>
               <button onClick={() => { setShowMobileLog(v => !v); setShowMobileMenu(false); }}
                 className="px-3 py-2 rounded-lg text-[10px] font-heading uppercase tracking-wider
