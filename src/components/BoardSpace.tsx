@@ -35,10 +35,6 @@ export default function BoardSpace({
   onClickPiece,
   onDragStart,
 }: BoardSpaceProps) {
-  const bgColor = variant === 'light'
-    ? 'bg-stone-light/80'
-    : 'bg-stone-dark/80';
-
   const isP1 = currentPlayer === 1;
   const ringColor = isP1 ? 'ring-amber-400' : 'ring-sky-400';
   const pulseClass = isP1 ? 'pulse-gold' : 'pulse-blue';
@@ -75,20 +71,32 @@ export default function BoardSpace({
     <div
       className={`
         relative flex flex-col items-center justify-end overflow-hidden
-        ${bgColor} ${borderHighlight}
-        rounded-t-lg rounded-b-sm
+        ${borderHighlight}
+        rounded-lg
         h-full w-full min-h-0
-        border border-stone-accent/40
         transition-all duration-200
         hover:brightness-110
       `}
       onClick={onClickSpace}
       style={{
-        background: variant === 'light'
-          ? 'linear-gradient(180deg, #918578 0%, #7a6f64 100%)'
-          : 'linear-gradient(180deg, #6b6058 0%, #57504a 100%)',
+        backgroundImage: "url('/stone-bg.jpg')",
+        backgroundSize: '120px',
+        backgroundPosition: `${(_index * 37) % 100}% ${(_index * 53) % 100}%`,
+        filter: variant === 'light' ? 'brightness(1.15) contrast(1.05)' : 'brightness(0.85) contrast(1.1)',
+        boxShadow: '0 3px 6px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.2)',
+        border: '1px solid rgba(80,70,60,0.6)',
       }}
     >
+      {/* Stone tint overlay */}
+      <div className="absolute inset-0 rounded-lg" style={{
+        background: variant === 'light'
+          ? 'rgba(160,140,110,0.15)'
+          : 'rgba(50,40,30,0.25)',
+      }} />
+      {/* Top edge highlight */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-lg" style={{
+        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+      }} />
       {/* Piece popup — rendered via portal to escape board's stacking context */}
       {showPiecePopup && createPortal(
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center" style={{ zIndex: 9999 }}
