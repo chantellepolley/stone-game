@@ -80,22 +80,20 @@ export default function BoardSpace({
       onClick={onClickSpace}
       style={{
         backgroundImage: "url('/stone-bg.jpg')",
-        backgroundSize: '120px',
+        backgroundSize: '100px',
         backgroundPosition: `${(_index * 37) % 100}% ${(_index * 53) % 100}%`,
-        filter: variant === 'light' ? 'brightness(1.15) contrast(1.05)' : 'brightness(0.85) contrast(1.1)',
-        boxShadow: '0 3px 6px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.2)',
-        border: '1px solid rgba(80,70,60,0.6)',
+        filter: 'brightness(1.6) contrast(0.9) saturate(0.7)',
+        boxShadow: variant === 'light'
+          ? '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+          : '0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+        border: '1px solid rgba(120,110,95,0.4)',
       }}
     >
-      {/* Stone tint overlay */}
+      {/* Subtle tint for light/dark variation */}
       <div className="absolute inset-0 rounded-lg" style={{
         background: variant === 'light'
-          ? 'rgba(160,140,110,0.15)'
-          : 'rgba(50,40,30,0.25)',
-      }} />
-      {/* Top edge highlight */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-lg" style={{
-        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+          ? 'rgba(210,195,170,0.2)'
+          : 'rgba(100,90,75,0.25)',
       }} />
       {/* Piece popup — rendered via portal to escape board's stacking context */}
       {showPiecePopup && createPortal(
