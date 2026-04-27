@@ -65,6 +65,13 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
+// Listen for skip-waiting message from page
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Cache static assets for offline support
 const CACHE_NAME = 'stone-v4';
 const STATIC_ASSETS = [

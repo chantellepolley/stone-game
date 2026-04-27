@@ -27,8 +27,43 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
   </head>
-  <body>
+  <body style="background-color: #1a1510; margin: 0;">
     <div id="root"></div>
+    <script>
+      // Auto-update service worker & clear stale caches on every page load
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(reg) {
+            reg.update();
+            // Force waiting SW to activate immediately
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            reg.addEventListener('updatefound', function() {
+              var newSW = reg.installing;
+              if (newSW) {
+                newSW.addEventListener('statechange', function() {
+                  if (newSW.state === 'activated') {
+                    // New SW active — reload to get fresh assets
+                    window.location.reload();
+                  }
+                });
+              }
+            });
+          });
+        });
+        // Clear any old caches not matching the current version
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            names.forEach(function(name) {
+              if (name.startsWith('stone-') && name !== 'stone-v4') {
+                caches.delete(name);
+              }
+            });
+          });
+        }
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
