@@ -34,14 +34,14 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
         .select('player_id, wins, losses, games_played, coins')
         .gt('games_played', 0)
         .order('wins', { ascending: false })
-        .limit(20);
+;
 
       // Fetch top 20 by coins
       const { data: statsByCoins } = await supabase
         .from('player_stats')
         .select('player_id, wins, losses, games_played, coins')
         .order('coins', { ascending: false })
-        .limit(20);
+;
 
       const allStats = [...(statsByWins || []), ...(statsByCoins || [])];
       if (allStats.length === 0) { setLoading(false); return; }
