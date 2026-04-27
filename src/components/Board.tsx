@@ -325,20 +325,25 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     ? Array.from({ length: 10 }, (_, i) => i)         // P1's row on bottom
     : Array.from({ length: 10 }, (_, i) => 19 - i);   // P2's row on bottom (default)
 
-  // Diamond shape offsets: top row angles up to center then down; bottom row mirrors
+  // Diamond shape offsets
+  // Top row: slopes up to center peak, then down → pushes spaces upward at middle
+  // Bottom row: slopes down to center dip, then up → pushes spaces downward at middle
+  // Together they form a diamond/eye shape
   const diamondOffset = (idx: number): number => {
-    // Top row: indices 0-4 (left half) go up, 5-9 (right half) go down
-    // Bottom row: indices 19-15 (left half) go down, 14-10 (right half) go up
-    const topLeft = [12, 6, 0, -6, -12]; // spaces 0-4: start low, peak at center
-    const topRight = [-12, -6, 0, 6, 12]; // spaces 5-9: peak at center, end low
-    const botLeft = [-12, -6, 0, 6, 12]; // spaces 19-15: start high, dip at center
-    const botRight = [12, 6, 0, -6, -12]; // spaces 14-10: dip at center, end high
+    // Top row (rendered left to right as indices 0,1,2,3,4 | 5,6,7,8,9)
+    // Negative = move up, Positive = move down
+    const topOffsets: Record<number, number> = {
+      0: 12, 1: 6, 2: 0, 3: -6, 4: -12,   // left half: start low, rise to peak
+      5: -12, 6: -6, 7: 0, 8: 6, 9: 12,    // right half: peak, descend back down
+    };
+    // Bottom row (rendered left to right as indices 19,18,17,16,15 | 14,13,12,11,10)
+    // Needs to go OPPOSITE: start high, dip at center, rise back up
+    const botOffsets: Record<number, number> = {
+      19: -12, 18: -6, 17: 0, 16: 6, 15: 12,  // left half: start high, dip down
+      14: 12, 13: 6, 12: 0, 11: -6, 10: -12,  // right half: dip, rise back up
+    };
 
-    if (idx >= 0 && idx <= 4) return topLeft[idx];
-    if (idx >= 5 && idx <= 9) return topRight[idx - 5];
-    if (idx >= 10 && idx <= 14) return botRight[idx - 10];
-    if (idx >= 15 && idx <= 19) return botLeft[idx - 15];
-    return 0;
+    return topOffsets[idx] ?? botOffsets[idx] ?? 0;
   };
 
   function renderSpace(idx: number) {
@@ -391,7 +396,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
       {/* Top row (opponent's row) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(6px)' }}>
+        <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(12px)' }}>
           <StoneBox player={topPlayer} pieces={state.bench[topPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === topPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -409,7 +414,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           )}
         </div>
 
-        <div ref={el => setRef(`home-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(6px)' }}>
+        <div ref={el => setRef(`home-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(12px)' }}>
           <StoneBox player={topPlayer} pieces={state.home[topPlayer]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === topPlayer}
             hinting={hintsEnabled && (topPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -455,7 +460,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
 
       {/* Bottom row (current player's row — always moves left to right here) */}
       <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
-        <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-6px)' }}>
+        <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-12px)' }}>
           <StoneBox player={botPlayer} pieces={state.bench[botPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === botPlayer}
             currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
@@ -473,7 +478,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           )}
         </div>
 
-        <div ref={el => setRef(`home-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-6px)' }}>
+        <div ref={el => setRef(`home-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-12px)' }}>
           <StoneBox player={botPlayer} pieces={state.home[botPlayer]} label="Home"
             interactive={!busy && canBearOff && state.currentPlayer === botPlayer}
             hinting={hintsEnabled && (botPlayer === 1 ? anyBearOffP1 : anyBearOffP2)} currentPlayer={state.currentPlayer} hintsEnabled={hintsEnabled}
