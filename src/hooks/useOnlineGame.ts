@@ -45,6 +45,7 @@ export function useOnlineGame() {
   const [opponentConnected, setOpponentConnected] = useState(false);
   const [opponentName, setOpponentName] = useState<string | null>(null);
   const [opponentColor, setOpponentColor] = useState<string | null>(null);
+  const [myGameColor, setMyGameColor] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const [gameWager, setGameWager] = useState(0);
@@ -484,8 +485,9 @@ export function useOnlineGame() {
       if (playerId && game.player1_id === playerId) {
         // We're player 1 — resume as P1, don't overwrite player2
         setMyPlayer(1);
-        // Load opponent color before rendering
+        // Load colors before rendering
         if (game.p2_color) setOpponentColor(game.p2_color);
+        if (game.p1_color) setMyGameColor(game.p1_color);
         if (game.state) {
           const loadedState = validateState(game.state);
           setState(loadedState);
@@ -539,8 +541,9 @@ export function useOnlineGame() {
         }));
       }
 
-      // Load opponent color from DB BEFORE rendering the board
+      // Load colors from DB BEFORE rendering the board
       if (game.p1_color) setOpponentColor(game.p1_color);
+      if (game.p2_color) setMyGameColor(game.p2_color);
 
       // Load saved state from DB so we have it ready
       if (game.state) {
@@ -626,10 +629,12 @@ export function useOnlineGame() {
       }
     }
 
-    // Load opponent color BEFORE rendering the board
+    // Load colors BEFORE rendering the board
     if (game) {
       const oppColor = player === 1 ? game.p2_color : game.p1_color;
+      const myColor = player === 1 ? game.p1_color : game.p2_color;
       if (oppColor) setOpponentColor(oppColor);
+      if (myColor) setMyGameColor(myColor);
     }
 
     if (game?.state) {
@@ -1037,7 +1042,7 @@ export function useOnlineGame() {
   return {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
-    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor, error,
+    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor, myGameColor, error,
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, sendInvite, gameWager, forfeit,

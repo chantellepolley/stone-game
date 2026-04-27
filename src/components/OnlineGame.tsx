@@ -33,7 +33,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
-    sendNudge, lastNudge,
+    sendNudge, lastNudge, myGameColor,
   } = useOnlineGame();
   const { coins, spend, earn } = useCoins();
   const coinsHandled = useRef(false);
@@ -82,12 +82,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const p1Name = myPlayer === 1 ? myName : (opponentName || undefined);
   const p2Name = myPlayer === 2 ? myName : (opponentName || undefined);
 
-  // Resolve color conflict: P1 keeps their color, P2 gets a different one if same
-  const myColor = loadPlayerColor();
+  // Resolve colors — use DB-stored game colors, fall back to localStorage/default
+  const myColor = myGameColor || loadPlayerColor();
   let resolvedP1Color = myPlayer === 1 ? myColor : (opponentColor || 'sandstone');
   let resolvedP2Color = myPlayer === 2 ? myColor : (opponentColor || 'sandstone');
   if (resolvedP1Color === resolvedP2Color) {
-    // P2 (the joiner) gets a different color — pick the first different one
     const alt = STONE_COLORS.find(c => c.id !== resolvedP1Color);
     resolvedP2Color = alt ? alt.id : 'sandstone';
   }
