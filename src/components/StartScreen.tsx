@@ -4,6 +4,7 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { AI_WAGER } from '../lib/coins';
+import { STONE_COLORS } from '../utils/stoneColors';
 import JesterCoin from './JesterCoin';
 
 interface StartScreenProps {
@@ -30,6 +31,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [showCoinRules, setShowCoinRules] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [refCopied, setRefCopied] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(() => {
+    return !localStorage.getItem('stone_seen_announcement_premium_colors');
+  });
   const [bonusCountdown, setBonusCountdown] = useState('');
 
   // Countdown to next daily bonus (midnight local time)
@@ -163,6 +167,53 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               {dailyStreak > 1 && <p className="text-amber-400/70 text-[10px]">{dailyStreak}-day streak!</p>}
             </div>
             <button onClick={dismissDailyBonus} className="text-white/40 hover:text-white/70 text-sm cursor-pointer ml-2">x</button>
+          </div>
+        </div>
+      )}
+
+      {/* New feature announcement */}
+      {showAnnouncement && player && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-amber-600/60 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-3xl mb-3">&#x2728;</p>
+            <h2 className="text-amber-400 font-heading text-lg mb-2">New Premium Colors!</h2>
+            <p className="text-white/70 text-sm mb-4">
+              8 new premium stone colors are now available — Rainbow, Zebra, Solar Flare, and more! Unlock them for 25 coins each.
+            </p>
+            <div className="flex justify-center gap-2 mb-4">
+              {STONE_COLORS.filter(c => c.premium).slice(0, 4).map(c => (
+                <div key={c.id} className="w-10 h-10 rounded-full shadow-lg relative overflow-hidden"
+                  style={{
+                    backgroundImage: "url('/stone-bg.jpg')",
+                    backgroundSize: '60px',
+                    filter: 'brightness(1.3) contrast(1.1)',
+                    border: `2px solid ${c.border}`,
+                  }}>
+                  <div className="absolute inset-0 rounded-full" style={
+                    c.gradient ? { background: c.gradient } : { backgroundColor: c.tint }
+                  } />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_premium_colors', '1');
+                setShowAnnouncement(false);
+                if (onShowColors) onShowColors();
+              }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
+                Check Them Out
+              </button>
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_premium_colors', '1');
+                setShowAnnouncement(false);
+              }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Later
+              </button>
+            </div>
           </div>
         </div>
       )}
