@@ -87,9 +87,8 @@ export default function BoardSpace({
       {/* Stone texture background — isolated so filter doesn't affect pieces */}
       <div className="absolute inset-0 rounded-lg" style={{
         backgroundImage: "url('/stone-bg.jpg')",
-        backgroundSize: `${80 + (_index * 13) % 60}px`,
-        backgroundPosition: `${(_index * 47 + 13) % 100}% ${(_index * 71 + 29) % 100}%`,
-        transform: `rotate(${(_index * 43) % 360}deg) scale(1.5)`,
+        backgroundSize: `${140 + (_index * 17) % 80}px`,
+        backgroundPosition: `${(_index * 67 + 11) % 100}% ${(_index * 89 + 23) % 100}%`,
         filter: 'brightness(1.55) contrast(0.85) saturate(0.5)',
       }} />
       {/* Warm tint overlay */}
