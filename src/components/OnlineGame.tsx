@@ -370,20 +370,24 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       </div>
 
       {/* Mobile bottom bar — just Menu, Undo, and Chat */}
-      <div className="lg:hidden flex items-center gap-2 py-0.5 shrink-0 justify-center">
+      <div className="lg:hidden flex items-center gap-3 py-1.5 shrink-0 justify-center">
         {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
         <button onClick={() => { setShowMobileMenu(true); setChatOpen(false); setShowMobileLog(false); }}
-          className="px-4 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
-                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md">
+          className="px-6 py-2.5 rounded-xl text-xs font-heading uppercase tracking-wider
+                     bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md min-w-[100px]">
           Menu
         </button>
-        <ChatPanel
-          messages={chatMessages}
-          onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
-          isOpen={false}
-          onToggle={() => { setChatOpen(v => !v); setShowMobileLog(false); setShowMobileMenu(false); setLastSeenOpponentCount(opponentMsgCount); }}
-          unreadCount={chatUnread}
-        />
+        <button onClick={() => { setChatOpen(v => !v); setShowMobileLog(false); setShowMobileMenu(false); setLastSeenOpponentCount(opponentMsgCount); }}
+          className="relative px-6 py-2.5 rounded-xl text-xs font-heading uppercase tracking-wider
+                     bg-amber-600 text-white border border-amber-500 cursor-pointer shadow-md min-w-[100px]
+                     hover:bg-amber-500 transition-colors">
+          Chat
+          {chatUnread > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {chatUnread > 9 ? '9+' : chatUnread}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Mobile menu popup */}
