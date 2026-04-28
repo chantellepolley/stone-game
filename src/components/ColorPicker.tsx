@@ -70,13 +70,14 @@ export default function ColorPicker({ selectedId, onSelect, onBack }: ColorPicke
   };
 
   const freeColors = STONE_COLORS.filter(c => !c.premium);
-  const premiumColors = STONE_COLORS.filter(c => c.premium);
+  const premiumColors = STONE_COLORS.filter(c => c.premium && (c.price || 0) <= 25);
+  const nflColors = STONE_COLORS.filter(c => c.premium && (c.price || 0) >= 50);
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
-      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
+    <div className="h-screen flex flex-col items-center justify-center gap-4 px-4 py-4">
+      <img src="/logo.png" alt="STONE" className="h-24 sm:h-32 lg:h-40 object-contain cursor-pointer shrink-0" onClick={onBack} />
 
-      <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-md w-full">
+      <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-4 sm:p-6 shadow-lg max-w-md w-full overflow-y-auto max-h-[75vh]">
         <p className="text-white font-heading text-lg">Choose Your Stone</p>
 
         <div className="grid grid-cols-4 gap-2">
@@ -112,8 +113,29 @@ export default function ColorPicker({ selectedId, onSelect, onBack }: ColorPicke
           </>
         )}
 
+        {nflColors.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex-1 h-px bg-white/20" />
+              <span className="text-amber-400/60 text-[10px] font-heading uppercase tracking-wider flex items-center gap-1">NFL Teams <JesterCoin size={10} /></span>
+              <div className="flex-1 h-px bg-white/20" />
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {nflColors.map(color => (
+                <ColorSwatch
+                  key={color.id}
+                  color={color}
+                  isSelected={color.id === selectedId}
+                  isOwned={owned.includes(color.id)}
+                  onClick={() => handleColorClick(color)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
         <button onClick={onBack}
-          className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-2">
+          className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-2 shrink-0">
           Back
         </button>
       </div>
