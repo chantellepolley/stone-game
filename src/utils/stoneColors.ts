@@ -209,7 +209,7 @@ export const STONE_COLORS: StoneColor[] = [
     name: '49ers',
     tint: 'rgba(170, 50, 30, 0.25)',
     tintCrowned: 'rgba(170, 50, 30, 0.35)',
-    border: 'rgba(200,170,55,0.6)',
+    border: 'rgba(190,30,30,0.6)',
     ring: 'ring-yellow-500',
     pulse: 'pulse-gold',
     gradient: 'repeating-linear-gradient(135deg, rgba(190,30,30,0.4) 0px, rgba(190,30,30,0.4) 5px, rgba(200,170,55,0.35) 5px, rgba(200,170,55,0.35) 10px), repeating-linear-gradient(225deg, rgba(190,30,30,0.2) 0px, rgba(190,30,30,0.2) 5px, rgba(200,170,55,0.15) 5px, rgba(200,170,55,0.15) 10px)',
