@@ -241,6 +241,8 @@ export default function App() {
           onShowTutorial={() => setScreen('tutorial')}
           onShowAdminFeedback={() => setScreen('admin-feedback')}
           onShowAdminPlayers={() => setScreen('admin-players')}
+          pushPermission={pushPermission}
+          onRequestPush={requestPermission}
         />
       )}
 

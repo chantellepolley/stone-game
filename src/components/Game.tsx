@@ -31,9 +31,11 @@ interface GameProps {
   onShowTutorial?: () => void;
   onShowAdminFeedback?: () => void;
   onShowAdminPlayers?: () => void;
+  pushPermission?: NotificationPermission;
+  onRequestPush?: () => void;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, pushPermission, onRequestPush }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
   const { spend, earn } = useCoins();
   const [currentWager, setCurrentWager] = useState(0);
@@ -132,7 +134,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   }, [state.currentPlayer, state.phase, state.gameMode]);
 
   if (state.phase === 'not_started') {
-    return <StartScreen onStart={handleStart} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} onShowTutorial={onShowTutorial} onShowAdminFeedback={onShowAdminFeedback} onShowAdminPlayers={onShowAdminPlayers} />;
+    return <StartScreen onStart={handleStart} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} onShowTutorial={onShowTutorial} onShowAdminFeedback={onShowAdminFeedback} onShowAdminPlayers={onShowAdminPlayers} pushPermission={pushPermission} onRequestPush={onRequestPush} />;
   }
 
   return (

@@ -22,9 +22,11 @@ interface StartScreenProps {
   onShowTutorial?: () => void;
   onShowAdminFeedback?: () => void;
   onShowAdminPlayers?: () => void;
+  pushPermission?: NotificationPermission;
+  onRequestPush?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, pushPermission, onRequestPush }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
@@ -33,7 +35,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [refCopied, setRefCopied] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(() => {
-    return !localStorage.getItem('stone_seen_announcement_premium_colors');
+    return !localStorage.getItem('stone_seen_announcement_nfl_colors');
   });
   const [bonusCountdown, setBonusCountdown] = useState('');
 
@@ -176,13 +178,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       {showAnnouncement && player && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/60 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
-            <p className="text-3xl mb-3">&#x2728;</p>
-            <h2 className="text-amber-400 font-heading text-lg mb-2">New Premium Colors!</h2>
+            <p className="text-3xl mb-3">&#x1F3C8;</p>
+            <h2 className="text-amber-400 font-heading text-lg mb-2">NFL Team Colors!</h2>
             <p className="text-white/70 text-sm mb-4">
-              8 new premium stone colors are now available — Rainbow, Zebra, Solar Flare, and more! Unlock them for 25 coins each.
+              Rep your team! All 32 NFL team stone colors are now available for 50 coins each.
             </p>
-            <div className="flex justify-center gap-2 mb-4">
-              {STONE_COLORS.filter(c => c.premium).slice(0, 4).map(c => (
+            <div className="flex justify-center gap-2 mb-4 flex-wrap">
+              {STONE_COLORS.filter(c => c.premium && (c.price || 0) >= 50).slice(0, 6).map(c => (
                 <div key={c.id} className="w-10 h-10 rounded-full shadow-lg relative overflow-hidden"
                   style={{
                     backgroundImage: "url('/stone-bg.jpg')",
@@ -198,7 +200,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
-                localStorage.setItem('stone_seen_announcement_premium_colors', '1');
+                localStorage.setItem('stone_seen_announcement_nfl_colors', '1');
                 setShowAnnouncement(false);
                 if (onShowColors) onShowColors();
               }}
@@ -207,7 +209,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 Check Them Out
               </button>
               <button onClick={() => {
-                localStorage.setItem('stone_seen_announcement_premium_colors', '1');
+                localStorage.setItem('stone_seen_announcement_nfl_colors', '1');
                 setShowAnnouncement(false);
               }}
                 className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
@@ -495,11 +497,20 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </button>
             </div>
           ) : (
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap justify-center">
               <button onClick={() => { setEditingPassword(true); setNewPassword(''); setPasswordMsg(''); }}
                 className="text-white/60 text-[10px] hover:text-white transition-colors cursor-pointer">
                 {'{'}Set/Change Password{'}'}
               </button>
+              {pushPermission !== 'granted' && onRequestPush && (
+                <button onClick={onRequestPush}
+                  className="text-amber-400/60 text-[10px] hover:text-amber-400 transition-colors cursor-pointer">
+                  {pushPermission === 'denied' ? 'Notifications Blocked' : 'Enable Notifications'}
+                </button>
+              )}
+              {pushPermission === 'granted' && (
+                <span className="text-green-400/60 text-[10px]">Notifications On</span>
+              )}
               <button onClick={logout}
                 className="text-white/60 text-[10px] hover:text-red-400 transition-colors cursor-pointer">
                 Logout
