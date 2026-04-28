@@ -37,8 +37,9 @@ function getJoinCodeFromURL(): string | null {
 export default function App() {
   const playerHook = usePlayer();
   const { player, isLoading } = playerHook;
-  const { supported: pushSupported, permission: pushPermission, requestPermission } = usePushNotifications();
+  const { supported: pushSupported, permission: pushPermission, requestPermission, unsubscribe, subscribe } = usePushNotifications();
   const [screen, setScreen] = useState<AppScreen>('game');
+  const [pushMuted, setPushMuted] = useState(() => localStorage.getItem('stone_push_muted') === '1');
 
   // Ask for notification permission once player is logged in
   useEffect(() => {
@@ -100,6 +101,20 @@ export default function App() {
     const interval = setInterval(pollNotifications, 30000);
     return () => clearInterval(interval);
   }, [pollNotifications]);
+
+  const handleTogglePushMute = useCallback(async () => {
+    if (pushMuted) {
+      // Unmute — re-subscribe
+      localStorage.removeItem('stone_push_muted');
+      setPushMuted(false);
+      await subscribe();
+    } else {
+      // Mute — unsubscribe from push
+      localStorage.setItem('stone_push_muted', '1');
+      setPushMuted(true);
+      await unsubscribe();
+    }
+  }, [pushMuted, subscribe, unsubscribe]);
 
   const handleInviteToPlay = useCallback(async (toPlayerId: string, wager = 0) => {
     if (!player) return;
@@ -243,6 +258,8 @@ export default function App() {
           onShowAdminPlayers={() => setScreen('admin-players')}
           pushPermission={pushPermission}
           onRequestPush={requestPermission}
+          pushMuted={pushMuted}
+          onTogglePushMute={handleTogglePushMute}
         />
       )}
 

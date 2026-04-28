@@ -86,7 +86,23 @@ export function usePushNotifications() {
     }
   }, [supported, permission, subscribe]);
 
-  return { supported, permission, requestPermission, subscribe };
+  const unsubscribe = useCallback(async (): Promise<boolean> => {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        // Remove from Supabase
+        await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+        await sub.unsubscribe();
+      }
+      return true;
+    } catch (err) {
+      console.error('[STONE] Push unsubscribe failed:', err);
+      return false;
+    }
+  }, []);
+
+  return { supported, permission, requestPermission, subscribe, unsubscribe };
 }
 
 /** Show a system notification (works when app is open or recently backgrounded) */

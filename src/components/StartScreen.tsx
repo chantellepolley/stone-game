@@ -24,9 +24,11 @@ interface StartScreenProps {
   onShowAdminPlayers?: () => void;
   pushPermission?: NotificationPermission;
   onRequestPush?: () => void;
+  pushMuted?: boolean;
+  onTogglePushMute?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, pushPermission, onRequestPush }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, pushPermission, onRequestPush, pushMuted, onTogglePushMute }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
@@ -502,14 +504,20 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 className="text-white/60 text-[10px] hover:text-white transition-colors cursor-pointer">
                 {'{'}Set/Change Password{'}'}
               </button>
-              {pushPermission !== 'granted' && onRequestPush && (
-                <button onClick={onRequestPush}
-                  className="text-amber-400/60 text-[10px] hover:text-amber-400 transition-colors cursor-pointer">
-                  {pushPermission === 'denied' ? 'Notifications Blocked' : 'Enable Notifications'}
+              {pushPermission === 'granted' && onTogglePushMute && (
+                <button onClick={onTogglePushMute}
+                  className={`text-[10px] transition-colors cursor-pointer ${pushMuted ? 'text-red-400/60 hover:text-red-400' : 'text-green-400/60 hover:text-green-400'}`}>
+                  Notifications: {pushMuted ? 'OFF' : 'ON'}
                 </button>
               )}
-              {pushPermission === 'granted' && (
-                <span className="text-green-400/60 text-[10px]">Notifications On</span>
+              {pushPermission === 'denied' && (
+                <span className="text-red-400/60 text-[10px]">Notifications Blocked (check browser settings)</span>
+              )}
+              {pushPermission === 'default' && onRequestPush && (
+                <button onClick={onRequestPush}
+                  className="text-amber-400/60 text-[10px] hover:text-amber-400 transition-colors cursor-pointer">
+                  Enable Notifications
+                </button>
               )}
               <button onClick={logout}
                 className="text-white/60 text-[10px] hover:text-red-400 transition-colors cursor-pointer">
