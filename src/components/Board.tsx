@@ -325,11 +325,11 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     ? Array.from({ length: 10 }, (_, i) => i)         // P1's row on bottom
     : Array.from({ length: 10 }, (_, i) => 19 - i);   // P2's row on bottom (default)
 
-  // Diamond shape offsets based on position in the row (0-9 left to right) v2
-  // Top row: peak up in the middle (negative Y = up)
-  // Bottom row: dip down in the middle (positive Y = down)
-  const topRowOffsets = [-12, -6, 0, 6, 12, 12, 6, 0, -6, -12];
-  const botRowOffsets = [12, 6, 0, -6, -12, -12, -6, 0, 6, 12];
+  // Diamond shape offsets based on position in the row (0-9 left to right)
+  // Top row: peak up in the middle — center spaces go UP (negative Y)
+  // Bottom row: dip down in the middle — center spaces go DOWN (positive Y)
+  const topRowOffsets = [12, 6, 0, -6, -12, -12, -6, 0, 6, 12];
+  const botRowOffsets = [-12, -6, 0, 6, 12, 12, 6, 0, -6, -12];
 
   function renderSpace(idx: number, rowPosition: number, isTopRow: boolean) {
     const yOffset = isTopRow ? topRowOffsets[rowPosition] : botRowOffsets[rowPosition];
