@@ -325,28 +325,14 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
     ? Array.from({ length: 10 }, (_, i) => i)         // P1's row on bottom
     : Array.from({ length: 10 }, (_, i) => 19 - i);   // P2's row on bottom (default)
 
-  // Diamond shape offsets
-  // Top row: slopes up to center peak, then down → pushes spaces upward at middle
-  // Bottom row: slopes down to center dip, then up → pushes spaces downward at middle
-  // Together they form a diamond/eye shape
-  const diamondOffset = (idx: number): number => {
-    // Top row (rendered left to right as indices 0,1,2,3,4 | 5,6,7,8,9)
-    // Negative = move up, Positive = move down
-    const topOffsets: Record<number, number> = {
-      0: -12, 1: -6, 2: 0, 3: 6, 4: 12,   // left half: start high, dip to center
-      5: 12, 6: 6, 7: 0, 8: -6, 9: -12,   // right half: center, rise back up
-    };
-    // Bottom row (rendered left to right as indices 19,18,17,16,15 | 14,13,12,11,10)
-    const botOffsets: Record<number, number> = {
-      19: 12, 18: 6, 17: 0, 16: -6, 15: -12,  // left half: start low, rise to center
-      14: -12, 13: -6, 12: 0, 11: 6, 10: 12,  // right half: center, dip back down
-    };
+  // Diamond shape offsets based on position in the row (0-9 left to right)
+  // Top row: peak up in the middle (negative Y = up)
+  // Bottom row: dip down in the middle (positive Y = down)
+  const topRowOffsets = [-12, -6, 0, 6, 12, 12, 6, 0, -6, -12];
+  const botRowOffsets = [12, 6, 0, -6, -12, -12, -6, 0, 6, 12];
 
-    return topOffsets[idx] ?? botOffsets[idx] ?? 0;
-  };
-
-  function renderSpace(idx: number) {
-    const yOffset = diamondOffset(idx);
+  function renderSpace(idx: number, rowPosition: number, isTopRow: boolean) {
+    const yOffset = isTopRow ? topRowOffsets[rowPosition] : botRowOffsets[rowPosition];
     return (
       <div key={idx} ref={el => setRef(`space-${idx}`, el)} className="min-w-0 h-full" style={{ transform: `translateY(${yOffset}px)` }}>
         <BoardSpace
@@ -397,8 +383,8 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
           {topIndices.map((idx, i) =>
             i === 5
-              ? [<div key="div-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx)]
-              : renderSpace(idx)
+              ? [<div key="div-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx, i, true)]
+              : renderSpace(idx, i, true)
           )}
         </div>
 
@@ -434,8 +420,8 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
           {bottomIndices.map((idx, i) =>
             i === 5
-              ? [<div key="div-bot" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx)]
-              : renderSpace(idx)
+              ? [<div key="div-bot" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx, i, false)]
+              : renderSpace(idx, i, false)
           )}
         </div>
 
