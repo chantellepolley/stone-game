@@ -190,6 +190,33 @@ export const STONE_COLORS: StoneColor[] = [
     premium: true,
     price: 25,
   },
+  // ── Ultra Premium colors (50 coins each) ──
+  {
+    id: 'commanders',
+    name: 'Commanders',
+    tint: 'rgba(100, 20, 20, 0.25)',
+    tintCrowned: 'rgba(100, 20, 20, 0.35)',
+    border: 'rgba(255,180,0,0.6)',
+    ring: 'ring-yellow-500',
+    pulse: 'pulse-gold',
+    gradient: 'linear-gradient(135deg, rgba(130,20,20,0.4), rgba(100,10,10,0.35), rgba(255,180,0,0.3))',
+    gradientCrowned: 'linear-gradient(135deg, rgba(130,20,20,0.5), rgba(100,10,10,0.45), rgba(255,180,0,0.4))',
+    premium: true,
+    price: 50,
+  },
+  {
+    id: 'niners',
+    name: '49ers',
+    tint: 'rgba(170, 50, 30, 0.25)',
+    tintCrowned: 'rgba(170, 50, 30, 0.35)',
+    border: 'rgba(200,170,55,0.6)',
+    ring: 'ring-yellow-500',
+    pulse: 'pulse-gold',
+    gradient: 'linear-gradient(135deg, rgba(190,30,30,0.35), rgba(170,40,25,0.35), rgba(200,170,55,0.3))',
+    gradientCrowned: 'linear-gradient(135deg, rgba(190,30,30,0.45), rgba(170,40,25,0.45), rgba(200,170,55,0.4))',
+    premium: true,
+    price: 50,
+  },
 ];
 
 export function getStoneColor(id: string): StoneColor {
