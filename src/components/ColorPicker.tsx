@@ -97,9 +97,9 @@ export default function ColorPicker({ selectedId, onSelect, onBack }: ColorPicke
     const updated = [...owned, confirmColor.id];
     setOwned(updated);
     localStorage.setItem('stone_owned_colors', JSON.stringify(updated));
-    // Save to DB
+    // Save to DB — both owned list and selected color
     if (player) {
-      await supabase.from('player_stats').update({ owned_colors: updated }).eq('player_id', player.id);
+      await supabase.from('player_stats').update({ owned_colors: updated, selected_color: confirmColor.id }).eq('player_id', player.id);
     }
     onSelect(confirmColor.id);
     setConfirmColor(null);
