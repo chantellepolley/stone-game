@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { STONE_COLORS, type StoneColor } from '../utils/stoneColors';
 import { useCoins } from '../contexts/CoinsContext';
+import { usePlayerContext } from '../contexts/PlayerContext';
+import { supabase } from '../lib/supabase';
 import JesterCoin from './JesterCoin';
 
 interface ColorPickerProps {
@@ -43,13 +45,42 @@ function ColorSwatch({ color, isSelected, isOwned, onClick }: { color: StoneColo
 
 export default function ColorPicker({ selectedId, onSelect, onBack }: ColorPickerProps) {
   const { coins, spend } = useCoins();
+  const { player } = usePlayerContext();
   const [confirmColor, setConfirmColor] = useState<StoneColor | null>(null);
+  const [owned, setOwned] = useState<string[]>([]);
 
-  // Track owned premium colors in localStorage
-  const getOwnedColors = (): string[] => {
-    try { return JSON.parse(localStorage.getItem('stone_owned_colors') || '[]'); } catch { return []; }
-  };
-  const owned = getOwnedColors();
+  // Load owned colors from DB, merge with localStorage, sync both
+  useEffect(() => {
+    const loadOwned = async () => {
+      // Start with localStorage
+      let local: string[] = [];
+      try { local = JSON.parse(localStorage.getItem('stone_owned_colors') || '[]'); } catch { /* */ }
+
+      if (!player) { setOwned(local); return; }
+
+      // Fetch from DB
+      const { data } = await supabase
+        .from('player_stats')
+        .select('owned_colors')
+        .eq('player_id', player.id)
+        .single();
+
+      const dbColors: string[] = data?.owned_colors || [];
+
+      // Merge both (union)
+      const merged = [...new Set([...local, ...dbColors])];
+      setOwned(merged);
+
+      // Sync back to both stores if there were differences
+      if (merged.length > local.length) {
+        localStorage.setItem('stone_owned_colors', JSON.stringify(merged));
+      }
+      if (merged.length > dbColors.length) {
+        await supabase.from('player_stats').update({ owned_colors: merged }).eq('player_id', player.id);
+      }
+    };
+    loadOwned();
+  }, [player]);
 
   const handleColorClick = (color: StoneColor) => {
     if (color.premium && !owned.includes(color.id) && color.id !== selectedId) {
@@ -64,7 +95,12 @@ export default function ColorPicker({ selectedId, onSelect, onBack }: ColorPicke
     const ok = await spend(confirmColor.price, `Unlocked ${confirmColor.name} stone color`);
     if (!ok) { setConfirmColor(null); return; }
     const updated = [...owned, confirmColor.id];
+    setOwned(updated);
     localStorage.setItem('stone_owned_colors', JSON.stringify(updated));
+    // Save to DB
+    if (player) {
+      await supabase.from('player_stats').update({ owned_colors: updated }).eq('player_id', player.id);
+    }
     onSelect(confirmColor.id);
     setConfirmColor(null);
   };

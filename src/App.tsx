@@ -15,7 +15,7 @@ import Tutorial from './components/Tutorial';
 import AdminFeedback from './components/AdminFeedback';
 import AdminPlayers from './components/AdminPlayers';
 import { usePushNotifications } from './hooks/usePushNotifications';
-import { loadPlayerColor, savePlayerColor } from './utils/stoneColors';
+import { loadPlayerColor, savePlayerColor, syncColorFromDb } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
 import { CoinsProvider } from './contexts/CoinsContext';
@@ -54,6 +54,15 @@ export default function App() {
   const [resumeLocalGameId, setResumeLocalGameId] = useState<string | null>(null);
   const [stoneColor, setStoneColor] = useState(loadPlayerColor());
   const [pendingNotifications, setPendingNotifications] = useState(0);
+
+  // Sync color and owned colors from DB on login
+  useEffect(() => {
+    if (player) {
+      syncColorFromDb(player.id).then(() => {
+        setStoneColor(loadPlayerColor());
+      });
+    }
+  }, [player]);
 
   // Poll for pending notifications (invites + your-turn games)
   const pollNotifications = useCallback(async () => {
