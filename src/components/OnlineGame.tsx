@@ -12,7 +12,7 @@ import { awardGameBonuses, type BonusResult } from '../lib/bonuses';
 import JesterCoin from './JesterCoin';
 import Board from './Board';
 import DiceArea from './DiceArea';
-import TurnIndicator from './TurnIndicator';
+
 import MoveLog from './MoveLog';
 import GameControls from './GameControls';
 import OnlineLobby from './OnlineLobby';
@@ -222,8 +222,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     );
   }
 
-  const playerLabel = myPlayer === 1 ? 'Sunstone' : 'Moonstone';
-  const waitingForOpponent = !isMyTurn && state.phase !== 'game_over';
 
   const colorCtx = { p1ColorId: resolvedP1Color, p2ColorId: resolvedP2Color, p1BorderOverride, p2BorderOverride };
 

@@ -647,7 +647,6 @@ export function useOnlineGame() {
     // Load pending wager proposal from DB (if opponent proposed while we were away)
     if (game?.pending_wager_proposal) {
       const proposal = game.pending_wager_proposal as { amount: number; from: string };
-      const myId = await getMyPlayerId();
       const amIProposer = proposal.from === myUsernameRef.current;
       if (amIProposer) {
         // I sent this proposal — show my status
