@@ -191,10 +191,20 @@ export function useOnlineGame() {
     return data?.id || null;
   }
 
-  // ── Save my color to the game DB (always update to reflect current color choice) ──
+  // ── Save my color to the game DB (check DB for selected_color first, then localStorage) ──
   async function saveMyColor(player: PlayerId) {
     if (!gameDbId.current) return;
-    const color = loadPlayerColor();
+    let color = loadPlayerColor();
+    // Check DB for the authoritative color (handles cross-device)
+    const myId = await getMyPlayerId();
+    if (myId) {
+      const { data } = await supabase.from('player_stats').select('selected_color').eq('player_id', myId).single();
+      if (data?.selected_color) {
+        color = data.selected_color;
+        // Sync to localStorage too
+        localStorage.setItem('stone_color', color);
+      }
+    }
     const field = player === 1 ? 'p1_color' : 'p2_color';
     await supabase.from('games').update({ [field]: color }).eq('id', gameDbId.current);
   }
