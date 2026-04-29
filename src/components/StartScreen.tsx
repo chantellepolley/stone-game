@@ -36,9 +36,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [showCoinRules, setShowCoinRules] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [refCopied, setRefCopied] = useState(false);
-  const [showAnnouncement, setShowAnnouncement] = useState(() => {
-    return !localStorage.getItem('stone_seen_announcement_nfl_colors');
-  });
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [bonusCountdown, setBonusCountdown] = useState('');
 
   // Countdown to next daily bonus (midnight local time)
