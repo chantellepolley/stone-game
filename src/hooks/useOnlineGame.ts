@@ -487,12 +487,27 @@ export function useOnlineGame() {
 
     const { data: game } = await supabase
       .from('games')
-      .select('id, state, player1_id, player2_id, wager, p1_color, p2_color')
+      .select('id, state, player1_id, player2_id, wager, p1_color, p2_color, pending_wager_proposal')
       .eq('room_code', upperCode)
       .in('status', ['waiting', 'active'])
       .maybeSingle();
 
     if (game?.wager) setGameWager(game.wager);
+
+    // Load pending wager proposal from DB
+    if (game?.pending_wager_proposal) {
+      const proposal = game.pending_wager_proposal as { amount: number; from: string };
+      // We'll determine if we're the proposer after we know which player we are
+      // For now just store it — the UI will check
+      setTimeout(() => {
+        const amIProposer = proposal.from === myUsernameRef.current;
+        if (amIProposer) {
+          setMyProposalStatus({ amount: proposal.amount, status: 'pending' });
+        } else {
+          setWagerProposal(proposal);
+        }
+      }, 1000);
+    }
 
     if (game) {
       gameDbId.current = game.id;
@@ -622,11 +637,25 @@ export function useOnlineGame() {
 
     const { data: game, error: gameErr } = await supabase
       .from('games')
-      .select('state, status, player1_id, player2_id, wager, p1_color, p2_color')
+      .select('state, status, player1_id, player2_id, wager, p1_color, p2_color, pending_wager_proposal')
       .eq('id', gameId)
       .single();
 
     if (game?.wager) setGameWager(game.wager);
+
+    // Load pending wager proposal from DB (if opponent proposed while we were away)
+    if (game?.pending_wager_proposal) {
+      const proposal = game.pending_wager_proposal as { amount: number; from: string };
+      const myId = await getMyPlayerId();
+      const amIProposer = proposal.from === myUsernameRef.current;
+      if (amIProposer) {
+        // I sent this proposal — show my status
+        setMyProposalStatus({ amount: proposal.amount, status: 'pending' });
+      } else {
+        // Opponent sent this — show the accept/decline popup
+        setWagerProposal(proposal);
+      }
+    }
 
     if (gameErr) {
       console.error('[STONE] Resume failed:', gameErr.message);
@@ -1013,6 +1042,13 @@ export function useOnlineGame() {
     // Clear any previous timeout
     if (proposalTimeoutRef.current) clearTimeout(proposalTimeoutRef.current);
 
+    // Save proposal to DB so opponent sees it even if they join later
+    if (gameDbId.current) {
+      await supabase.from('games').update({
+        pending_wager_proposal: { amount, from: myUsernameRef.current },
+      }).eq('id', gameDbId.current);
+    }
+
     channelRef.current.send({
       type: 'broadcast', event: 'wager_proposal',
       payload: { amount, from: myUsernameRef.current },
@@ -1046,8 +1082,8 @@ export function useOnlineGame() {
       const myId = await getMyPlayerId();
       if (myId) await deductCoins(myId, diff, `Wager increase (${gameWager} → ${newWager})`);
     }
-    // Update DB
-    await supabase.from('games').update({ wager: newWager }).eq('id', gameDbId.current);
+    // Update DB — set new wager and clear the proposal
+    await supabase.from('games').update({ wager: newWager, pending_wager_proposal: null }).eq('id', gameDbId.current);
     setGameWager(newWager);
     setWagerProposal(null);
     channelRef.current.send({
@@ -1056,9 +1092,13 @@ export function useOnlineGame() {
     });
   }, [wagerProposal, gameWager]);
 
-  const declineWager = useCallback(() => {
+  const declineWager = useCallback(async () => {
     if (!channelRef.current) return;
     setWagerProposal(null);
+    // Clear proposal from DB
+    if (gameDbId.current) {
+      await supabase.from('games').update({ pending_wager_proposal: null }).eq('id', gameDbId.current);
+    }
     channelRef.current.send({ type: 'broadcast', event: 'wager_declined', payload: {} });
   }, []);
 
