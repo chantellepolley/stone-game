@@ -44,6 +44,7 @@ export function useOnlineGame() {
   const [error, setError] = useState('');
   const [opponentConnected, setOpponentConnected] = useState(false);
   const [opponentName, setOpponentName] = useState<string | null>(null);
+  const [opponentAvatar, setOpponentAvatar] = useState<string | null>(null);
   const [opponentColor, setOpponentColor] = useState<string | null>(null);
   const [myGameColor, setMyGameColor] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
@@ -541,8 +542,8 @@ export function useOnlineGame() {
           .eq('id', game.id)
           .single();
         if (gameData?.player2_id) {
-          const { data: opp } = await supabase.from('players').select('username').eq('id', gameData.player2_id).single();
-          if (opp) setOpponentName(opp.username);
+          const { data: opp } = await supabase.from('players').select('username, avatar_url').eq('id', gameData.player2_id).single();
+          if (opp) { setOpponentName(opp.username); setOpponentAvatar(opp.avatar_url || null); }
         }
         localStorage.setItem('stone_active_game', JSON.stringify({
           gameId: game.id, roomCode: upperCode, myPlayer: 1,
@@ -616,8 +617,8 @@ export function useOnlineGame() {
 
     // Fetch opponent (P1) name
     if (game?.player1_id) {
-      supabase.from('players').select('username').eq('id', game.player1_id).single()
-        .then(({ data: p }) => { if (p) setOpponentName(p.username); });
+      supabase.from('players').select('username, avatar_url').eq('id', game.player1_id).single()
+        .then(({ data: p }) => { if (p) { setOpponentName(p.username); setOpponentAvatar(p.avatar_url || null); } });
     }
 
     // Always connect to the channel even if game not in DB yet
@@ -727,8 +728,8 @@ export function useOnlineGame() {
     if (game) {
       const opponentId = player === 1 ? game.player2_id : game.player1_id;
       if (opponentId) {
-        const { data: opp } = await supabase.from('players').select('username').eq('id', opponentId).single();
-        if (opp) setOpponentName(opp.username);
+        const { data: opp } = await supabase.from('players').select('username, avatar_url').eq('id', opponentId).single();
+        if (opp) { setOpponentName(opp.username); setOpponentAvatar(opp.avatar_url || null); }
       }
     }
 
@@ -894,6 +895,7 @@ export function useOnlineGame() {
     setMyPlayer(null);
     setOpponentConnected(false);
     setOpponentName(null);
+    setOpponentAvatar(null);
     setOpponentColor(null);
     setChatMessages([]);
     setGameWager(0);
@@ -1129,7 +1131,7 @@ export function useOnlineGame() {
   return {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
-    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor, myGameColor, error,
+    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentAvatar, opponentColor, myGameColor, error,
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, sendInvite, gameWager, forfeit,

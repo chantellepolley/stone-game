@@ -29,7 +29,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
-    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentColor,
+    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentAvatar, opponentColor,
     error, createRoom, joinRoom, resumeGame, leave, isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
@@ -241,41 +241,56 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         </button>
       </header>
 
-      {/* Turn + online info */}
-      <div className="flex items-center gap-2 shrink-0">
-        <TurnIndicator currentPlayer={state.currentPlayer} phase={state.phase} winner={state.winner} player1Name={p1Name} player2Name={p2Name} isMyTurn={isMyTurn} />
-        {waitingForOpponent && (
-          <span className="text-[10px] lg:text-xs text-white animate-pulse">Opponent's turn...</span>
-        )}
+      {/* Player vs Opponent display */}
+      <div className="flex items-center justify-center gap-3 shrink-0 w-full max-w-md">
+        {/* Me */}
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${isMyTurn ? 'bg-amber-600/20 ring-1 ring-amber-400/50' : ''}`}>
+          {player?.avatarUrl ? (
+            <img src={player.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#6b5f55]" />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
+              <span className="text-[9px] font-heading text-white/50">{myName?.[0]?.toUpperCase() || '?'}</span>
+            </div>
+          )}
+          <div className="flex flex-col">
+            <span className="text-[10px] font-heading text-white truncate max-w-[70px]">{myName || 'You'}</span>
+            {isMyTurn && <span className="text-[8px] text-amber-400 font-heading">Your turn</span>}
+          </div>
+        </div>
+
+        {/* VS + wager */}
+        <div className="flex flex-col items-center">
+          <span className="text-[10px] font-heading text-white/40">VS</span>
+          {gameWager > 0 && (
+            <button onClick={state.phase !== 'game_over' ? () => { setProposedAmount(gameWager * 2); setShowWagerPicker(true); } : undefined}
+              className={`flex items-center gap-0.5 text-[9px] text-amber-400/80 ${state.phase !== 'game_over' ? 'cursor-pointer hover:text-amber-400' : ''}`}>
+              <JesterCoin size={10} /> {gameWager}
+            </button>
+          )}
+        </div>
+
+        {/* Opponent */}
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${!isMyTurn && state.phase !== 'game_over' ? 'bg-sky-600/20 ring-1 ring-sky-400/50' : ''}`}>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-heading text-white truncate max-w-[70px]">{opponentName || 'Opponent'}</span>
+            <div className="flex items-center gap-1">
+              {!isMyTurn && state.phase !== 'game_over' && <span className="text-[8px] text-sky-400 font-heading">Their turn</span>}
+              <span className={`w-1.5 h-1.5 rounded-full ${opponentConnected ? 'bg-green-400' : 'bg-white/30'}`} />
+            </div>
+          </div>
+          {opponentAvatar ? (
+            <img src={opponentAvatar} alt="" className="w-7 h-7 rounded-full object-cover border border-[#6b5f55]" />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
+              <span className="text-[9px] font-heading text-white/50">{opponentName?.[0]?.toUpperCase() || '?'}</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Online status bar */}
+      {/* Room code + friend status */}
       <div className="flex items-center gap-2 shrink-0 text-[9px]">
-        <span className="text-white">Room: <span className="text-amber-400 font-heading tracking-wider">{roomCode}</span></span>
-        {gameWager > 0 && state.phase !== 'game_over' && (
-          <>
-            <span className="text-white/50">|</span>
-            <button onClick={() => { setProposedAmount(gameWager * 2); setShowWagerPicker(true); }}
-              className="text-amber-400/80 flex items-center gap-1 cursor-pointer hover:text-amber-400 transition-colors">
-              <JesterCoin size={12} /> {gameWager} wager
-            </button>
-          </>
-        )}
-        {gameWager > 0 && state.phase === 'game_over' && (
-          <>
-            <span className="text-white/50">|</span>
-            <span className="text-amber-400/80 flex items-center gap-1"><JesterCoin size={12} /> {gameWager} wager</span>
-          </>
-        )}
-        <span className="text-white/50">|</span>
-        <span className="text-white">You: {playerLabel}</span>
-        <span className="text-white/50">|</span>
-        <span className={opponentConnected ? 'text-white' : 'text-white animate-pulse'}>
-          {opponentConnected
-            ? 'Opponent is live'
-            : `${opponentName || 'Opponent'} has stepped away`}
-        </span>
-        <span className={`w-2 h-2 rounded-full ${opponentConnected ? 'bg-green-400' : 'bg-white/30'}`} />
+        <span className="text-white/40">Room: <span className="text-amber-400/60 font-heading tracking-wider">{roomCode}</span></span>
         {opponentName && (
           <>
             <span className="text-white/50">|</span>
