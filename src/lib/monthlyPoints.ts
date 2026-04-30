@@ -57,11 +57,23 @@ async function ensureRow(playerId: string, month: string): Promise<number> {
 export async function addMonthlyPoints(
   playerId: string,
   points: number,
-  field?: 'wins_online' | 'wins_ai_hard' | 'wins_ai_expert' | 'forfeits' | 'login_days'
+  field?: 'wins_online' | 'wins_ai_hard' | 'wins_ai_expert' | 'forfeits' | 'login_days',
+  reason?: string
 ): Promise<void> {
+  if (points === 0) return;
   const month = getCurrentMonth();
   const currentPoints = await ensureRow(playerId, month);
   const newTotal = currentPoints + points;
+
+  // Log the point entry
+  if (reason) {
+    await supabase.from('monthly_point_log').insert({
+      player_id: playerId,
+      month,
+      points,
+      reason,
+    });
+  }
 
   const update: Record<string, any> = {
     points: newTotal,
@@ -211,11 +223,27 @@ export async function awardDailyLoginPoint(playerId: string): Promise<boolean> {
   if (localStorage.getItem(lastLoginKey)) return false;
 
   localStorage.setItem(lastLoginKey, '1');
-  await addMonthlyPoints(playerId, 1, 'login_days');
+  await addMonthlyPoints(playerId, 1, 'login_days', 'Daily login');
   return true;
 }
 
 /** Deduct points for forfeiting */
 export async function deductForfeitPoints(playerId: string): Promise<void> {
-  await addMonthlyPoints(playerId, -2, 'forfeits');
+  await addMonthlyPoints(playerId, -2, 'forfeits', 'Forfeited a game');
+}
+
+/** Get a player's point log for the current month */
+export async function getPointLog(playerId: string, month?: string): Promise<Array<{
+  points: number;
+  reason: string;
+  created_at: string;
+}>> {
+  const m = month || getCurrentMonth();
+  const { data } = await supabase
+    .from('monthly_point_log')
+    .select('points, reason, created_at')
+    .eq('player_id', playerId)
+    .eq('month', m)
+    .order('created_at', { ascending: false });
+  return data || [];
 }

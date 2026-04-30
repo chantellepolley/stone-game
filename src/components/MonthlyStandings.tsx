@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getMonthlyStandings, getCurrentMonth, getTimeUntilMonthEnd, getTimeUntilCompetitionStart, hasCompetitionStarted, formatMonthName } from '../lib/monthlyPoints';
+import { getMonthlyStandings, getCurrentMonth, getTimeUntilMonthEnd, getTimeUntilCompetitionStart, hasCompetitionStarted, formatMonthName, getPointLog } from '../lib/monthlyPoints';
 import { CHAMPION_STONES } from '../utils/stoneColors';
 import { usePlayerContext } from '../contexts/PlayerContext';
 
@@ -24,6 +24,8 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState('');
   const [started, setStarted] = useState(hasCompetitionStarted());
+  const [pointLog, setPointLog] = useState<Array<{ points: number; reason: string; created_at: string }>>([]);
+  const [showPointLog, setShowPointLog] = useState(false);
 
   useEffect(() => {
     if (started) {
@@ -168,17 +170,58 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
 
         {/* My status */}
         {player && (
-          <div className="bg-black/20 rounded-lg px-4 py-2 w-full">
-            <div className="flex items-center justify-between">
-              <span className="text-white/60 text-xs">Your points:</span>
-              <span className="text-amber-400 font-heading text-sm">{myEntry?.points || 0}</span>
-            </div>
-            {myEntry?.qualified ? (
-              <p className="text-green-400 text-[10px] mt-1">Qualified! Rank #{myRank}</p>
-            ) : (
-              <p className="text-white/40 text-[10px] mt-1">
-                {15 - (myEntry?.points || 0)} more points to qualify
-              </p>
+          <div className="w-full">
+            <button
+              onClick={async () => {
+                if (!showPointLog && pointLog.length === 0) {
+                  const log = await getPointLog(player.id);
+                  setPointLog(log);
+                }
+                setShowPointLog(!showPointLog);
+              }}
+              className="bg-black/20 rounded-lg px-4 py-2 w-full cursor-pointer hover:bg-black/30 transition-colors text-left"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-white/60 text-xs">Your points:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-400 font-heading text-sm">{myEntry?.points || 0}</span>
+                  <span className="text-white/30 text-[9px]">{showPointLog ? '▲' : '▼'}</span>
+                </div>
+              </div>
+              {myEntry?.qualified ? (
+                <p className="text-green-400 text-[10px] mt-1">Qualified! Rank #{myRank}</p>
+              ) : (
+                <p className="text-white/40 text-[10px] mt-1">
+                  {15 - (myEntry?.points || 0)} more points to qualify — tap to see breakdown
+                </p>
+              )}
+            </button>
+
+            {/* Itemized point log */}
+            {showPointLog && (
+              <div className="mt-1 bg-black/15 rounded-lg p-3 max-h-[200px] overflow-y-auto">
+                {pointLog.length === 0 ? (
+                  <p className="text-white/30 text-[10px] text-center">No points earned yet this month</p>
+                ) : (
+                  <div className="space-y-1">
+                    {pointLog.map((entry, i) => {
+                      const date = new Date(entry.created_at);
+                      const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                      return (
+                        <div key={i} className="flex items-center justify-between text-[10px]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-white/30 shrink-0 w-12">{timeStr}</span>
+                            <span className="text-white/60 truncate">{entry.reason}</span>
+                          </div>
+                          <span className={`font-heading shrink-0 ml-2 ${entry.points > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {entry.points > 0 ? '+' : ''}{entry.points}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

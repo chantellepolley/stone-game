@@ -124,7 +124,7 @@ export async function awardGameBonuses(
       await addCoins(playerId, bonus.amount, bonus.label);
     }
 
-    // Award monthly competition points
+    // Award monthly competition points (each reason logged separately)
     const mode = state.gameMode || 'online';
     const wager = (state as any).wager || 0;
     const winPoints = calculateWinPoints(mode, state.aiDifficulty, wager);
@@ -134,9 +134,12 @@ export async function awardGameBonuses(
       bonuses.some(b => b.type === 'speed'),
       bonuses.some(b => b.type === 'jesters'),
     );
-    const totalMonthlyPoints = winPoints.points + bonusPoints.points;
-    if (totalMonthlyPoints > 0) {
-      await addMonthlyPoints(playerId, totalMonthlyPoints, winPoints.field);
+    // Log each point source separately for the itemized view
+    for (const item of [...winPoints.breakdown, ...bonusPoints.breakdown]) {
+      const pts = parseInt(item.match(/\+(\d+)/)?.[1] || '0');
+      if (pts > 0) {
+        await addMonthlyPoints(playerId, pts, winPoints.field, item);
+      }
     }
 
     return bonuses;
