@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { sendPushNotification } from '../hooks/usePushNotifications';
 
 export default function FeedbackPanel({ onBack }: { onBack: () => void }) {
   const { player } = usePlayerContext();
@@ -18,6 +19,22 @@ export default function FeedbackPanel({ onBack }: { onBack: () => void }) {
       type,
       message: message.trim(),
     });
+
+    // Notify admin (cpolley) of new feedback
+    const { data: admin } = await supabase
+      .from('players')
+      .select('id')
+      .ilike('username', 'cpolley')
+      .single();
+    if (admin) {
+      sendPushNotification(
+        admin.id,
+        'STONE - New Feedback!',
+        `${player?.username || 'Anonymous'} submitted ${type} feedback`,
+        'new-feedback'
+      );
+    }
+
     setSubmitting(false);
     setSubmitted(true);
     setMessage('');

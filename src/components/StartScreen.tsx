@@ -5,6 +5,7 @@ import { useCoins } from '../contexts/CoinsContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { AI_WAGER } from '../lib/coins';
 import { STONE_COLORS } from '../utils/stoneColors';
+import { supabase } from '../lib/supabase';
 import JesterCoin from './JesterCoin';
 
 interface StartScreenProps {
@@ -68,6 +69,23 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [passwordMsg, setPasswordMsg] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
+
+  // Poll for unread feedback (admin only)
+  useEffect(() => {
+    if (player?.username?.toLowerCase() !== 'cpolley') return;
+    const lastSeen = localStorage.getItem('stone_feedback_last_seen') || '2000-01-01';
+    const check = async () => {
+      const { count } = await supabase
+        .from('feedback')
+        .select('id', { count: 'exact', head: true })
+        .gt('created_at', lastSeen);
+      setPendingFeedbackCount(count || 0);
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, [player]);
   const { canInstall, isInstalled, install, showIOSInstructions, bannerDismissed, dismissBanner } = useInstallPrompt();
   const [showIOSModal, setShowIOSModal] = useState(false);
 
@@ -462,10 +480,23 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </button>
           )}
           {onShowFeedback && (
-            <button onClick={player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback ? onShowAdminFeedback : onShowFeedback}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+            <button onClick={() => {
+              if (player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback) {
+                localStorage.setItem('stone_feedback_last_seen', new Date().toISOString());
+                setPendingFeedbackCount(0);
+                onShowAdminFeedback();
+              } else {
+                onShowFeedback();
+              }
+            }}
+              className="relative px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white hover:text-amber-400 transition-colors cursor-pointer">
               Feedback
+              {pendingFeedbackCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {pendingFeedbackCount > 9 ? '9+' : pendingFeedbackCount}
+                </span>
+              )}
             </button>
           )}
         </div>
@@ -552,21 +583,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <span className="text-white/50">|</span>
             <a href="mailto:support@stonethegame.com" className="hover:text-amber-400 transition-colors">Support</a>
           </div>
-          {player?.username?.toLowerCase() === 'cpolley' && (
-            <div className="flex gap-3">
-              {onShowAdminFeedback && (
-                <button onClick={onShowAdminFeedback}
-                  className="text-white text-[9px] hover:text-amber-400 transition-colors cursor-pointer">
-                  View Feedback
-                </button>
-              )}
-              {onShowAdminPlayers && (
-                <button onClick={onShowAdminPlayers}
-                  className="text-white text-[9px] hover:text-amber-400 transition-colors cursor-pointer">
-                  View Players
-                </button>
-              )}
-            </div>
+          {player?.username?.toLowerCase() === 'cpolley' && onShowAdminPlayers && (
+            <button onClick={onShowAdminPlayers}
+              className="px-5 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         bg-[#504840] text-white border border-[#6b5f55] hover:bg-[#5e5549]
+                         cursor-pointer transition-colors shadow-md">
+              View Players
+            </button>
           )}
           <div className="text-[8px] text-white">
             &copy; 2026 Stone The Game. All rights reserved.
