@@ -268,53 +268,6 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
-      {/* New feature announcement */}
-      {showAnnouncement && player && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#504840] border-2 border-amber-600/60 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
-            <p className="text-3xl mb-3">&#x1F3C8;</p>
-            <h2 className="text-amber-400 font-heading text-lg mb-2">NFL Team Colors!</h2>
-            <p className="text-white/70 text-sm mb-4">
-              Rep your team! All 32 NFL team stone colors are now available for 50 coins each.
-            </p>
-            <div className="flex justify-center gap-2 mb-4 flex-wrap">
-              {STONE_COLORS.filter(c => c.premium && (c.price || 0) >= 50).slice(0, 6).map(c => (
-                <div key={c.id} className="w-10 h-10 rounded-full shadow-lg relative overflow-hidden"
-                  style={{
-                    backgroundImage: "url('/stone-bg.jpg')",
-                    backgroundSize: '60px',
-                    filter: 'brightness(1.3) contrast(1.1)',
-                    border: `2px solid ${c.border}`,
-                  }}>
-                  <div className="absolute inset-0 rounded-full" style={
-                    c.gradient ? { background: c.gradient } : { backgroundColor: c.tint }
-                  } />
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 justify-center">
-              <button onClick={() => {
-                localStorage.setItem('stone_seen_announcement_nfl_colors', '1');
-                setShowAnnouncement(false);
-                if (onShowColors) onShowColors();
-              }}
-                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
-                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
-                Check Them Out
-              </button>
-              <button onClick={() => {
-                localStorage.setItem('stone_seen_announcement_nfl_colors', '1');
-                setShowAnnouncement(false);
-              }}
-                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
-                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
-                Later
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={() => setShowDifficulty(false)} />
 
       {player && !editingName && (
