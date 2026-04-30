@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getMonthlyStandings, getCurrentMonth, getTimeUntilMonthEnd, getTimeUntilCompetitionStart, hasCompetitionStarted, formatMonthName } from '../lib/monthlyPoints';
+import { CHAMPION_STONES } from '../utils/stoneColors';
 import { usePlayerContext } from '../contexts/PlayerContext';
+
+const CHAMPION_CLIP = 'polygon(50% 0%, 65% 25%, 100% 15%, 75% 40%, 100% 50%, 75% 60%, 100% 85%, 65% 75%, 50% 100%, 35% 75%, 0% 85%, 25% 60%, 0% 50%, 25% 40%, 0% 15%, 35% 25%)';
 
 interface StandingEntry {
   player_id: string;
@@ -78,6 +81,30 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
             building streaks, and mastering the Jester dice. The winner receives an exclusive champion
             stone with a unique design that no one else can get — ever.
           </p>
+
+          {/* May champion stone preview */}
+          {(() => {
+            const mayStone = CHAMPION_STONES.find(s => s.championMonth === '2026-05');
+            if (!mayStone) return null;
+            return (
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-[10px] text-amber-400/60 uppercase tracking-wider font-heading">May's Champion Stone</p>
+                <div
+                  className="w-16 h-16 relative overflow-hidden"
+                  style={{
+                    backgroundImage: "url('/stone-bg.jpg')",
+                    backgroundSize: '80px',
+                    filter: 'brightness(1.3) contrast(1.1)',
+                    clipPath: CHAMPION_CLIP,
+                    boxShadow: '0 0 16px rgba(255,200,0,0.4)',
+                  }}>
+                  <div className="absolute inset-0" style={{ background: mayStone.gradient }} />
+                  <div className="absolute inset-0" style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5)' }} />
+                </div>
+                <p className="text-amber-400 text-xs font-heading">{mayStone.name}</p>
+              </div>
+            );
+          })()}
 
           {/* Countdown to start */}
           <div className="bg-black/20 rounded-lg px-5 py-3 text-center w-full">
@@ -247,11 +274,37 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
           </>
         )}
 
-        {/* Prize info */}
-        <div className="bg-black/20 rounded-lg px-4 py-2 text-center w-full">
-          <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Monthly prize</p>
-          <p className="text-white/60 text-xs mt-1">Winner receives an exclusive champion stone with a unique design that no one else can get!</p>
-        </div>
+        {/* Prize info with stone preview */}
+        {(() => {
+          const currentStone = CHAMPION_STONES.find(s => s.championMonth === month);
+          return (
+            <div className="bg-black/20 rounded-lg px-4 py-3 text-center w-full">
+              <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Monthly prize</p>
+              {currentStone && (
+                <div className="flex items-center justify-center gap-3 mt-2">
+                  <div
+                    className="w-12 h-12 relative overflow-hidden shrink-0"
+                    style={{
+                      backgroundImage: "url('/stone-bg.jpg')",
+                      backgroundSize: '60px',
+                      filter: 'brightness(1.3) contrast(1.1)',
+                      clipPath: CHAMPION_CLIP,
+                      boxShadow: '0 0 12px rgba(255,200,0,0.3)',
+                    }}>
+                    <div className="absolute inset-0" style={{ background: currentStone.gradient }} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-amber-400 text-xs font-heading">{currentStone.name}</p>
+                    <p className="text-white/40 text-[9px]">Exclusive champion stone</p>
+                  </div>
+                </div>
+              )}
+              {!currentStone && (
+                <p className="text-white/60 text-xs mt-1">Winner receives an exclusive champion stone!</p>
+              )}
+            </div>
+          );
+        })()}
 
         {onShowHallOfFame && (
           <button onClick={onShowHallOfFame}

@@ -11,7 +11,7 @@ interface ColorPickerProps {
   onBack: () => void;
 }
 
-const CHAMPION_CLIP = 'polygon(50% 0%, 95% 5%, 100% 40%, 85% 70%, 50% 100%, 15% 70%, 0% 40%, 5% 5%)';
+const CHAMPION_CLIP = 'polygon(50% 0%, 65% 25%, 100% 15%, 75% 40%, 100% 50%, 75% 60%, 100% 85%, 65% 75%, 50% 100%, 35% 75%, 0% 85%, 25% 60%, 0% 50%, 25% 40%, 0% 15%, 35% 25%)';
 
 function ColorSwatch({ color, isSelected, isOwned, onClick, locked }: { color: StoneColor; isSelected: boolean; isOwned: boolean; onClick: () => void; locked?: boolean }) {
   const isChampion = color.shape === 'sunburst';

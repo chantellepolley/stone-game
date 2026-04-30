@@ -17,8 +17,8 @@ const sizes = {
   lg: { box: 'w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 lg:w-15 lg:h-15', px: 60, icon: 38 },
 };
 
-// Shield/crest clip-path for champion stones
-const CHAMPION_CLIP = 'polygon(50% 0%, 95% 5%, 100% 40%, 85% 70%, 50% 100%, 15% 70%, 0% 40%, 5% 5%)';
+// Sunburst clip-path for champion stones (8 even points)
+const CHAMPION_CLIP = 'polygon(50% 0%, 65% 25%, 100% 15%, 75% 40%, 100% 50%, 75% 60%, 100% 85%, 65% 75%, 50% 100%, 35% 75%, 0% 85%, 25% 60%, 0% 50%, 25% 40%, 0% 15%, 35% 25%)';
 
 // Default opponent color
 const DEFAULT_P2_COLOR = 'slate';
