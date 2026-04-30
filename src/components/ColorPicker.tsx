@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { STONE_COLORS, type StoneColor } from '../utils/stoneColors';
+import { STONE_COLORS, CHAMPION_STONES, type StoneColor } from '../utils/stoneColors';
 import { useCoins } from '../contexts/CoinsContext';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { supabase } from '../lib/supabase';
@@ -11,32 +11,43 @@ interface ColorPickerProps {
   onBack: () => void;
 }
 
-function ColorSwatch({ color, isSelected, isOwned, onClick }: { color: StoneColor; isSelected: boolean; isOwned: boolean; onClick: () => void }) {
+const SUNBURST_CLIP = 'polygon(50% 0%, 63% 18%, 82% 5%, 78% 27%, 100% 30%, 87% 45%, 100% 60%, 82% 65%, 90% 85%, 70% 75%, 58% 95%, 50% 78%, 42% 95%, 30% 75%, 10% 85%, 18% 65%, 0% 60%, 13% 45%, 0% 30%, 22% 27%, 18% 5%, 37% 18%)';
+
+function ColorSwatch({ color, isSelected, isOwned, onClick, locked }: { color: StoneColor; isSelected: boolean; isOwned: boolean; onClick: () => void; locked?: boolean }) {
+  const isSunburst = color.shape === 'sunburst';
   return (
     <button
-      onClick={onClick}
-      className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all cursor-pointer relative
-        ${isSelected ? 'bg-white/10 ring-2 ring-white scale-105' : 'hover:bg-white/5'}`}
+      onClick={locked ? undefined : onClick}
+      className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all relative
+        ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+        ${isSelected ? 'bg-white/10 ring-2 ring-white scale-105' : locked ? '' : 'hover:bg-white/5'}`}
     >
       <div
-        className="w-12 h-12 rounded-full shadow-lg relative overflow-hidden"
+        className={`w-12 h-12 shadow-lg relative overflow-hidden ${isSunburst ? '' : 'rounded-full'}`}
         style={{
           backgroundImage: "url('/stone-bg.jpg')",
           backgroundSize: '80px',
           filter: 'brightness(1.3) contrast(1.1)',
-          border: `3px solid ${color.border}`,
+          border: isSunburst ? 'none' : `3px solid ${color.border}`,
+          clipPath: isSunburst ? SUNBURST_CLIP : undefined,
+          boxShadow: isSunburst ? '0 0 10px rgba(255,200,0,0.3)' : undefined,
         }}
       >
-        <div className="absolute inset-0 rounded-full" style={
+        <div className={`absolute inset-0 ${isSunburst ? '' : 'rounded-full'}`} style={
           color.gradient ? { background: color.gradient } : { backgroundColor: color.tint }
         } />
-        <div className="absolute inset-0 rounded-full"
+        <div className={`absolute inset-0 ${isSunburst ? '' : 'rounded-full'}`}
           style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08)' }} />
       </div>
       <span className="text-[10px] text-white/60">{color.name}</span>
-      {color.premium && !isOwned && !isSelected && (
+      {color.premium && !isOwned && !isSelected && !color.champion && (
         <span className="absolute -top-1 -right-1 flex items-center gap-0.5 bg-amber-600 text-white text-[7px] font-heading px-1 py-0.5 rounded-full">
           <JesterCoin size={8} /> {color.price}
+        </span>
+      )}
+      {color.champion && !isOwned && (
+        <span className="absolute -top-1 -right-1 bg-amber-600 text-white text-[6px] font-heading px-1 py-0.5 rounded-full">
+          POTM
         </span>
       )}
     </button>
@@ -167,6 +178,33 @@ export default function ColorPicker({ selectedId, onSelect, onBack }: ColorPicke
                 />
               ))}
             </div>
+          </>
+        )}
+
+        {/* Champion stones */}
+        {CHAMPION_STONES.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex-1 h-px bg-amber-400/30" />
+              <span className="text-amber-400/80 text-[10px] font-heading uppercase tracking-wider">Champion Exclusive</span>
+              <div className="flex-1 h-px bg-amber-400/30" />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {CHAMPION_STONES.map(color => {
+                const isChampionOwned = owned.includes(color.id);
+                return (
+                  <ColorSwatch
+                    key={color.id}
+                    color={color}
+                    isSelected={color.id === selectedId}
+                    isOwned={isChampionOwned}
+                    onClick={() => isChampionOwned && onSelect(color.id)}
+                    locked={!isChampionOwned}
+                  />
+                );
+              })}
+            </div>
+            <p className="text-white/30 text-[8px] text-center">Win Player of the Month to unlock these exclusive sunburst stones</p>
           </>
         )}
 

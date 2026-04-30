@@ -15,7 +15,7 @@ interface StandingEntry {
   avatar_url?: string | null;
 }
 
-export default function MonthlyStandings({ onBack }: { onBack: () => void }) {
+export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack: () => void; onShowHallOfFame?: () => void }) {
   const { player } = usePlayerContext();
   const [standings, setStandings] = useState<StandingEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,6 +176,20 @@ export default function MonthlyStandings({ onBack }: { onBack: () => void }) {
               </>
             )}
           </>
+        )}
+
+        {/* Prize info */}
+        <div className="bg-black/20 rounded-lg px-4 py-2 text-center w-full">
+          <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Monthly prize</p>
+          <p className="text-white/60 text-xs mt-1">Winner receives an exclusive champion stone with a unique sunburst shape that no one else can get!</p>
+        </div>
+
+        {onShowHallOfFame && (
+          <button onClick={onShowHallOfFame}
+            className="px-5 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                       bg-[#5e5549] text-amber-400 hover:bg-[#6b5f55] cursor-pointer transition-colors">
+            Hall of Fame
+          </button>
         )}
 
         <button onClick={onBack}

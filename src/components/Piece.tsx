@@ -17,6 +17,9 @@ const sizes = {
   lg: { box: 'w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 lg:w-15 lg:h-15', px: 60, icon: 38 },
 };
 
+// Sunburst clip-path with 12 points
+const SUNBURST_CLIP = 'polygon(50% 0%, 63% 18%, 82% 5%, 78% 27%, 100% 30%, 87% 45%, 100% 60%, 82% 65%, 90% 85%, 70% 75%, 58% 95%, 50% 78%, 42% 95%, 30% 75%, 10% 85%, 18% 65%, 0% 60%, 13% 45%, 0% 30%, 22% 27%, 18% 5%, 37% 18%)';
+
 // Default opponent color
 const DEFAULT_P2_COLOR = 'slate';
 
@@ -31,6 +34,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
     : (colorOverrides.p2ColorId || DEFAULT_P2_COLOR);
   const color = getStoneColor(colorId);
   const borderOverride = isP1 ? colorOverrides.p1BorderOverride : colorOverrides.p2BorderOverride;
+  const isSunburst = color.shape === 'sunburst';
 
   const tintOverlay = piece.crowned ? color.tintCrowned : color.tint;
 
@@ -50,42 +54,45 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
   return (
     <div
       className={`
-        ${s.box} rounded-full relative overflow-hidden
-        ${crownedStyle} ${selectedStyle} ${highlightStyle} ${clickable}
+        ${s.box} ${isSunburst ? '' : 'rounded-full'} relative overflow-hidden
+        ${isSunburst ? '' : crownedStyle} ${isSunburst ? '' : selectedStyle} ${highlightStyle} ${clickable}
         flex items-center justify-center
         transition-transform duration-150
         piece-enter
         ${className}
       `}
       onClick={onClick}
-      title={`${isP1 ? 'Sunstone' : 'Moonstone'}${piece.crowned ? ' (Crowned - Jester)' : ''}`}
+      title={`${isP1 ? 'Sunstone' : 'Moonstone'}${piece.crowned ? ' (Crowned - Jester)' : ''}${color.champion ? ' [Champion]' : ''}`}
       style={{
         backgroundImage: "url('/stone-bg.jpg')",
         backgroundSize: '100px',
         backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
-        boxShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08) inset',
+        boxShadow: isSunburst
+          ? '0 0 12px rgba(255,200,0,0.4), 0 4px 8px rgba(0,0,0,0.7)'
+          : '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08) inset',
         filter: 'brightness(1.5) contrast(1.05)',
-        border: `${borderOverride ? '3px' : '2px'} solid ${borderOverride || color.border}`,
+        border: isSunburst ? 'none' : `${borderOverride ? '3px' : '2px'} solid ${borderOverride || color.border}`,
+        clipPath: isSunburst ? SUNBURST_CLIP : undefined,
         willChange: 'transform',
         contain: 'layout style paint',
       }}
     >
       {/* Color tint overlay */}
-      <div className="absolute inset-0 rounded-full" style={
+      <div className={`absolute inset-0 ${isSunburst ? '' : 'rounded-full'}`} style={
         (piece.crowned ? color.gradientCrowned : color.gradient)
           ? { background: piece.crowned ? color.gradientCrowned : color.gradient }
           : { backgroundColor: tintOverlay }
       } />
 
       {/* Chiseled stone inner shadow */}
-      <div className="absolute inset-0 rounded-full"
+      <div className={`absolute inset-0 ${isSunburst ? '' : 'rounded-full'}`}
         style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08), inset 0 0 12px rgba(0,0,0,0.2)' }}
       />
 
       {/* Crowned: jester face */}
       {piece.crowned && (
         <img src="/jester.png" alt="Crowned"
-          className="absolute inset-0 w-full h-full rounded-full object-cover z-10" />
+          className={`absolute inset-0 w-full h-full ${isSunburst ? '' : 'rounded-full'} object-cover z-10`} />
       )}
     </div>
   );

@@ -10,6 +10,9 @@ export interface StoneColor {
   gradientCrowned?: string;
   premium?: boolean;   // requires coin purchase
   price?: number;      // coin cost to unlock
+  champion?: boolean;  // exclusive Player of the Month reward
+  championMonth?: string; // e.g. "2026-05"
+  shape?: 'circle' | 'sunburst'; // default is circle
 }
 
 export const STONE_COLORS: StoneColor[] = [
@@ -669,7 +672,56 @@ export const STONE_COLORS: StoneColor[] = [
   },
 ];
 
+// ── Champion Stones (Player of the Month exclusive rewards) ──
+export const CHAMPION_STONES: StoneColor[] = [
+  {
+    id: 'champion-2026-05',
+    name: 'Crown of May',
+    tint: 'rgba(255, 200, 50, 0.3)',
+    tintCrowned: 'rgba(255, 200, 50, 0.4)',
+    border: 'rgba(255,215,0,0.8)',
+    ring: 'ring-yellow-400',
+    pulse: 'pulse-gold',
+    gradient: 'conic-gradient(from 0deg, rgba(255,215,0,0.45) 0deg, rgba(255,140,0,0.4) 60deg, rgba(255,215,0,0.45) 120deg, rgba(255,140,0,0.4) 180deg, rgba(255,215,0,0.45) 240deg, rgba(255,140,0,0.4) 300deg, rgba(255,215,0,0.45) 360deg)',
+    gradientCrowned: 'conic-gradient(from 0deg, rgba(255,215,0,0.55) 0deg, rgba(255,140,0,0.5) 60deg, rgba(255,215,0,0.55) 120deg, rgba(255,140,0,0.5) 180deg, rgba(255,215,0,0.55) 240deg, rgba(255,140,0,0.5) 300deg, rgba(255,215,0,0.55) 360deg)',
+    champion: true,
+    championMonth: '2026-05',
+    shape: 'sunburst',
+  },
+  {
+    id: 'champion-2026-06',
+    name: 'Crown of June',
+    tint: 'rgba(0, 180, 255, 0.3)',
+    tintCrowned: 'rgba(0, 180, 255, 0.4)',
+    border: 'rgba(0,200,255,0.8)',
+    ring: 'ring-cyan-400',
+    pulse: 'pulse-blue',
+    gradient: 'conic-gradient(from 30deg, rgba(0,200,255,0.45) 0deg, rgba(0,100,200,0.4) 60deg, rgba(0,200,255,0.45) 120deg, rgba(0,100,200,0.4) 180deg, rgba(0,200,255,0.45) 240deg, rgba(0,100,200,0.4) 300deg, rgba(0,200,255,0.45) 360deg)',
+    gradientCrowned: 'conic-gradient(from 30deg, rgba(0,200,255,0.55) 0deg, rgba(0,100,200,0.5) 60deg, rgba(0,200,255,0.55) 120deg, rgba(0,100,200,0.5) 180deg, rgba(0,200,255,0.55) 240deg, rgba(0,100,200,0.5) 300deg, rgba(0,200,255,0.55) 360deg)',
+    champion: true,
+    championMonth: '2026-06',
+    shape: 'sunburst',
+  },
+  {
+    id: 'champion-2026-07',
+    name: 'Crown of July',
+    tint: 'rgba(200, 30, 30, 0.3)',
+    tintCrowned: 'rgba(200, 30, 30, 0.4)',
+    border: 'rgba(220,40,40,0.8)',
+    ring: 'ring-red-500',
+    pulse: 'pulse-gold',
+    gradient: 'conic-gradient(from 15deg, rgba(220,40,40,0.45) 0deg, rgba(180,0,60,0.4) 60deg, rgba(220,40,40,0.45) 120deg, rgba(180,0,60,0.4) 180deg, rgba(220,40,40,0.45) 240deg, rgba(180,0,60,0.4) 300deg, rgba(220,40,40,0.45) 360deg)',
+    gradientCrowned: 'conic-gradient(from 15deg, rgba(220,40,40,0.55) 0deg, rgba(180,0,60,0.5) 60deg, rgba(220,40,40,0.55) 120deg, rgba(180,0,60,0.5) 180deg, rgba(220,40,40,0.55) 240deg, rgba(180,0,60,0.5) 300deg, rgba(220,40,40,0.55) 360deg)',
+    champion: true,
+    championMonth: '2026-07',
+    shape: 'sunburst',
+  },
+];
+
 export function getStoneColor(id: string): StoneColor {
+  // Check champion stones too
+  const champ = CHAMPION_STONES.find(c => c.id === id);
+  if (champ) return champ;
   return STONE_COLORS.find(c => c.id === id) || STONE_COLORS[0];
 }
 

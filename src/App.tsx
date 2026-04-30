@@ -15,6 +15,7 @@ import Tutorial from './components/Tutorial';
 import AdminFeedback from './components/AdminFeedback';
 import AdminPlayers from './components/AdminPlayers';
 import MonthlyStandings from './components/MonthlyStandings';
+import HallOfFame from './components/HallOfFame';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { loadPlayerColor, savePlayerColor, syncColorFromDb } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
@@ -23,7 +24,7 @@ import { CoinsProvider } from './contexts/CoinsContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players' | 'monthly-standings';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players' | 'monthly-standings' | 'hall-of-fame';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -213,7 +214,8 @@ export default function App() {
       {screen === 'tutorial' && <Tutorial onFinish={() => setScreen('game')} />}
       {screen === 'admin-feedback' && <AdminFeedback onBack={() => setScreen('game')} />}
       {screen === 'admin-players' && <AdminPlayers onBack={() => setScreen('game')} />}
-      {screen === 'monthly-standings' && <MonthlyStandings onBack={() => setScreen('game')} />}
+      {screen === 'monthly-standings' && <MonthlyStandings onBack={() => setScreen('game')} onShowHallOfFame={() => setScreen('hall-of-fame')} />}
+      {screen === 'hall-of-fame' && <HallOfFame onBack={() => setScreen('monthly-standings')} />}
       {screen === 'colors' && (
         <ColorPicker
           selectedId={stoneColor}
