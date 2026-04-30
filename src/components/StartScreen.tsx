@@ -160,7 +160,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-2">
       {/* Install banner for first-time visitors */}
       {!isInstalled && !bannerDismissed && (canInstall || showIOSInstructions) && (
         <div className="fixed top-0 left-0 right-0 bg-amber-600 text-white px-4 py-2 flex items-center justify-center gap-3 z-50 shadow-lg">

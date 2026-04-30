@@ -46,6 +46,18 @@ body {
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+}
+
+/* Override fixed inset-0 to respect safe areas */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .fixed.inset-0 {
+    top: env(safe-area-inset-top);
+    bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* Dice dot patterns */
