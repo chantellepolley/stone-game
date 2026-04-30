@@ -63,6 +63,10 @@ export default function App() {
       syncColorFromDb(player.id).then(() => {
         setStoneColor(loadPlayerColor());
       });
+      // Check if previous month's POTM winner needs to be crowned
+      import('./lib/monthlyPoints').then(({ checkAndCrownWinner }) => {
+        checkAndCrownWinner().catch(() => {});
+      });
     }
   }, [player]);
 

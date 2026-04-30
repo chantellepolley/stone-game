@@ -232,6 +232,106 @@ export async function deductForfeitPoints(playerId: string): Promise<void> {
   await addMonthlyPoints(playerId, -2, 'forfeits', 'Forfeited a game');
 }
 
+/** Check if previous month needs a winner crowned, and do it automatically */
+export async function checkAndCrownWinner(): Promise<{
+  winner?: { username: string; points: number; month: string };
+  tie?: boolean;
+} | null> {
+  // Figure out the previous month
+  const now = new Date();
+  const prevDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15));
+  const prevMonth = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+  // Don't check months before the competition started (May 2026)
+  if (prevMonth < '2026-05') return null;
+
+  // Check if already crowned
+  const { data: existing } = await supabase
+    .from('champions')
+    .select('id')
+    .eq('month', prevMonth)
+    .single();
+  if (existing) return null; // already crowned
+
+  // Get standings for previous month
+  const { data: standings } = await supabase
+    .from('monthly_points')
+    .select('player_id, points, qualified')
+    .eq('month', prevMonth)
+    .eq('qualified', true)
+    .order('points', { ascending: false });
+
+  if (!standings || standings.length === 0) return null; // no qualified players
+
+  // Check for tie
+  if (standings.length >= 2 && standings[0].points === standings[1].points) {
+    // Tie — don't auto-crown, flag it for tiebreaker
+    return { tie: true };
+  }
+
+  const winnerId = standings[0].player_id;
+  const winnerPoints = standings[0].points;
+  const stoneId = `champion-${prevMonth}`;
+
+  // Crown the winner
+  await supabase.from('champions').insert({
+    player_id: winnerId,
+    month: prevMonth,
+    points: winnerPoints,
+    stone_id: stoneId,
+  });
+
+  // Award the champion stone to their owned colors
+  const { data: stats } = await supabase
+    .from('player_stats')
+    .select('owned_colors, coins')
+    .eq('player_id', winnerId)
+    .single();
+
+  const currentOwned: string[] = stats?.owned_colors || [];
+  const currentCoins: number = stats?.coins || 0;
+  if (!currentOwned.includes(stoneId)) {
+    await supabase.from('player_stats').update({
+      owned_colors: [...currentOwned, stoneId],
+      selected_color: stoneId,
+      coins: currentCoins + 500,
+    }).eq('player_id', winnerId);
+  }
+
+  // Log the coin award
+  const { addCoins } = await import('./coins');
+  // addCoins already logged via the update above, just log the transaction
+  await supabase.from('coin_transactions').insert({
+    player_id: winnerId,
+    amount: 500,
+    reason: `Player of the Month winner — ${formatMonthName(prevMonth)}!`,
+    balance_after: currentCoins + 500,
+  });
+
+  // Send push notification
+  const { sendPushNotification } = await import('../hooks/usePushNotifications');
+  const { data: winnerPlayer } = await supabase.from('players').select('username').eq('id', winnerId).single();
+  sendPushNotification(
+    winnerId,
+    'STONE — Player of the Month!',
+    `Congratulations! You won Player of the Month for ${formatMonthName(prevMonth)}! You earned an exclusive champion stone and 500 coins!`,
+    'potm-winner'
+  );
+
+  // Also notify admin
+  const { data: admin } = await supabase.from('players').select('id').ilike('username', 'cpolley').single();
+  if (admin) {
+    sendPushNotification(
+      admin.id,
+      'STONE — POTM Winner Crowned!',
+      `${winnerPlayer?.username || 'Unknown'} won Player of the Month for ${formatMonthName(prevMonth)} with ${winnerPoints} points!`,
+      'potm-crowned'
+    );
+  }
+
+  return { winner: { username: winnerPlayer?.username || 'Unknown', points: winnerPoints, month: prevMonth } };
+}
+
 /** Get a player's point log for the current month */
 export async function getPointLog(playerId: string, month?: string): Promise<Array<{
   points: number;
