@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { getCoins, addCoins, deductCoins, claimDailyBonus } from '../lib/coins';
+import { awardDailyLoginPoint } from '../lib/monthlyPoints';
 import { usePlayerContext } from './PlayerContext';
 
 interface CoinsContextValue {
@@ -46,6 +47,8 @@ export function CoinsProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       // Try to claim daily bonus
       const result = await claimDailyBonus(player.id);
+      // Award daily login point for monthly competition
+      awardDailyLoginPoint(player.id).catch(() => {});
       if (result !== null) {
         setCoins(result.balance);
         setDailyBonusAmount(result.bonus);

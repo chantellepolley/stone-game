@@ -14,6 +14,7 @@ import FeedbackPanel from './components/FeedbackPanel';
 import Tutorial from './components/Tutorial';
 import AdminFeedback from './components/AdminFeedback';
 import AdminPlayers from './components/AdminPlayers';
+import MonthlyStandings from './components/MonthlyStandings';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { loadPlayerColor, savePlayerColor, syncColorFromDb } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
@@ -22,7 +23,7 @@ import { CoinsProvider } from './contexts/CoinsContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players' | 'monthly-standings';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -212,6 +213,7 @@ export default function App() {
       {screen === 'tutorial' && <Tutorial onFinish={() => setScreen('game')} />}
       {screen === 'admin-feedback' && <AdminFeedback onBack={() => setScreen('game')} />}
       {screen === 'admin-players' && <AdminPlayers onBack={() => setScreen('game')} />}
+      {screen === 'monthly-standings' && <MonthlyStandings onBack={() => setScreen('game')} />}
       {screen === 'colors' && (
         <ColorPicker
           selectedId={stoneColor}
@@ -265,6 +267,7 @@ export default function App() {
           onShowTutorial={() => setScreen('tutorial')}
           onShowAdminFeedback={() => setScreen('admin-feedback')}
           onShowAdminPlayers={() => setScreen('admin-players')}
+          onShowMonthlyStandings={() => setScreen('monthly-standings')}
           pushPermission={pushPermission}
           onRequestPush={requestPermission}
           pushMuted={pushMuted}

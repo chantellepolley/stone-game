@@ -23,13 +23,14 @@ interface StartScreenProps {
   onShowTutorial?: () => void;
   onShowAdminFeedback?: () => void;
   onShowAdminPlayers?: () => void;
+  onShowMonthlyStandings?: () => void;
   pushPermission?: NotificationPermission;
   onRequestPush?: () => void;
   pushMuted?: boolean;
   onTogglePushMute?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, pushPermission, onRequestPush, pushMuted, onTogglePushMute }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, pushPermission, onRequestPush, pushMuted, onTogglePushMute }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
@@ -456,6 +457,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white hover:text-amber-400 transition-colors cursor-pointer">
               Leaderboard
+            </button>
+          )}
+          {onShowMonthlyStandings && (
+            <button onClick={onShowMonthlyStandings}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer">
+              Player of the Month
             </button>
           )}
           {onShowColors && (

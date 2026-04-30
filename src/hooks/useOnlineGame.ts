@@ -1018,6 +1018,14 @@ export function useOnlineGame() {
     };
     setState(forfeitState);
     broadcastState(forfeitState);
+
+    // Deduct monthly points for forfeiting
+    getMyPlayerId().then(async (myId) => {
+      if (myId) {
+        const { deductForfeitPoints } = await import('../lib/monthlyPoints');
+        await deductForfeitPoints(myId);
+      }
+    });
   }, [myPlayer, state]);
 
   const awaitingJesterChoice = state.dice.pendingDoubleJester && state.dice.remaining.length === 0 && state.phase === 'moving';

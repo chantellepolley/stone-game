@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { addCoins } from './coins';
+import { calculateWinPoints, calculateBonusPoints, addMonthlyPoints } from './monthlyPoints';
 import type { GameState, PlayerId } from '../types/game';
 
 export interface BonusResult {
@@ -121,6 +122,21 @@ export async function awardGameBonuses(
     // Award each bonus
     for (const bonus of bonuses) {
       await addCoins(playerId, bonus.amount, bonus.label);
+    }
+
+    // Award monthly competition points
+    const mode = state.gameMode || 'online';
+    const wager = (state as any).wager || 0;
+    const winPoints = calculateWinPoints(mode, state.aiDifficulty, wager);
+    const bonusPoints = calculateBonusPoints(
+      newStreak,
+      bonuses.some(b => b.type === 'perfect'),
+      bonuses.some(b => b.type === 'speed'),
+      bonuses.some(b => b.type === 'jesters'),
+    );
+    const totalMonthlyPoints = winPoints.points + bonusPoints.points;
+    if (totalMonthlyPoints > 0) {
+      await addMonthlyPoints(playerId, totalMonthlyPoints, winPoints.field);
     }
 
     return bonuses;
