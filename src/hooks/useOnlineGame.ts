@@ -20,6 +20,13 @@ function validateState(raw: any): GameState {
   const s = raw as GameState;
   if (!s.captureCount) s.captureCount = { 1: 0, 2: 0 };
   if (!s.moveLog) s.moveLog = [];
+  // Auto-advance stuck no_moves phase (happens if client disconnected before timeout)
+  if (s.phase === 'no_moves') {
+    s.currentPlayer = s.currentPlayer === 1 ? 2 : 1;
+    s.dice = { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false };
+    s.phase = 'rolling';
+    s.turnCount = (s.turnCount || 0) + 1;
+  }
   return s;
 }
 
