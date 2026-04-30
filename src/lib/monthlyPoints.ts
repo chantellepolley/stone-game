@@ -15,6 +15,25 @@ export function getTimeUntilMonthEnd(): number {
   return Math.max(0, endOfMonth.getTime() - now.getTime());
 }
 
+/** First competition starts May 1, 2026 UTC */
+const FIRST_COMPETITION = Date.UTC(2026, 4, 1, 0, 0, 0); // May = month 4 (0-indexed)
+
+/** Check if the competition has started yet */
+export function hasCompetitionStarted(): boolean {
+  return Date.now() >= FIRST_COMPETITION;
+}
+
+/** Get milliseconds until competition starts */
+export function getTimeUntilCompetitionStart(): number {
+  return Math.max(0, FIRST_COMPETITION - Date.now());
+}
+
+/** Format a YYYY-MM string to a display name */
+export function formatMonthName(month: string): string {
+  const [year, m] = month.split('-');
+  return new Date(Date.UTC(Number(year), Number(m) - 1, 15)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
 /** Ensure a row exists for this player+month, return current points */
 async function ensureRow(playerId: string, month: string): Promise<number> {
   const { data } = await supabase

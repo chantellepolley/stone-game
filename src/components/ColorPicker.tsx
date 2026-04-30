@@ -11,10 +11,10 @@ interface ColorPickerProps {
   onBack: () => void;
 }
 
-const SUNBURST_CLIP = 'polygon(50% 0%, 63% 18%, 82% 5%, 78% 27%, 100% 30%, 87% 45%, 100% 60%, 82% 65%, 90% 85%, 70% 75%, 58% 95%, 50% 78%, 42% 95%, 30% 75%, 10% 85%, 18% 65%, 0% 60%, 13% 45%, 0% 30%, 22% 27%, 18% 5%, 37% 18%)';
+const CHAMPION_CLIP = 'polygon(50% 0%, 95% 5%, 100% 40%, 85% 70%, 50% 100%, 15% 70%, 0% 40%, 5% 5%)';
 
 function ColorSwatch({ color, isSelected, isOwned, onClick, locked }: { color: StoneColor; isSelected: boolean; isOwned: boolean; onClick: () => void; locked?: boolean }) {
-  const isSunburst = color.shape === 'sunburst';
+  const isChampion = color.shape === 'sunburst';
   return (
     <button
       onClick={locked ? undefined : onClick}
@@ -23,20 +23,20 @@ function ColorSwatch({ color, isSelected, isOwned, onClick, locked }: { color: S
         ${isSelected ? 'bg-white/10 ring-2 ring-white scale-105' : locked ? '' : 'hover:bg-white/5'}`}
     >
       <div
-        className={`w-12 h-12 shadow-lg relative overflow-hidden ${isSunburst ? '' : 'rounded-full'}`}
+        className={`w-12 h-12 shadow-lg relative overflow-hidden ${isChampion ? '' : 'rounded-full'}`}
         style={{
           backgroundImage: "url('/stone-bg.jpg')",
           backgroundSize: '80px',
           filter: 'brightness(1.3) contrast(1.1)',
-          border: isSunburst ? 'none' : `3px solid ${color.border}`,
-          clipPath: isSunburst ? SUNBURST_CLIP : undefined,
-          boxShadow: isSunburst ? '0 0 10px rgba(255,200,0,0.3)' : undefined,
+          border: isChampion ? 'none' : `3px solid ${color.border}`,
+          clipPath: isChampion ? CHAMPION_CLIP : undefined,
+          boxShadow: isChampion ? '0 0 10px rgba(255,200,0,0.3)' : undefined,
         }}
       >
-        <div className={`absolute inset-0 ${isSunburst ? '' : 'rounded-full'}`} style={
+        <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`} style={
           color.gradient ? { background: color.gradient } : { backgroundColor: color.tint }
         } />
-        <div className={`absolute inset-0 ${isSunburst ? '' : 'rounded-full'}`}
+        <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`}
           style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08)' }} />
       </div>
       <span className="text-[10px] text-white/60">{color.name}</span>
@@ -204,7 +204,7 @@ export default function ColorPicker({ selectedId, onSelect, onBack }: ColorPicke
                 );
               })}
             </div>
-            <p className="text-white/30 text-[8px] text-center">Win Player of the Month to unlock these exclusive sunburst stones</p>
+            <p className="text-white/30 text-[8px] text-center">Win Player of the Month to unlock these exclusive champion stones</p>
           </>
         )}
 

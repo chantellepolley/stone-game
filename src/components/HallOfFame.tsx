@@ -79,7 +79,7 @@ export default function HallOfFame({ onBack }: { onBack: () => void }) {
                       backgroundImage: "url('/stone-bg.jpg')",
                       backgroundSize: '60px',
                       filter: 'brightness(1.3) contrast(1.1)',
-                      clipPath: 'polygon(50% 0%, 63% 18%, 82% 5%, 78% 27%, 100% 30%, 87% 45%, 100% 60%, 82% 65%, 90% 85%, 70% 75%, 58% 95%, 50% 78%, 42% 95%, 30% 75%, 10% 85%, 18% 65%, 0% 60%, 13% 45%, 0% 30%, 22% 27%, 18% 5%, 37% 18%)',
+                      clipPath: 'polygon(50% 0%, 95% 5%, 100% 40%, 85% 70%, 50% 100%, 15% 70%, 0% 40%, 5% 5%)',
                       boxShadow: '0 0 12px rgba(255,200,0,0.4)',
                     }}>
                     <div className="absolute inset-0" style={

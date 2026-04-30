@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getMonthlyStandings, getCurrentMonth, getTimeUntilMonthEnd } from '../lib/monthlyPoints';
+import { getMonthlyStandings, getCurrentMonth, getTimeUntilMonthEnd, getTimeUntilCompetitionStart, hasCompetitionStarted, formatMonthName } from '../lib/monthlyPoints';
 import { usePlayerContext } from '../contexts/PlayerContext';
 
 interface StandingEntry {
@@ -20,24 +20,32 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
   const [standings, setStandings] = useState<StandingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdown, setCountdown] = useState('');
+  const [started, setStarted] = useState(hasCompetitionStarted());
 
   useEffect(() => {
-    getMonthlyStandings().then(data => {
-      setStandings(data);
+    if (started) {
+      getMonthlyStandings().then(data => {
+        setStandings(data);
+        setLoading(false);
+      });
+    } else {
       setLoading(false);
-    });
-  }, []);
+    }
+  }, [started]);
 
-  // Countdown timer to month end (UTC)
+  // Countdown timer
   useEffect(() => {
     const tick = () => {
-      const ms = getTimeUntilMonthEnd();
+      const isStarted = hasCompetitionStarted();
+      setStarted(isStarted);
+
+      const ms = isStarted ? getTimeUntilMonthEnd() : getTimeUntilCompetitionStart();
       const days = Math.floor(ms / 86400000);
       const hours = Math.floor((ms % 86400000) / 3600000);
       const mins = Math.floor((ms % 3600000) / 60000);
       const secs = Math.floor((ms % 60000) / 1000);
       if (days > 0) {
-        setCountdown(`${days}d ${hours}h ${mins}m`);
+        setCountdown(`${days}d ${hours}h ${mins}m ${secs}s`);
       } else {
         setCountdown(`${hours}h ${mins}m ${secs}s`);
       }
@@ -48,11 +56,72 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
   }, []);
 
   const month = getCurrentMonth();
-  const monthName = new Date(month + '-01').toLocaleString('en-US', { month: 'long', year: 'numeric' });
   const qualifiedEntries = standings.filter(s => s.qualified);
   const unqualifiedEntries = standings.filter(s => !s.qualified && s.points > 0);
   const myEntry = standings.find(s => s.player_id === player?.id);
   const myRank = qualifiedEntries.findIndex(s => s.player_id === player?.id) + 1;
+
+  // Pre-competition view
+  if (!started) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center gap-4 px-4 py-4">
+        <img src="/logo.png" alt="STONE" className="h-24 sm:h-32 lg:h-40 object-contain cursor-pointer shrink-0" onClick={onBack} />
+
+        <div className="flex flex-col items-center gap-5 bg-[#504840] border-2 border-amber-600/40 rounded-xl p-6 sm:p-8 shadow-lg max-w-md w-full">
+          <div className="text-center">
+            <p className="text-amber-400 font-heading text-xl">Player of the Month</p>
+            <p className="text-white/70 text-sm mt-2">Introducing the Player of the Month competition!</p>
+          </div>
+
+          <p className="text-white/50 text-xs text-center leading-relaxed">
+            Compete each month for the title of STONE's top player. Earn points by winning games,
+            building streaks, and mastering the Jester dice. The winner receives an exclusive champion
+            stone with a unique design that no one else can get — ever.
+          </p>
+
+          {/* Countdown to start */}
+          <div className="bg-black/20 rounded-lg px-5 py-3 text-center w-full">
+            <p className="text-[10px] text-amber-400/60 uppercase tracking-wider font-heading">First competition begins</p>
+            <p className="text-white font-heading text-lg mt-1">{countdown}</p>
+            <p className="text-[9px] text-white/30 mt-1">May 1, 2026 at 12:00 AM UTC</p>
+          </div>
+
+          {/* How points work */}
+          <div className="w-full">
+            <p className="text-amber-400/60 text-[10px] font-heading uppercase tracking-wider text-center mb-2">How to earn points</p>
+            <div className="bg-black/20 rounded-lg p-3 text-[9px] text-white/50 space-y-1">
+              <p><span className="text-white/70">Online win:</span> +3 pts (+1 wagered, +1 at 25, +1 at 50, +2 at 100)</p>
+              <p><span className="text-white/70">Expert AI win:</span> +2 pts</p>
+              <p><span className="text-white/70">Hard AI win:</span> +1 pt</p>
+              <p><span className="text-white/70">Win streak 3/5/10:</span> +2/+5/+10 pts</p>
+              <p><span className="text-white/70">Perfect game:</span> +3 pts</p>
+              <p><span className="text-white/70">Speed win:</span> +2 pts</p>
+              <p><span className="text-white/70">Jester master:</span> +1 pt</p>
+              <p><span className="text-white/70">Daily login:</span> +1 pt</p>
+              <p><span className="text-red-400/70">Forfeit:</span> -2 pts</p>
+              <p className="text-white/30 mt-2">Qualify at 15 points. Easy/Medium AI wins = 0 pts.</p>
+            </div>
+          </div>
+
+          {onShowHallOfFame && (
+            <button onClick={onShowHallOfFame}
+              className="px-5 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         bg-[#5e5549] text-amber-400 hover:bg-[#6b5f55] cursor-pointer transition-colors">
+              Hall of Fame
+            </button>
+          )}
+
+          <button onClick={onBack}
+            className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer shrink-0">
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Active competition view
+  const monthName = formatMonthName(month);
 
   return (
     <div className="h-screen flex flex-col items-center justify-center gap-4 px-4 py-4">
@@ -181,7 +250,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
         {/* Prize info */}
         <div className="bg-black/20 rounded-lg px-4 py-2 text-center w-full">
           <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Monthly prize</p>
-          <p className="text-white/60 text-xs mt-1">Winner receives an exclusive champion stone with a unique sunburst shape that no one else can get!</p>
+          <p className="text-white/60 text-xs mt-1">Winner receives an exclusive champion stone with a unique design that no one else can get!</p>
         </div>
 
         {onShowHallOfFame && (
