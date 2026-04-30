@@ -60,7 +60,7 @@ export async function addMonthlyPoints(
       .eq('month', month)
       .single();
     if (row) {
-      update[field] = (row[field] || 0) + (field === 'forfeits' ? 1 : 1);
+      update[field] = ((row as any)[field] || 0) + 1;
     }
   }
 
@@ -188,7 +188,6 @@ export async function awardDailyLoginPoint(playerId: string): Promise<boolean> {
 
   // Check if already awarded today (UTC)
   const today = new Date().toISOString().slice(0, 10);
-  const lastUpdate = data.updated_at?.slice(0, 10);
   const lastLoginKey = `stone_potm_login_${month}_${today}`;
   if (localStorage.getItem(lastLoginKey)) return false;
 
