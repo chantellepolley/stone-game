@@ -4,7 +4,7 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { AI_WAGER } from '../lib/coins';
-import { STONE_COLORS } from '../utils/stoneColors';
+
 import { supabase } from '../lib/supabase';
 import JesterCoin from './JesterCoin';
 
