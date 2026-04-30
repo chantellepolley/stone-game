@@ -802,6 +802,7 @@ export function useOnlineGame() {
             turnCount: prev.turnCount + 1,
           };
           broadcastState(switched);
+          saveGameState(switched);
           return switched;
         });
       }, 3500);
