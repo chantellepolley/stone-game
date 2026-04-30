@@ -59,13 +59,24 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     if (!player) return;
     const load = async () => {
       // Fetch games where this player is p1 or p2 (active + recent completed)
-      const { data } = await supabase
-        .from('games')
-        .select('id, room_code, player1_id, player2_id, status, state, updated_at, mode, winner_id, wager')
-        .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
-        .in('status', ['active', 'completed'])
-        .order('updated_at', { ascending: false })
-        .limit(50);
+      // Fetch active and completed games separately — active needs state, completed doesn't
+      const [{ data: activeData }, { data: completedData }] = await Promise.all([
+        supabase
+          .from('games')
+          .select('id, room_code, player1_id, player2_id, status, state, updated_at, mode, winner_id, wager')
+          .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
+          .eq('status', 'active')
+          .order('updated_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('games')
+          .select('id, room_code, player1_id, player2_id, status, updated_at, mode, winner_id, wager')
+          .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
+          .eq('status', 'completed')
+          .order('updated_at', { ascending: false })
+          .limit(30),
+      ]);
+      const data = [...(activeData || []), ...(completedData || [])];
 
       if (!data) { setLoading(false); return; }
 
@@ -87,7 +98,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
       const rows: GameRow[] = data.map(g => {
         const myPlayer = g.player1_id === player.id ? 1 : 2;
         const opponentId = myPlayer === 1 ? g.player2_id : g.player1_id;
-        const currentPlayer = (g.state as any)?.currentPlayer || 1;
+        const currentPlayer = (g as any).state?.currentPlayer || 1;
         const mode = g.mode || 'online';
         const isAI = mode === 'ai';
         const isLocal = mode === 'local';
@@ -97,9 +108,9 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           if (g.winner_id === player.id) winnerLabel = 'You won';
           else if (g.winner_id) winnerLabel = 'You lost';
           else {
-            // No winner_id — check if game ended naturally (state.winner) or was manually ended
-            const statePhase = (g.state as any)?.phase;
-            const stateWinner = (g.state as any)?.winner;
+            // No winner_id — check if game ended naturally or was manually ended
+            const statePhase = (g as any).state?.phase;
+            const stateWinner = (g as any).state?.winner;
             if (statePhase === 'game_over' && stateWinner === myPlayer) winnerLabel = 'You won';
             else if (statePhase === 'game_over' && stateWinner) winnerLabel = 'You lost';
             else winnerLabel = 'Ended';
@@ -115,10 +126,10 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           mode,
           updated_at: g.updated_at,
           my_player: myPlayer as 1 | 2,
-          opponent_name: isAI ? `Computer (${((g.state as any)?.aiDifficulty || 'medium').charAt(0).toUpperCase() + ((g.state as any)?.aiDifficulty || 'medium').slice(1)})` : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Waiting...'),
+          opponent_name: isAI ? `Computer (${(((g as any).state?.aiDifficulty) || 'medium').charAt(0).toUpperCase() + (((g as any).state?.aiDifficulty) || 'medium').slice(1)})` : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Waiting...'),
           is_my_turn: g.status !== 'completed' && currentPlayer === myPlayer,
           winner_label: winnerLabel,
-          wager: isAI ? (AI_WAGER[(g.state as any)?.aiDifficulty as AIDifficulty] || 0) : (g.wager || 0),
+          wager: isAI ? (AI_WAGER[((g as any).state?.aiDifficulty) as AIDifficulty] || 0) : (g.wager || 0),
         };
       });
 
