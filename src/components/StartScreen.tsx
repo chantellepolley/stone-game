@@ -38,7 +38,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [showCoinRules, setShowCoinRules] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [refCopied, setRefCopied] = useState(false);
-  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(() => {
+    // Only show for cpolley for now (admin preview)
+    const seen = localStorage.getItem('stone_seen_announcement_potm');
+    if (seen) return false;
+    return true;
+  });
+  const [potmCountdown, setPotmCountdown] = useState('');
   const [bonusCountdown, setBonusCountdown] = useState('');
 
   // Countdown to next daily bonus (midnight local time)
@@ -60,6 +66,28 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [dailyBonusClaimed, coins]);
+
+  // POTM countdown
+  useEffect(() => {
+    if (!showAnnouncement) return;
+    const POTM_START = Date.UTC(2026, 4, 1, 0, 0, 0);
+    const tick = () => {
+      const ms = Math.max(0, POTM_START - Date.now());
+      const days = Math.floor(ms / 86400000);
+      const hours = Math.floor((ms % 86400000) / 3600000);
+      const mins = Math.floor((ms % 3600000) / 60000);
+      const secs = Math.floor((ms % 60000) / 1000);
+      if (days > 0) {
+        setPotmCountdown(`${days}d ${hours}h ${mins}m ${secs}s`);
+      } else {
+        setPotmCountdown(`${hours}h ${mins}m ${secs}s`);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [showAnnouncement]);
+
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [savingName, setSavingName] = useState(false);
@@ -174,6 +202,53 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                          bg-amber-600 text-white hover:bg-amber-500 cursor-pointer shadow-lg">
               Got it
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* POTM Announcement — admin only for now */}
+      {showAnnouncement && player && player.username?.toLowerCase() === 'cpolley' && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-3xl mb-2">&#127942;</p>
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Player of the Month</h2>
+            <p className="text-white/70 text-sm mb-4">
+              The competition is here! Compete for the title of STONE's top player each month.
+              Win games, build streaks, and earn points — the winner gets an exclusive champion stone
+              and 500 coins!
+            </p>
+
+            {/* Champion stone preview */}
+            <div className="flex justify-center mb-3">
+              <img src="/champion-2026-05.png" alt="May Champion Stone" className="w-20 h-20 object-contain" />
+            </div>
+
+            {/* Countdown */}
+            <div className="bg-black/20 rounded-lg px-4 py-2 mb-4">
+              <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Competition begins</p>
+              <p className="text-white font-heading text-lg">{potmCountdown}</p>
+              <p className="text-[9px] text-white/30">May 1, 2026 at 12:00 AM UTC</p>
+            </div>
+
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_potm', '1');
+                setShowAnnouncement(false);
+                if (onShowMonthlyStandings) onShowMonthlyStandings();
+              }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
+                View Details
+              </button>
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_potm', '1');
+                setShowAnnouncement(false);
+              }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Got it
+              </button>
+            </div>
           </div>
         </div>
       )}
