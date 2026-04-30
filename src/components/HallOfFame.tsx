@@ -73,19 +73,23 @@ export default function HallOfFame({ onBack }: { onBack: () => void }) {
               return (
                 <div key={c.month} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-900/30 to-transparent border border-amber-600/30">
                   {/* Champion stone preview */}
-                  <div
-                    className="w-12 h-12 shrink-0 relative overflow-hidden"
-                    style={{
-                      backgroundImage: "url('/stone-bg.jpg')",
-                      backgroundSize: '60px',
-                      filter: 'brightness(1.3) contrast(1.1)',
-                      clipPath: 'polygon(50% 0%, 65% 25%, 100% 15%, 75% 40%, 100% 50%, 75% 60%, 100% 85%, 65% 75%, 50% 100%, 35% 75%, 0% 85%, 25% 60%, 0% 50%, 25% 40%, 0% 15%, 35% 25%)',
-                      boxShadow: '0 0 12px rgba(255,200,0,0.4)',
-                    }}>
-                    <div className="absolute inset-0" style={
-                      stone?.gradient ? { background: stone.gradient } : { backgroundColor: stone?.tint || 'rgba(255,215,0,0.3)' }
-                    } />
-                  </div>
+                  {stone?.image ? (
+                    <img src={stone.image} alt={stone.name} className="w-14 h-14 object-contain shrink-0" />
+                  ) : (
+                    <div
+                      className="w-12 h-12 shrink-0 relative overflow-hidden"
+                      style={{
+                        backgroundImage: "url('/stone-bg.jpg')",
+                        backgroundSize: '60px',
+                        filter: 'brightness(1.3) contrast(1.1)',
+                        clipPath: 'polygon(50% 0%, 65% 25%, 100% 15%, 75% 40%, 100% 50%, 75% 60%, 100% 85%, 65% 75%, 50% 100%, 35% 75%, 0% 85%, 25% 60%, 0% 50%, 25% 40%, 0% 15%, 35% 25%)',
+                        boxShadow: '0 0 12px rgba(255,200,0,0.4)',
+                      }}>
+                      <div className="absolute inset-0" style={
+                        stone?.gradient ? { background: stone.gradient } : { backgroundColor: stone?.tint || 'rgba(255,215,0,0.3)' }
+                      } />
+                    </div>
+                  )}
 
                   <div className="flex-1 min-w-0">
                     <div className="text-amber-400 font-heading text-xs uppercase tracking-wider">{formatMonth(c.month)}</div>

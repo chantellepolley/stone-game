@@ -13,6 +13,7 @@ export interface StoneColor {
   champion?: boolean;  // exclusive Player of the Month reward
   championMonth?: string; // e.g. "2026-05"
   shape?: 'circle' | 'sunburst'; // default is circle
+  image?: string;      // custom image URL (replaces all CSS rendering)
 }
 
 export const STONE_COLORS: StoneColor[] = [
@@ -682,11 +683,12 @@ export const CHAMPION_STONES: StoneColor[] = [
     border: 'rgba(255,215,0,0.8)',
     ring: 'ring-yellow-400',
     pulse: 'pulse-gold',
-    gradient: 'conic-gradient(from 0deg, rgba(255,215,0,0.45) 0deg, rgba(255,140,0,0.4) 60deg, rgba(255,215,0,0.45) 120deg, rgba(255,140,0,0.4) 180deg, rgba(255,215,0,0.45) 240deg, rgba(255,140,0,0.4) 300deg, rgba(255,215,0,0.45) 360deg)',
-    gradientCrowned: 'conic-gradient(from 0deg, rgba(255,215,0,0.55) 0deg, rgba(255,140,0,0.5) 60deg, rgba(255,215,0,0.55) 120deg, rgba(255,140,0,0.5) 180deg, rgba(255,215,0,0.55) 240deg, rgba(255,140,0,0.5) 300deg, rgba(255,215,0,0.55) 360deg)',
+    gradient: 'none',
+    gradientCrowned: 'none',
     champion: true,
     championMonth: '2026-05',
     shape: 'sunburst',
+    image: '/champion-2026-05.png',
   },
   {
     id: 'champion-2026-06',

@@ -35,6 +35,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
   const color = getStoneColor(colorId);
   const borderOverride = isP1 ? colorOverrides.p1BorderOverride : colorOverrides.p2BorderOverride;
   const isChampion = color.shape === 'sunburst';
+  const hasImage = !!color.image;
 
   const tintOverlay = piece.crowned ? color.tintCrowned : color.tint;
 
@@ -63,7 +64,9 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
       `}
       onClick={onClick}
       title={`${isP1 ? 'Sunstone' : 'Moonstone'}${piece.crowned ? ' (Crowned - Jester)' : ''}${color.champion ? ' [Champion]' : ''}`}
-      style={{
+      style={hasImage ? {
+        willChange: 'transform',
+      } : {
         backgroundImage: "url('/stone-bg.jpg')",
         backgroundSize: '100px',
         backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
@@ -77,17 +80,28 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
         contain: 'layout style paint',
       }}
     >
-      {/* Color tint overlay */}
-      <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`} style={
-        (piece.crowned ? color.gradientCrowned : color.gradient)
-          ? { background: piece.crowned ? color.gradientCrowned : color.gradient }
-          : { backgroundColor: tintOverlay }
-      } />
+      {/* Image-based champion stone */}
+      {hasImage && (
+        <img src={color.image} alt={color.name}
+          className="absolute inset-0 w-full h-full object-contain z-0" />
+      )}
 
-      {/* Chiseled stone inner shadow */}
-      <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`}
-        style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08), inset 0 0 12px rgba(0,0,0,0.2)' }}
-      />
+      {/* Standard stone rendering */}
+      {!hasImage && (
+        <>
+          {/* Color tint overlay */}
+          <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`} style={
+            (piece.crowned ? color.gradientCrowned : color.gradient)
+              ? { background: piece.crowned ? color.gradientCrowned : color.gradient }
+              : { backgroundColor: tintOverlay }
+          } />
+
+          {/* Chiseled stone inner shadow */}
+          <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`}
+            style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08), inset 0 0 12px rgba(0,0,0,0.2)' }}
+          />
+        </>
+      )}
 
       {/* Crowned: jester face */}
       {piece.crowned && (

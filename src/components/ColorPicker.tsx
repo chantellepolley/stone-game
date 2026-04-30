@@ -22,23 +22,27 @@ function ColorSwatch({ color, isSelected, isOwned, onClick, locked }: { color: S
         ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
         ${isSelected ? 'bg-white/10 ring-2 ring-white scale-105' : locked ? '' : 'hover:bg-white/5'}`}
     >
-      <div
-        className={`w-12 h-12 shadow-lg relative overflow-hidden ${isChampion ? '' : 'rounded-full'}`}
-        style={{
-          backgroundImage: "url('/stone-bg.jpg')",
-          backgroundSize: '80px',
-          filter: 'brightness(1.3) contrast(1.1)',
-          border: isChampion ? 'none' : `3px solid ${color.border}`,
-          clipPath: isChampion ? CHAMPION_CLIP : undefined,
-          boxShadow: isChampion ? '0 0 10px rgba(255,200,0,0.3)' : undefined,
-        }}
-      >
-        <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`} style={
-          color.gradient ? { background: color.gradient } : { backgroundColor: color.tint }
-        } />
-        <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`}
-          style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08)' }} />
-      </div>
+      {color.image ? (
+        <img src={color.image} alt={color.name} className="w-12 h-12 object-contain" />
+      ) : (
+        <div
+          className={`w-12 h-12 shadow-lg relative overflow-hidden ${isChampion ? '' : 'rounded-full'}`}
+          style={{
+            backgroundImage: "url('/stone-bg.jpg')",
+            backgroundSize: '80px',
+            filter: 'brightness(1.3) contrast(1.1)',
+            border: isChampion ? 'none' : `3px solid ${color.border}`,
+            clipPath: isChampion ? CHAMPION_CLIP : undefined,
+            boxShadow: isChampion ? '0 0 10px rgba(255,200,0,0.3)' : undefined,
+          }}
+        >
+          <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`} style={
+            color.gradient ? { background: color.gradient } : { backgroundColor: color.tint }
+          } />
+          <div className={`absolute inset-0 ${isChampion ? '' : 'rounded-full'}`}
+            style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.08)' }} />
+        </div>
+      )}
       <span className="text-[10px] text-white/60">{color.name}</span>
       {color.premium && !isOwned && !isSelected && !color.champion && (
         <span className="absolute -top-1 -right-1 flex items-center gap-0.5 bg-amber-600 text-white text-[7px] font-heading px-1 py-0.5 rounded-full">

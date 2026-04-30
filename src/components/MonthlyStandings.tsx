@@ -91,18 +91,21 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
             return (
               <div className="flex flex-col items-center gap-2">
                 <p className="text-[10px] text-amber-400/60 uppercase tracking-wider font-heading">May's Champion Stone</p>
-                <div
-                  className="w-16 h-16 relative overflow-hidden"
-                  style={{
-                    backgroundImage: "url('/stone-bg.jpg')",
-                    backgroundSize: '80px',
-                    filter: 'brightness(1.3) contrast(1.1)',
-                    clipPath: CHAMPION_CLIP,
-                    boxShadow: '0 0 16px rgba(255,200,0,0.4)',
-                  }}>
-                  <div className="absolute inset-0" style={{ background: mayStone.gradient }} />
-                  <div className="absolute inset-0" style={{ boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.5)' }} />
-                </div>
+                {mayStone.image ? (
+                  <img src={mayStone.image} alt={mayStone.name} className="w-20 h-20 object-contain" />
+                ) : (
+                  <div
+                    className="w-16 h-16 relative overflow-hidden"
+                    style={{
+                      backgroundImage: "url('/stone-bg.jpg')",
+                      backgroundSize: '80px',
+                      filter: 'brightness(1.3) contrast(1.1)',
+                      clipPath: CHAMPION_CLIP,
+                      boxShadow: '0 0 16px rgba(255,200,0,0.4)',
+                    }}>
+                    <div className="absolute inset-0" style={{ background: mayStone.gradient || '' }} />
+                  </div>
+                )}
                 <p className="text-amber-400 text-xs font-heading">{mayStone.name}</p>
               </div>
             );
@@ -128,7 +131,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
               <p><span className="text-white/70">Jester master:</span> +1 pt</p>
               <p><span className="text-white/70">Daily login:</span> +1 pt</p>
               <p><span className="text-red-400/70">Forfeit:</span> -2 pts</p>
-              <p className="text-white/30 mt-2">Qualify at 15 points. Easy/Medium AI wins = 0 pts.</p>
+              <p className="text-white/30 mt-2">Qualify at 5 points. Easy/Medium AI wins = 0 pts.</p>
             </div>
           </div>
 
@@ -192,7 +195,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
                 <p className="text-green-400 text-[10px] mt-1">Qualified! Rank #{myRank}</p>
               ) : (
                 <p className="text-white/40 text-[10px] mt-1">
-                  {15 - (myEntry?.points || 0)} more points to qualify — tap to see breakdown
+                  {5 - (myEntry?.points || 0)} more points to qualify — tap to see breakdown
                 </p>
               )}
             </button>
@@ -241,7 +244,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
             <p><span className="text-white/70">Jester master:</span> +1 pt</p>
             <p><span className="text-white/70">Daily login:</span> +1 pt</p>
             <p><span className="text-red-400/70">Forfeit:</span> -2 pts</p>
-            <p className="text-white/30 mt-2">Qualify at 15 points. Easy/Medium AI wins = 0 pts.</p>
+            <p className="text-white/30 mt-2">Qualify at 5 points. Easy/Medium AI wins = 0 pts.</p>
           </div>
         </details>
 
@@ -293,7 +296,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
               <>
                 <div className="flex items-center gap-2 w-full">
                   <div className="flex-1 h-px bg-white/10" />
-                  <span className="text-white/30 text-[9px]">Not yet qualified (need 15 pts)</span>
+                  <span className="text-white/30 text-[9px]">Not yet qualified (need 5 pts)</span>
                   <div className="flex-1 h-px bg-white/10" />
                 </div>
                 <div className="w-full space-y-1">
@@ -325,17 +328,21 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
               <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Monthly prize</p>
               {currentStone && (
                 <div className="flex items-center justify-center gap-3 mt-2">
-                  <div
-                    className="w-12 h-12 relative overflow-hidden shrink-0"
-                    style={{
-                      backgroundImage: "url('/stone-bg.jpg')",
-                      backgroundSize: '60px',
-                      filter: 'brightness(1.3) contrast(1.1)',
-                      clipPath: CHAMPION_CLIP,
-                      boxShadow: '0 0 12px rgba(255,200,0,0.3)',
-                    }}>
-                    <div className="absolute inset-0" style={{ background: currentStone.gradient }} />
-                  </div>
+                  {currentStone.image ? (
+                    <img src={currentStone.image} alt={currentStone.name} className="w-14 h-14 object-contain shrink-0" />
+                  ) : (
+                    <div
+                      className="w-12 h-12 relative overflow-hidden shrink-0"
+                      style={{
+                        backgroundImage: "url('/stone-bg.jpg')",
+                        backgroundSize: '60px',
+                        filter: 'brightness(1.3) contrast(1.1)',
+                        clipPath: CHAMPION_CLIP,
+                        boxShadow: '0 0 12px rgba(255,200,0,0.3)',
+                      }}>
+                      <div className="absolute inset-0" style={{ background: currentStone.gradient || '' }} />
+                    </div>
+                  )}
                   <div className="text-left">
                     <p className="text-amber-400 text-xs font-heading">{currentStone.name}</p>
                     <p className="text-white/40 text-[9px]">Exclusive champion stone</p>

@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const QUALIFY_THRESHOLD = 15;
+const QUALIFY_THRESHOLD = 5;
 
 /** Get current month key in YYYY-MM format (UTC) */
 export function getCurrentMonth(): string {
