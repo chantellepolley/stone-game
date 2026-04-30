@@ -69,7 +69,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
   // Pre-competition view
   if (!started) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-4 px-4 py-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 py-4">
         <img src="/logo.png" alt="STONE" className="h-24 sm:h-32 lg:h-40 object-contain cursor-pointer shrink-0" onClick={onBack} />
 
         <div className="flex flex-col items-center gap-5 bg-[#504840] border-2 border-amber-600/40 rounded-xl p-6 sm:p-8 shadow-lg max-w-md w-full">
@@ -156,7 +156,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
   const monthName = formatMonthName(month);
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center gap-4 px-4 py-4">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 py-4">
       <img src="/logo.png" alt="STONE" className="h-24 sm:h-32 lg:h-40 object-contain cursor-pointer shrink-0" onClick={onBack} />
 
       <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-4 sm:p-6 shadow-lg max-w-md w-full overflow-y-auto max-h-[75vh]">

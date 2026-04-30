@@ -17,7 +17,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-screen flex flex-col items-center justify-center gap-6 px-4"
+        <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4"
           style={{ background: '#302b26' }}>
           <img src="/logo.png" alt="STONE" className="h-32 object-contain" />
           <div className="flex flex-col items-center gap-3 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full text-center">

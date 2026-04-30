@@ -149,7 +149,7 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4">
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
 
       <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-md w-full max-h-[60vh]">

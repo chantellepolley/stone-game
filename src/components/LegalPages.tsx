@@ -4,7 +4,7 @@ interface LegalPageProps {
 
 export function TermsPage({ onBack }: LegalPageProps) {
   return (
-    <div className="h-screen flex flex-col items-center py-8 px-4 overflow-y-auto">
+    <div className="min-h-screen flex flex-col items-center py-8 px-4 overflow-y-auto">
       <img src="/logo.png" alt="STONE" className="h-24 object-contain cursor-pointer mb-6" onClick={onBack} />
       <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-lg w-full">
         <h1 className="text-white font-heading text-xl mb-4">Terms of Service</h1>
@@ -37,7 +37,7 @@ export function TermsPage({ onBack }: LegalPageProps) {
 
 export function PrivacyPage({ onBack }: LegalPageProps) {
   return (
-    <div className="h-screen flex flex-col items-center py-8 px-4 overflow-y-auto">
+    <div className="min-h-screen flex flex-col items-center py-8 px-4 overflow-y-auto">
       <img src="/logo.png" alt="STONE" className="h-24 object-contain cursor-pointer mb-6" onClick={onBack} />
       <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-lg w-full">
         <h1 className="text-white font-heading text-xl mb-4">Privacy Policy</h1>

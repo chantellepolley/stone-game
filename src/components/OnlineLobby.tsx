@@ -81,7 +81,7 @@ export default function OnlineLobby({
 
   if (onlinePhase === 'error') {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4">
         <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
           <p className="text-red-400 text-sm font-heading text-center">{error || 'Something went wrong'}</p>
@@ -101,7 +101,7 @@ export default function OnlineLobby({
 
   if (onlinePhase === 'connecting') {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4">
         <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
           <p className="text-white text-sm font-heading">Connecting to game...</p>
@@ -124,7 +124,7 @@ export default function OnlineLobby({
 
   if (onlinePhase === 'waiting') {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4">
         <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
 
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
@@ -180,7 +180,7 @@ export default function OnlineLobby({
 
   // Default: show create/join options
   return (
-    <div className="h-screen flex flex-col items-center justify-center gap-6 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-4">
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
 
       <div className="flex flex-col items-center gap-6 max-w-sm w-full">

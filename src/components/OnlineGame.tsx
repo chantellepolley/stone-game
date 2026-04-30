@@ -98,13 +98,20 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   // Only count unread messages from opponent (not your own)
   const opponentMsgCount = chatMessages.filter(m => !m.isMine).length;
   const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState<number | null>(null);
-  // Initialize to current count on first load so old messages don't show as unread
-  const chatUnread = lastSeenOpponentCount === null ? 0 : chatOpen ? 0 : opponentMsgCount - lastSeenOpponentCount;
+  // Load last seen count from localStorage for this game
   useEffect(() => {
-    if (onlinePhase === 'playing' && lastSeenOpponentCount === null && chatMessages.length > 0) {
-      setLastSeenOpponentCount(opponentMsgCount);
+    if (onlinePhase === 'playing' && roomCode && lastSeenOpponentCount === null) {
+      const saved = localStorage.getItem(`stone_chat_seen_${roomCode}`);
+      setLastSeenOpponentCount(saved ? parseInt(saved) : 0);
     }
-  }, [onlinePhase, chatMessages.length, lastSeenOpponentCount, opponentMsgCount]);
+  }, [onlinePhase, roomCode, lastSeenOpponentCount]);
+  // Save last seen count when chat is opened
+  useEffect(() => {
+    if (chatOpen && roomCode && opponentMsgCount > 0) {
+      localStorage.setItem(`stone_chat_seen_${roomCode}`, String(opponentMsgCount));
+    }
+  }, [chatOpen, roomCode, opponentMsgCount]);
+  const chatUnread = lastSeenOpponentCount === null ? 0 : chatOpen ? 0 : Math.max(0, opponentMsgCount - lastSeenOpponentCount);
 
   // Replay opponent's last move animation when entering the game
   const recapShown = useRef(false);
@@ -404,7 +411,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                      bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md min-w-[100px]">
           Menu
         </button>
-        <button onClick={() => { setChatOpen(v => !v); setShowMobileLog(false); setShowMobileMenu(false); setLastSeenOpponentCount(opponentMsgCount); }}
+        <button onClick={() => { setChatOpen(v => !v); setShowMobileLog(false); setShowMobileMenu(false); setLastSeenOpponentCount(opponentMsgCount); if (roomCode) localStorage.setItem(`stone_chat_seen_${roomCode}`, String(opponentMsgCount)); }}
           className="relative px-6 py-2.5 rounded-xl text-xs font-heading uppercase tracking-wider
                      bg-amber-600 text-white border border-amber-500 cursor-pointer shadow-md min-w-[100px]
                      hover:bg-amber-500 transition-colors">
@@ -487,7 +494,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             messages={chatMessages}
             onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
             isOpen={true}
-            onToggle={() => { setChatOpen(false); setLastSeenOpponentCount(opponentMsgCount); }}
+            onToggle={() => { setChatOpen(false); setLastSeenOpponentCount(opponentMsgCount); if (roomCode) localStorage.setItem(`stone_chat_seen_${roomCode}`, String(opponentMsgCount)); }}
           />
         </div>
       )}

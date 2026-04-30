@@ -48,7 +48,7 @@ export default function AdminFeedback({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center py-6 px-4 overflow-y-auto">
+    <div className="min-h-screen flex flex-col items-center py-6 px-4 overflow-y-auto">
       <img src="/logo.png" alt="STONE" className="h-20 sm:h-28 object-contain cursor-pointer mb-4" onClick={onBack} />
 
       <div className="flex flex-col gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-4 sm:p-6 shadow-lg max-w-2xl w-full">
