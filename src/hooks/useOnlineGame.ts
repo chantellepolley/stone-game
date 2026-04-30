@@ -253,8 +253,16 @@ export function useOnlineGame() {
           }, 500);
         } else if (payload.state) {
           const s = payload.state as GameState;
-          setState(s);
-          stateRef.current = s;
+          // Don't overwrite our state if it's our turn and we're ahead
+          // (e.g. we just rolled but opponent sent stale state from a ping/join)
+          const current = stateRef.current;
+          const isMyTurnNow = current.currentPlayer === player;
+          const incomingIsOlderTurn = s.turnCount < current.turnCount ||
+            (s.turnCount === current.turnCount && isMyTurnNow && current.phase !== 'rolling' && s.phase === 'rolling');
+          if (!incomingIsOlderTurn) {
+            setState(s);
+            stateRef.current = s;
+          }
         }
         if (!stateReceivedRef.current) {
           stateReceivedRef.current = true;
