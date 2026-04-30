@@ -179,6 +179,12 @@ export function useOnlineGame() {
 
             // Record stats for both players
             recordGameResult(state, state.winner!, game.player1_id, game.player2_id);
+
+            // Check if this was a tiebreaker game
+            const { recordTiebreakerResult } = await import('../lib/monthlyPoints');
+            const capturesP1 = state.captureCount?.[1] || 0;
+            const capturesP2 = state.captureCount?.[2] || 0;
+            recordTiebreakerResult(gameDbId.current!, winnerDbId!, capturesP1, capturesP2).catch(() => {});
           }
         })();
       }

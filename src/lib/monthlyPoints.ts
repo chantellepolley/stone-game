@@ -263,25 +263,54 @@ export async function checkAndCrownWinner(): Promise<{
 
   if (!standings || standings.length === 0) return null; // no qualified players
 
-  // Check for tie
-  if (standings.length >= 2 && standings[0].points === standings[1].points) {
-    // Tie — don't auto-crown, flag it for tiebreaker
-    return { tie: true };
+  // Check for tie at the top
+  const topScore = standings[0].points;
+  const tiedPlayers = standings.filter(s => s.points === topScore);
+
+  if (tiedPlayers.length >= 2) {
+    // Check if tiebreaker games already created
+    const { data: existingTiebreakers } = await supabase
+      .from('tiebreaker_games')
+      .select('id, status')
+      .eq('month', prevMonth);
+
+    if (!existingTiebreakers || existingTiebreakers.length === 0) {
+      // Create round-robin tiebreaker games
+      await createTiebreakerGames(prevMonth, tiedPlayers.map(p => p.player_id));
+      return { tie: true };
+    }
+
+    // Check if all tiebreaker games are done
+    const allDone = existingTiebreakers.every(t => t.status === 'completed');
+    if (!allDone) return { tie: true }; // still waiting
+
+    // All done — determine the round-robin winner
+    const tiebreakerWinner = await determineTiebreakerWinner(prevMonth);
+    if (!tiebreakerWinner) return { tie: true }; // still tied somehow
+
+    // Crown the tiebreaker winner — continue below with winnerId overridden
+    const winnerId2 = tiebreakerWinner;
+    const winnerEntry = standings.find(s => s.player_id === winnerId2);
+    if (!winnerEntry) return null;
+
+    // Use the tiebreaker winner instead of falling through
+    return await crownWinner(winnerId2, winnerEntry.points, prevMonth);
   }
 
-  const winnerId = standings[0].player_id;
-  const winnerPoints = standings[0].points;
-  const stoneId = `champion-${prevMonth}`;
+  return await crownWinner(standings[0].player_id, standings[0].points, prevMonth);
+}
 
-  // Crown the winner
+/** Crown a POTM winner — award stone, coins, hall of fame, notifications */
+async function crownWinner(winnerId: string, winnerPoints: number, month: string) {
+  const stoneId = `champion-${month}`;
+
   await supabase.from('champions').insert({
     player_id: winnerId,
-    month: prevMonth,
+    month,
     points: winnerPoints,
     stone_id: stoneId,
   });
 
-  // Award the champion stone to their owned colors
   const { data: stats } = await supabase
     .from('player_stats')
     .select('owned_colors, coins')
@@ -298,38 +327,148 @@ export async function checkAndCrownWinner(): Promise<{
     }).eq('player_id', winnerId);
   }
 
-  // Log the coin award
-  const { addCoins } = await import('./coins');
-  // addCoins already logged via the update above, just log the transaction
   await supabase.from('coin_transactions').insert({
     player_id: winnerId,
     amount: 500,
-    reason: `Player of the Month winner — ${formatMonthName(prevMonth)}!`,
+    reason: `Player of the Month winner — ${formatMonthName(month)}!`,
     balance_after: currentCoins + 500,
   });
 
-  // Send push notification
   const { sendPushNotification } = await import('../hooks/usePushNotifications');
   const { data: winnerPlayer } = await supabase.from('players').select('username').eq('id', winnerId).single();
   sendPushNotification(
     winnerId,
     'STONE — Player of the Month!',
-    `Congratulations! You won Player of the Month for ${formatMonthName(prevMonth)}! You earned an exclusive champion stone and 500 coins!`,
+    `Congratulations! You won Player of the Month for ${formatMonthName(month)}! You earned an exclusive champion stone and 500 coins!`,
     'potm-winner'
   );
 
-  // Also notify admin
   const { data: admin } = await supabase.from('players').select('id').ilike('username', 'cpolley').single();
   if (admin) {
     sendPushNotification(
       admin.id,
       'STONE — POTM Winner Crowned!',
-      `${winnerPlayer?.username || 'Unknown'} won Player of the Month for ${formatMonthName(prevMonth)} with ${winnerPoints} points!`,
+      `${winnerPlayer?.username || 'Unknown'} won Player of the Month for ${formatMonthName(month)} with ${winnerPoints} points!`,
       'potm-crowned'
     );
   }
 
-  return { winner: { username: winnerPlayer?.username || 'Unknown', points: winnerPoints, month: prevMonth } };
+  return { winner: { username: winnerPlayer?.username || 'Unknown', points: winnerPoints, month } };
+}
+
+/** Create round-robin tiebreaker games between tied players */
+async function createTiebreakerGames(month: string, playerIds: string[]): Promise<void> {
+  const { sendPushNotification } = await import('../hooks/usePushNotifications');
+  const { createInitialState } = await import('../engine');
+
+  // Get player names for notifications
+  const { data: players } = await supabase.from('players').select('id, username').in('id', playerIds);
+  const nameMap: Record<string, string> = {};
+  players?.forEach(p => { nameMap[p.id] = p.username; });
+
+  // Create a game for each pair
+  for (let i = 0; i < playerIds.length; i++) {
+    for (let j = i + 1; j < playerIds.length; j++) {
+      const p1 = playerIds[i];
+      const p2 = playerIds[j];
+
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let k = 0; k < 5; k++) code += chars[Math.floor(Math.random() * chars.length)];
+
+      const initialState = { ...createInitialState(), phase: 'rolling' as const, gameMode: 'pvp' as const, currentPlayer: 1 as const };
+
+      const { data: game } = await supabase.from('games').insert({
+        room_code: code,
+        player1_id: p1,
+        player2_id: p2,
+        mode: 'online',
+        state: initialState,
+        status: 'active',
+        wager: 0,
+      }).select('id').single();
+
+      if (game) {
+        await supabase.from('tiebreaker_games').insert({
+          month,
+          game_id: game.id,
+          player1_id: p1,
+          player2_id: p2,
+        });
+      }
+    }
+  }
+
+  // Notify all tied players
+  const monthName = formatMonthName(month);
+  const tiedNames = playerIds.map(id => nameMap[id] || 'Unknown').join(', ');
+  for (const pid of playerIds) {
+    sendPushNotification(
+      pid,
+      'STONE — Tiebreaker!',
+      `You're tied for Player of the Month (${monthName})! Tiebreaker games have been created against ${tiedNames.replace(nameMap[pid] || '', '').replace(/^, |, $|, ,/g, '')}. Winner takes all!`,
+      'potm-tiebreaker'
+    );
+  }
+
+  // Notify admin
+  const { data: admin } = await supabase.from('players').select('id').ilike('username', 'cpolley').single();
+  if (admin) {
+    sendPushNotification(admin.id, 'STONE — POTM Tiebreaker!', `Tie for ${monthName}: ${tiedNames}. Tiebreaker games created.`, 'potm-tiebreaker');
+  }
+}
+
+/** Check tiebreaker results and determine winner (most wins, then total captures) */
+async function determineTiebreakerWinner(month: string): Promise<string | null> {
+  const { data: tiebreakers } = await supabase
+    .from('tiebreaker_games')
+    .select('player1_id, player2_id, winner_id, captures_p1, captures_p2')
+    .eq('month', month)
+    .eq('status', 'completed');
+
+  if (!tiebreakers || tiebreakers.length === 0) return null;
+
+  // Count wins and captures for each player
+  const stats: Record<string, { wins: number; captures: number }> = {};
+  for (const t of tiebreakers) {
+    if (!stats[t.player1_id]) stats[t.player1_id] = { wins: 0, captures: 0 };
+    if (!stats[t.player2_id]) stats[t.player2_id] = { wins: 0, captures: 0 };
+    stats[t.player1_id].captures += t.captures_p1 || 0;
+    stats[t.player2_id].captures += t.captures_p2 || 0;
+    if (t.winner_id === t.player1_id) stats[t.player1_id].wins++;
+    if (t.winner_id === t.player2_id) stats[t.player2_id].wins++;
+  }
+
+  // Sort by wins desc, then captures desc
+  const sorted = Object.entries(stats).sort((a, b) => {
+    if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
+    return b[1].captures - a[1].captures;
+  });
+
+  if (sorted.length === 0) return null;
+  // Only crown if there's a clear winner (not still tied on wins AND captures)
+  if (sorted.length >= 2 && sorted[0][1].wins === sorted[1][1].wins && sorted[0][1].captures === sorted[1][1].captures) {
+    return null; // still tied — extremely rare, admin handles manually
+  }
+
+  return sorted[0][0];
+}
+
+/** Record a tiebreaker game result (called when a tiebreaker game ends) */
+export async function recordTiebreakerResult(gameId: string, winnerId: string, capturesP1: number, capturesP2: number): Promise<void> {
+  await supabase.from('tiebreaker_games').update({
+    winner_id: winnerId,
+    captures_p1: capturesP1,
+    captures_p2: capturesP2,
+    status: 'completed',
+  }).eq('game_id', gameId);
+
+  // Check if all tiebreaker games for this month are done
+  const { data: tb } = await supabase.from('tiebreaker_games').select('month').eq('game_id', gameId).single();
+  if (tb) {
+    // Re-run the crown check — it will see all games done and crown the winner
+    await checkAndCrownWinner();
+  }
 }
 
 /** Get a player's point log for the current month */
