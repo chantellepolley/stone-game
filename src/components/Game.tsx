@@ -323,7 +323,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
                            hover:bg-[#6b5f55] hover:scale-105 active:scale-95
                            transition-all cursor-pointer shadow-lg"
               >
-                Skip — I know how to play
+                Skip, I know how to play
               </button>
             </div>
           </div>

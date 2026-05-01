@@ -81,7 +81,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
           <p className="text-white/50 text-xs text-center leading-relaxed">
             Compete each month for the title of STONE's top player. Earn points by winning games,
             building streaks, and mastering the Jester dice. The winner receives an exclusive champion
-            stone with a unique design that no one else can get — ever.
+            stone with a unique design that no one else can get. Ever.
           </p>
 
           {/* May champion stone preview */}
@@ -195,7 +195,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
                 <p className="text-green-400 text-[10px] mt-1">Qualified! Rank #{myRank}</p>
               ) : (
                 <p className="text-white/40 text-[10px] mt-1">
-                  {5 - (myEntry?.points || 0)} more points to qualify — tap to see breakdown
+                  {5 - (myEntry?.points || 0)} more points to qualify. Tap to see breakdown.
                 </p>
               )}
             </button>

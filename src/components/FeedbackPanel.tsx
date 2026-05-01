@@ -78,7 +78,7 @@ export default function FeedbackPanel({ onBack }: { onBack: () => void }) {
               value={message}
               onChange={e => setMessage(e.target.value)}
               placeholder={type === 'bug'
-                ? 'Describe the glitch — what happened and what you expected...'
+                ? 'Describe the glitch. What happened and what did you expect?'
                 : type === 'feature'
                 ? 'What feature would you like to see?'
                 : 'Tell us anything...'}

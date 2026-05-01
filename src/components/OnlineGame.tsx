@@ -550,7 +550,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                 <>
                   <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
                   <span className="text-amber-400 text-xs font-heading">
-                    Wager proposal sent ({myProposalStatus.amount} <JesterCoin size={10} />) — waiting...
+                    Wager proposal sent ({myProposalStatus.amount} <JesterCoin size={10} />). Waiting...
                   </span>
                 </>
               )}
@@ -558,7 +558,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                 <>
                   <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin shrink-0" />
                   <span className="text-amber-400 text-xs font-heading">
-                    Opponent saw your {myProposalStatus.amount} <JesterCoin size={10} /> proposal — deciding...
+                    Opponent saw your {myProposalStatus.amount} <JesterCoin size={10} /> proposal. Deciding...
                   </span>
                 </>
               )}
@@ -569,7 +569,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
               )}
               {myProposalStatus.status === 'declined' && (
                 <span className="text-red-400 text-xs font-heading">
-                  Opponent declined your {myProposalStatus.amount} <JesterCoin size={10} /> wager — coins refunded
+                  Opponent declined your {myProposalStatus.amount} <JesterCoin size={10} /> wager. Coins refunded.
                 </span>
               )}
             </div>

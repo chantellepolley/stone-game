@@ -172,7 +172,7 @@ function buildSteps(): TutorialStep[] {
     },
     {
       title: "Step 4: Capture!",
-      description: "Land on a space with a single opponent stone to capture it — it goes to The Stoned Dungeon (jail)! They must re-enter jailed stones before making other moves.",
+      description: "Land on a space with a single opponent stone to capture it. It goes to The Stoned Dungeon (jail)! They must re-enter jailed stones before making other moves.",
       state: captureState,
       autoAdvance: false,
     },

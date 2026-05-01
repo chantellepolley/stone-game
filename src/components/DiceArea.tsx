@@ -245,7 +245,7 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
             shadow-lg hover:shadow-xl hover:scale-105 active:scale-95
           `}
         >
-          Roll Dice — {playerName}
+          Roll Dice: {playerName}
         </button>
       )}
 

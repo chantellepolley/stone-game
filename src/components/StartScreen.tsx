@@ -214,7 +214,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <h2 className="text-amber-400 font-heading text-xl mb-1">Player of the Month</h2>
             <p className="text-white/70 text-sm mb-4">
               The competition is here! Compete for the title of STONE's top player each month.
-              Win games, build streaks, and earn points — the winner gets an exclusive champion stone
+              Win games, build streaks, and earn points. The winner gets an exclusive champion stone
               and 500 coins!
             </p>
 
@@ -674,7 +674,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Refer a Friend</p>
-                <p>Share your referral code — you both get <span className="text-amber-400">+50 coins</span> when they join!</p>
+                <p>Share your referral code! You both get <span className="text-amber-400">+50 coins</span> when they join!</p>
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Forfeit</p>

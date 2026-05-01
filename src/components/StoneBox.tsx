@@ -75,7 +75,7 @@ export default function StoneBox({ pieces, label, interactive, hinting, hintsEna
       )}
 
       {pieces.length === 0 && (
-        <div className="text-[9px] text-white/30 italic">—</div>
+        <div className="text-[9px] text-white/30 italic">Empty</div>
       )}
     </div>
   );
