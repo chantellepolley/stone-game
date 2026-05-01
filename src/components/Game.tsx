@@ -75,19 +75,25 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   };
 
   // Award coins + bonuses on AI game end
+  const awardingInProgress = useRef(false);
   useEffect(() => {
-    if (state.phase === 'game_over' && state.winner && state.gameMode === 'ai' && !coinsAwarded.current) {
+    if (state.phase === 'game_over' && state.winner && state.gameMode === 'ai' && !coinsAwarded.current && !awardingInProgress.current) {
       coinsAwarded.current = true;
+      awardingInProgress.current = true;
       const wager = wagerRef.current;
       const isWin = state.winner === 1;
       if (isWin && wager > 0) {
         earn(wager * 2, `AI game win (${state.aiDifficulty})`);
       }
-      // Award bonuses (win or loss — handles streak reset on loss)
+      // Award bonuses (win or loss, handles streak reset on loss)
       if (player) {
-        awardGameBonuses(player.id, state, state.winner, isWin).then(bonuses => {
+        const stateWithWager = { ...state, wager };
+        awardGameBonuses(player.id, stateWithWager, state.winner, isWin).then(bonuses => {
           setGameBonuses(bonuses);
-        });
+          awardingInProgress.current = false;
+        }).catch(() => { awardingInProgress.current = false; });
+      } else {
+        awardingInProgress.current = false;
       }
     }
   }, [state.phase, state.winner, state.gameMode, earn, player]);
@@ -105,6 +111,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     setCurrentWager(0);
     wagerRef.current = 0;
     coinsAwarded.current = false;
+    awardingInProgress.current = false;
     setGameBonuses([]);
     restart();
   };
