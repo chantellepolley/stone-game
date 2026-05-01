@@ -54,7 +54,7 @@ export default function Bench({ player, pieces, hasBenchMoves, onClickBench, isS
       )}
 
       {pieces.length === 0 && (
-        <div className="text-[9px] text-stone-light/25 italic">Empty</div>
+        <div className="text-[9px] text-stone-light/25 italic">—</div>
       )}
     </div>
   );
