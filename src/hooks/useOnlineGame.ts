@@ -208,16 +208,21 @@ export function useOnlineGame() {
   // ── Save my color to the game DB (check DB for selected_color first, then localStorage) ──
   async function saveMyColor(player: PlayerId) {
     if (!gameDbId.current) return;
+    const myId = await getMyPlayerId();
+    if (!myId) return;
+
+    // Verify we are actually this player in the game before writing
+    const { data: game } = await supabase.from('games').select('player1_id, player2_id').eq('id', gameDbId.current).single();
+    if (!game) return;
+    if (player === 1 && game.player1_id !== myId) return;
+    if (player === 2 && game.player2_id !== myId) return;
+
     let color = loadPlayerColor();
     // Check DB for the authoritative color (handles cross-device)
-    const myId = await getMyPlayerId();
-    if (myId) {
-      const { data } = await supabase.from('player_stats').select('selected_color').eq('player_id', myId).single();
-      if (data?.selected_color) {
-        color = data.selected_color;
-        // Sync to localStorage too
-        localStorage.setItem('stone_color', color);
-      }
+    const { data } = await supabase.from('player_stats').select('selected_color').eq('player_id', myId).single();
+    if (data?.selected_color) {
+      color = data.selected_color;
+      localStorage.setItem('stone_color', color);
     }
     const field = player === 1 ? 'p1_color' : 'p2_color';
     await supabase.from('games').update({ [field]: color }).eq('id', gameDbId.current);
