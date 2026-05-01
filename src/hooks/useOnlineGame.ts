@@ -205,26 +205,32 @@ export function useOnlineGame() {
     return data?.id || null;
   }
 
-  // ── Save my color to the game DB (check DB for selected_color first, then localStorage) ──
-  async function saveMyColor(player: PlayerId) {
+  // ── Save my color to the game DB (only if not already set, to prevent race conditions) ──
+  async function saveMyColor(player: PlayerId, force = false) {
     if (!gameDbId.current) return;
     const myId = await getMyPlayerId();
     if (!myId) return;
 
-    // Verify we are actually this player in the game before writing
-    const { data: game } = await supabase.from('games').select('player1_id, player2_id').eq('id', gameDbId.current).single();
+    const field = player === 1 ? 'p1_color' : 'p2_color';
+
+    // Check if color is already set in this game
+    const { data: game } = await supabase.from('games').select(`player1_id, player2_id, ${field}`).eq('id', gameDbId.current).single();
     if (!game) return;
+
+    // Verify we are actually this player
     if (player === 1 && game.player1_id !== myId) return;
     if (player === 2 && game.player2_id !== myId) return;
 
+    // Only write if not already set (backfill) or forced (first join)
+    if ((game as any)[field] && !force) return;
+
     let color = loadPlayerColor();
     // Check DB for the authoritative color (handles cross-device)
-    const { data } = await supabase.from('player_stats').select('selected_color').eq('player_id', myId).single();
-    if (data?.selected_color) {
-      color = data.selected_color;
+    const { data: stats } = await supabase.from('player_stats').select('selected_color').eq('player_id', myId).single();
+    if (stats?.selected_color) {
+      color = stats.selected_color;
       localStorage.setItem('stone_color', color);
     }
-    const field = player === 1 ? 'p1_color' : 'p2_color';
     await supabase.from('games').update({ [field]: color }).eq('id', gameDbId.current);
   }
 
