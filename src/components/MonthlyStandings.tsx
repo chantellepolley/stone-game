@@ -346,11 +346,12 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
                   <div className="text-left">
                     <p className="text-amber-400 text-xs font-heading">{currentStone.name}</p>
                     <p className="text-white/40 text-[9px]">Exclusive champion stone</p>
+                    <p className="text-amber-400/60 text-[9px]">+ 500 coins</p>
                   </div>
                 </div>
               )}
               {!currentStone && (
-                <p className="text-white/60 text-xs mt-1">Winner receives an exclusive champion stone!</p>
+                <p className="text-white/60 text-xs mt-1">Winner receives an exclusive champion stone + 500 coins!</p>
               )}
             </div>
           );
