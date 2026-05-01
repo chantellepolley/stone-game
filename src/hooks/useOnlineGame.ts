@@ -205,27 +205,26 @@ export function useOnlineGame() {
     return data?.id || null;
   }
 
-  // ── Save my color to the game DB (only if not already set, to prevent race conditions) ──
-  async function saveMyColor(player: PlayerId, force = false) {
+  // ── Save my color to the game DB ──
+  // onReconnect=true means we only backfill if color is null (prevents race conditions)
+  // onReconnect=false (default) means always write (used when player changes color mid-game)
+  async function saveMyColor(player: PlayerId, onReconnect = false) {
     if (!gameDbId.current) return;
     const myId = await getMyPlayerId();
     if (!myId) return;
 
     const field = player === 1 ? 'p1_color' : 'p2_color';
 
-    // Check if color is already set in this game
+    // Verify we are actually this player in the game
     const { data: game } = await supabase.from('games').select(`player1_id, player2_id, ${field}`).eq('id', gameDbId.current).single();
     if (!game) return;
-
-    // Verify we are actually this player
     if (player === 1 && game.player1_id !== myId) return;
     if (player === 2 && game.player2_id !== myId) return;
 
-    // Only write if not already set (backfill) or forced (first join)
-    if ((game as any)[field] && !force) return;
+    // On reconnect, only backfill if color is null (don't overwrite)
+    if (onReconnect && (game as any)[field]) return;
 
     let color = loadPlayerColor();
-    // Check DB for the authoritative color (handles cross-device)
     const { data: stats } = await supabase.from('player_stats').select('selected_color').eq('player_id', myId).single();
     if (stats?.selected_color) {
       color = stats.selected_color;
@@ -581,7 +580,7 @@ export function useOnlineGame() {
           gameId: game.id, roomCode: upperCode, myPlayer: 1,
         }));
         joinChannel(upperCode, 1, true);
-        saveMyColor(1);
+        saveMyColor(1, true);
         setTimeout(() => {
           if (channelRef.current) {
             channelRef.current.send({ type: 'broadcast', event: 'player_joined', payload: {} });
@@ -658,7 +657,7 @@ export function useOnlineGame() {
     joinChannel(upperCode, 2, stateReceivedRef.current);
 
     // Backfill color for old games that don't have it stored
-    saveMyColor(2);
+    saveMyColor(2, true);
   }, []);
 
   async function resumeGameInternal(gameId: string, code: string, player: PlayerId) {
@@ -769,7 +768,7 @@ export function useOnlineGame() {
     joinChannel(code, player, true);
 
     // Backfill color for old games that don't have it stored
-    saveMyColor(player);
+    saveMyColor(player, true);
 
     // Announce presence after a short delay so the channel is subscribed
     setTimeout(() => {

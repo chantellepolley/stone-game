@@ -745,9 +745,14 @@ async function syncColorToDb(colorId: string) {
     const token = localStorage.getItem('stone_device_token');
     if (!token) return;
     const { data: player } = await supabase.from('players').select('id').eq('device_token', token).single();
-    if (player) {
-      await supabase.from('player_stats').update({ selected_color: colorId }).eq('player_id', player.id);
-    }
+    if (!player) return;
+
+    // Update selected color in player stats
+    await supabase.from('player_stats').update({ selected_color: colorId }).eq('player_id', player.id);
+
+    // Update all active games where this player is participating
+    await supabase.from('games').update({ p1_color: colorId }).eq('player1_id', player.id).eq('status', 'active');
+    await supabase.from('games').update({ p2_color: colorId }).eq('player2_id', player.id).eq('status', 'active');
   } catch { /* silent */ }
 }
 
