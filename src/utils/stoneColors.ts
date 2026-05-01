@@ -741,13 +741,9 @@ export function savePlayerColor(id: string) {
 
 async function syncColorToDb(colorId: string) {
   try {
+    const { supabase } = await import('../lib/supabase');
     const token = localStorage.getItem('stone_device_token');
     if (!token) return;
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      'https://tabsvmsnkdltuzenhgkw.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhYnN2bXNua2RsdHV6ZW5oZ2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDgzMTYsImV4cCI6MjA5MTg4NDMxNn0.jHLlIj_u998taHN-Qo4zp_ivjQi6UDA11kiKeqQ48Rc'
-    );
     const { data: player } = await supabase.from('players').select('id').eq('device_token', token).single();
     if (player) {
       await supabase.from('player_stats').update({ selected_color: colorId }).eq('player_id', player.id);
@@ -758,11 +754,7 @@ async function syncColorToDb(colorId: string) {
 /** Load selected color from DB and sync to localStorage (call on login) */
 export async function syncColorFromDb(playerId: string) {
   try {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
-      'https://tabsvmsnkdltuzenhgkw.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhYnN2bXNua2RsdHV6ZW5oZ2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDgzMTYsImV4cCI6MjA5MTg4NDMxNn0.jHLlIj_u998taHN-Qo4zp_ivjQi6UDA11kiKeqQ48Rc'
-    );
+    const { supabase } = await import('../lib/supabase');
     const { data } = await supabase.from('player_stats').select('selected_color').eq('player_id', playerId).single();
     if (data?.selected_color) {
       localStorage.setItem('stone_color', data.selected_color);
