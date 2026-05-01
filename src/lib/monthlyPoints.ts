@@ -125,7 +125,7 @@ export function calculateWinPoints(mode: string, aiDifficulty?: string, wager?: 
     return { points: 0, breakdown: [] };
   }
 
-  if (mode === 'online') {
+  if (mode === 'online' || mode === 'pvp') {
     points += 3;
     breakdown.push('Online win: +3');
 

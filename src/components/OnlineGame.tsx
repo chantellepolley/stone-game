@@ -58,7 +58,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         earn(gameWager * 2, 'Online game win');
       }
       if (player) {
-        awardGameBonuses(player.id, state, state.winner, isWin).then(bonuses => {
+        const stateWithWager = { ...state, wager: gameWager };
+        awardGameBonuses(player.id, stateWithWager, state.winner, isWin).then(bonuses => {
           setGameBonuses(bonuses);
         });
       }
