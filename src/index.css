@@ -52,6 +52,10 @@ body {
   box-sizing: border-box;
 }
 
+/* Hide scrollbar on game tabs */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Override fixed inset-0 to respect safe areas */
 @supports (padding-top: env(safe-area-inset-top)) {
   .fixed.inset-0 {
