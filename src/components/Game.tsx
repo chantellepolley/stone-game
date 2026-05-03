@@ -296,7 +296,13 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       {/* Mobile: move log overlay */}
       {showMobileLog && (
         <div className="lg:hidden fixed bottom-10 left-2 right-2 max-h-[40vh] z-40 overflow-y-auto rounded-xl shadow-2xl">
-          <MoveLog entries={state.moveLog} />
+          <div className="relative">
+            <button onClick={() => setShowMobileLog(false)}
+              className="absolute top-1 right-2 text-white/60 hover:text-white text-sm cursor-pointer z-10 bg-[#504840] rounded-full w-6 h-6 flex items-center justify-center">
+              x
+            </button>
+            <MoveLog entries={state.moveLog} />
+          </div>
         </div>
       )}
 
