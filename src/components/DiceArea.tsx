@@ -15,6 +15,8 @@ interface DiceAreaProps {
   onChooseJesterDoubles?: (value: number) => void;
   isAITurn?: boolean;
   externalRolling?: boolean;
+  player1Name?: string;
+  player2Name?: string;
 }
 
 /** SVG dot positions for dice faces 1-5 */
@@ -97,7 +99,7 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
   );
 }
 
-export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJesterChoice, onChooseJesterDoubles, isAITurn, externalRolling }: DiceAreaProps) {
+export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJesterChoice, onChooseJesterDoubles, isAITurn, externalRolling, player1Name, player2Name }: DiceAreaProps) {
   const [rolling, setRolling] = useState(false);
   const [rollFaces, setRollFaces] = useState<[number, number]>([1, 1]);
   const canRoll = phase === 'rolling' && !isAITurn;
@@ -117,7 +119,7 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
       playDiceSlam();
     };
   }, [externalRolling]);
-  const playerName = GAME_CONFIG.PLAYER_NAMES[currentPlayer];
+  const playerName = (currentPlayer === 1 ? player1Name : player2Name) || GAME_CONFIG.PLAYER_NAMES[currentPlayer];
 
   const handleRoll = () => {
     if (!canRoll) return;

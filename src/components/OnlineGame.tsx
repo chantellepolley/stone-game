@@ -377,6 +377,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
           awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
           onChooseJesterDoubles={chooseJesterDoubles}
           isAITurn={!isMyTurn}
+          player1Name={p1Name}
+          player2Name={p2Name}
         />
       </div>
 
@@ -410,6 +412,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
             onChooseJesterDoubles={chooseJesterDoubles}
             isAITurn={!isMyTurn}
+            player1Name={p1Name}
+            player2Name={p2Name}
           />
           {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
           <button onClick={() => setHintsEnabled(h => !h)}
