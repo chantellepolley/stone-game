@@ -26,6 +26,8 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
   const [started, setStarted] = useState(hasCompetitionStarted());
   const [pointLog, setPointLog] = useState<Array<{ points: number; reason: string; created_at: string }>>([]);
   const [showPointLog, setShowPointLog] = useState(false);
+  const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(null);
+  const [playerLogs, setPlayerLogs] = useState<Record<string, Array<{ points: number; reason: string; created_at: string }>>>({});
 
   useEffect(() => {
     if (started) {
@@ -260,34 +262,74 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
             {qualifiedEntries.length > 0 && (
               <div className="w-full space-y-1.5">
                 {qualifiedEntries.map((entry, i) => (
-                  <div key={entry.player_id}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg ${
-                      entry.player_id === player?.id ? 'bg-amber-600/20 border border-amber-600/30' : 'bg-black/20'
-                    }`}>
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className={`text-sm font-heading w-6 text-center ${
-                        i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-700' : 'text-white/40'
+                  <div key={entry.player_id}>
+                    <button
+                      onClick={async () => {
+                        const pid = entry.player_id;
+                        if (expandedPlayerId === pid) { setExpandedPlayerId(null); return; }
+                        setExpandedPlayerId(pid);
+                        if (!playerLogs[pid]) {
+                          const log = await getPointLog(pid);
+                          setPlayerLogs(prev => ({ ...prev, [pid]: log }));
+                        }
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-left ${
+                        entry.player_id === player?.id ? 'bg-amber-600/20 border border-amber-600/30 hover:bg-amber-600/30' : 'bg-black/20 hover:bg-black/30'
                       }`}>
-                        {i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}`}
-                      </span>
-                      {entry.avatar_url ? (
-                        <img src={entry.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-[#6b5f55] shrink-0" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55] shrink-0">
-                          <span className="text-xs font-heading text-white/40">{entry.username?.[0]?.toUpperCase()}</span>
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-white text-sm font-heading truncate">{entry.username}</div>
-                        <div className="text-[8px] text-white/30">
-                          {entry.wins_online}W online, {entry.wins_ai_expert}W expert, {entry.login_days}d streak
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className={`text-sm font-heading w-6 text-center ${
+                          i === 0 ? 'text-amber-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-700' : 'text-white/40'
+                        }`}>
+                          {i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}`}
+                        </span>
+                        {entry.avatar_url ? (
+                          <img src={entry.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-[#6b5f55] shrink-0" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55] shrink-0">
+                            <span className="text-xs font-heading text-white/40">{entry.username?.[0]?.toUpperCase()}</span>
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-white text-sm font-heading truncate">{entry.username}</div>
+                          <div className="text-[8px] text-white/30">
+                            {entry.wins_online}W online, {entry.wins_ai_expert}W expert, {entry.login_days}d login
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex flex-col items-end shrink-0 ml-2">
-                      <span className="text-amber-400 font-heading text-sm">{entry.points}</span>
-                      <span className="text-[8px] text-white/30">pts</span>
-                    </div>
+                      <div className="flex flex-col items-end shrink-0 ml-2">
+                        <span className="text-amber-400 font-heading text-sm">{entry.points}</span>
+                        <span className="text-[8px] text-white/30">{expandedPlayerId === entry.player_id ? '▲' : '▼'}</span>
+                      </div>
+                    </button>
+
+                    {/* Expanded point log */}
+                    {expandedPlayerId === entry.player_id && (
+                      <div className="bg-black/15 rounded-b-lg p-3 -mt-0.5 max-h-[150px] overflow-y-auto">
+                        {!playerLogs[entry.player_id] ? (
+                          <p className="text-white/30 text-[9px] text-center">Loading...</p>
+                        ) : playerLogs[entry.player_id].length === 0 ? (
+                          <p className="text-white/30 text-[9px] text-center">No points logged yet</p>
+                        ) : (
+                          <div className="space-y-0.5">
+                            {playerLogs[entry.player_id].map((log, j) => {
+                              const date = new Date(log.created_at);
+                              const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                              return (
+                                <div key={j} className="flex items-center justify-between text-[9px]">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-white/30 shrink-0 w-12">{timeStr}</span>
+                                    <span className="text-white/50 truncate">{log.reason}</span>
+                                  </div>
+                                  <span className={`font-heading shrink-0 ml-2 ${log.points > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {log.points > 0 ? '+' : ''}{log.points}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
