@@ -286,45 +286,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         </button>
       </header>
 
-      {/* Active games tabs */}
-      {activeGames.length > 1 && (
-        <div className="flex gap-1.5 shrink-0 overflow-x-auto max-w-full px-1 py-0.5 no-scrollbar">
-          {activeGames.map(g => {
-            const isCurrent = g.room_code === roomCode;
-            return (
-              <button
-                key={g.id}
-                onClick={() => {
-                  if (isCurrent) return;
-                  leave();
-                  resumeGame(g.id, g.room_code, g.my_player);
-                  coinsHandled.current = false;
-                  setChatOpen(false);
-                  setShowMobileLog(false);
-                }}
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-heading shrink-0 transition-all
-                  ${isCurrent
-                    ? 'bg-amber-600/30 border border-amber-400/50 text-white'
-                    : 'bg-black/20 border border-[#6b5f55]/30 text-white/50 hover:text-white/80 cursor-pointer'
-                  }`}
-              >
-                {g.opponent_avatar ? (
-                  <img src={g.opponent_avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-[#3d3632] flex items-center justify-center">
-                    <span className="text-[7px] text-white/40">{g.opponent_name[0]?.toUpperCase()}</span>
-                  </div>
-                )}
-                <span className="truncate max-w-[50px]">{g.opponent_name}</span>
-                {g.is_my_turn && !isCurrent && (
-                  <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* Player vs Opponent display */}
       <div className="flex items-center justify-center gap-3 shrink-0 w-full max-w-md">
         {/* Me */}
@@ -481,6 +442,45 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
           )}
         </div>
       </div>
+
+      {/* Active games tabs — above bottom bar */}
+      {activeGames.length > 1 && (
+        <div className="flex gap-1.5 shrink-0 overflow-x-auto max-w-full px-1 py-0.5 no-scrollbar justify-center">
+          {activeGames.map(g => {
+            const isCurrent = g.room_code === roomCode;
+            return (
+              <button
+                key={g.id}
+                onClick={() => {
+                  if (isCurrent) return;
+                  leave();
+                  resumeGame(g.id, g.room_code, g.my_player);
+                  coinsHandled.current = false;
+                  setChatOpen(false);
+                  setShowMobileLog(false);
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-heading shrink-0 transition-all
+                  ${isCurrent
+                    ? 'bg-amber-600/30 border border-amber-400/50 text-white'
+                    : 'bg-black/20 border border-[#6b5f55]/30 text-white/50 hover:text-white/80 cursor-pointer'
+                  }`}
+              >
+                {g.opponent_avatar ? (
+                  <img src={g.opponent_avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-[#3d3632] flex items-center justify-center">
+                    <span className="text-[7px] text-white/40">{g.opponent_name[0]?.toUpperCase()}</span>
+                  </div>
+                )}
+                <span className="truncate max-w-[50px]">{g.opponent_name}</span>
+                {g.is_my_turn && !isCurrent && (
+                  <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Mobile bottom bar — just Menu, Undo, and Chat */}
       <div className="lg:hidden flex items-center gap-3 py-1.5 shrink-0 justify-center">
