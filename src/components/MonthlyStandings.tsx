@@ -121,16 +121,17 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
           {/* How points work */}
           <div className="w-full">
             <p className="text-amber-400/60 text-[10px] font-heading uppercase tracking-wider text-center mb-2">How to earn points</p>
-            <div className="bg-black/20 rounded-lg p-3 text-[9px] text-white/50 space-y-1">
-              <p><span className="text-white/70">Online win:</span> +3 pts (+1 wagered, +1 at 25, +1 at 50, +2 at 100)</p>
-              <p><span className="text-white/70">Expert AI win:</span> +2 pts</p>
-              <p><span className="text-white/70">Hard AI win:</span> +1 pt</p>
-              <p><span className="text-white/70">Win streak 3/5/10:</span> +2/+5/+10 pts</p>
-              <p><span className="text-white/70">Perfect game:</span> +3 pts</p>
-              <p><span className="text-white/70">Speed win:</span> +2 pts</p>
-              <p><span className="text-white/70">Jester master:</span> +1 pt</p>
-              <p><span className="text-white/70">Daily login:</span> +1 pt</p>
-              <p><span className="text-red-400/70">Forfeit:</span> -2 pts</p>
+            <div className="bg-black/20 rounded-lg p-3 text-[9px] text-white/50 space-y-1.5">
+              <p><span className="text-white/70">Online win:</span> +3 pts. Beat another player online.</p>
+              <p className="pl-3 text-white/30">Wager bonus: +1 for any wager, +1 more at 25+, +1 more at 50+, +2 more at 100+</p>
+              <p><span className="text-white/70">Expert AI win:</span> +2 pts. Beat the computer on Expert difficulty.</p>
+              <p><span className="text-white/70">Hard AI win:</span> +1 pt. Beat the computer on Hard difficulty.</p>
+              <p><span className="text-white/70">Win streak:</span> Win multiple games in a row. 3 in a row = +2, 5 in a row = +5, 10 in a row = +10.</p>
+              <p><span className="text-white/70">Perfect game:</span> +3 pts. Win without your opponent capturing any of your pieces.</p>
+              <p><span className="text-white/70">Speed win:</span> +2 pts. Win in under 30 turns.</p>
+              <p><span className="text-white/70">Jester master:</span> +1 pt. Roll more double Jesters than your opponent in a game.</p>
+              <p><span className="text-white/70">Daily login:</span> +1 pt. Open the app each day (max 1 per day).</p>
+              <p><span className="text-red-400/70">Forfeit:</span> -2 pts. Quitting a game costs you points.</p>
               <p className="text-white/30 mt-2">Qualify at 5 points. Easy/Medium AI wins = 0 pts.</p>
             </div>
           </div>
