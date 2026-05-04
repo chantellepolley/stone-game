@@ -41,7 +41,7 @@ interface GameProps {
 }
 
 export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, pushPermission, onRequestPush, pushMuted, onTogglePushMute, onResumeOnlineGame, onClearResumeId }: GameProps) {
-  const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
+  const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame, currentGameId } = useGame();
   const { spend, earn } = useCoins();
   const [currentWager, setCurrentWager] = useState(0);
   const wagerRef = useRef(0);
@@ -93,7 +93,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       // Award bonuses (win or loss, handles streak reset on loss)
       if (player) {
         const stateWithWager = { ...state, wager };
-        awardGameBonuses(player.id, stateWithWager, state.winner, isWin).then(bonuses => {
+        awardGameBonuses(player.id, stateWithWager, state.winner, isWin, currentGameId || undefined).then(bonuses => {
           setGameBonuses(bonuses);
           awardingInProgress.current = false;
         }).catch(() => { awardingInProgress.current = false; });

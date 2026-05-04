@@ -35,7 +35,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     chatMessages, sendChat, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
     myProposalStatus,
-    sendNudge, lastNudge, myGameColor,
+    sendNudge, lastNudge, myGameColor, currentGameId,
   } = useOnlineGame();
   const { coins, spend, earn } = useCoins();
   const coinsHandled = useRef(false);
@@ -61,7 +61,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       }
       if (player) {
         const stateWithWager = { ...state, wager: gameWager };
-        awardGameBonuses(player.id, stateWithWager, state.winner, isWin).then(bonuses => {
+        awardGameBonuses(player.id, stateWithWager, state.winner, isWin, currentGameId || undefined).then(bonuses => {
           setGameBonuses(bonuses);
         });
       }

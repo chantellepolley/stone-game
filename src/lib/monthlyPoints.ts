@@ -58,10 +58,25 @@ export async function addMonthlyPoints(
   playerId: string,
   points: number,
   field?: 'wins_online' | 'wins_ai_hard' | 'wins_ai_expert' | 'forfeits' | 'login_days',
-  reason?: string
+  reason?: string,
+  gameId?: string
 ): Promise<void> {
   if (points === 0) return;
   const month = getCurrentMonth();
+
+  // If a game_id is provided, check if points were already awarded for this game
+  if (gameId && reason) {
+    const { data: existing } = await supabase
+      .from('monthly_point_log')
+      .select('id')
+      .eq('player_id', playerId)
+      .eq('month', month)
+      .eq('game_id', gameId)
+      .eq('reason', reason)
+      .limit(1);
+    if (existing && existing.length > 0) return; // Already awarded for this game
+  }
+
   const currentPoints = await ensureRow(playerId, month);
   const newTotal = currentPoints + points;
 
@@ -72,6 +87,7 @@ export async function addMonthlyPoints(
       month,
       points,
       reason,
+      game_id: gameId || null,
     });
   }
 

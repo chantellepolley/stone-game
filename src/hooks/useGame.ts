@@ -383,7 +383,7 @@ export function useGame() {
     state, roll, selectMove, restart, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
     undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling,
-    loadGame,
+    loadGame, currentGameId: gameDbId.current,
   };
 }
 

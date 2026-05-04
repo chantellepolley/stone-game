@@ -95,6 +95,7 @@ export async function awardGameBonuses(
   state: GameState,
   winnerPlayer: PlayerId,
   isWinner: boolean,
+  gameId?: string,
 ): Promise<BonusResult[]> {
   // Get current stats
   const { data: stats } = await supabase
@@ -138,7 +139,7 @@ export async function awardGameBonuses(
     for (const item of [...winPoints.breakdown, ...bonusPoints.breakdown]) {
       const pts = parseInt(item.match(/\+(\d+)/)?.[1] || '0');
       if (pts > 0) {
-        await addMonthlyPoints(playerId, pts, winPoints.field, item);
+        await addMonthlyPoints(playerId, pts, winPoints.field, item, gameId);
       }
     }
 

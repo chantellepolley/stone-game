@@ -1170,7 +1170,7 @@ export function useOnlineGame() {
   return {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
-    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentAvatar, opponentColor, myGameColor, error,
+    onlinePhase, roomCode, myPlayer, opponentConnected, opponentName, opponentAvatar, opponentColor, myGameColor, error, currentGameId: gameDbId.current,
     createRoom, joinRoom, resumeGame, leave,
     isMyTurn, pendingOpponentMove,
     chatMessages, sendChat, sendInvite, gameWager, forfeit,
