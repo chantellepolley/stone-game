@@ -37,9 +37,10 @@ interface GameProps {
   pushMuted?: boolean;
   onTogglePushMute?: () => void;
   onResumeOnlineGame?: (gameId: string, roomCode: string, player: 1 | 2) => void;
+  onClearResumeId?: () => void;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, pushPermission, onRequestPush, pushMuted, onTogglePushMute, onResumeOnlineGame }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, pushPermission, onRequestPush, pushMuted, onTogglePushMute, onResumeOnlineGame, onClearResumeId }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
   const { spend, earn } = useCoins();
   const [currentWager, setCurrentWager] = useState(0);
@@ -48,13 +49,16 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const [gameBonuses, setGameBonuses] = useState<BonusResult[]>([]);
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
-  const [hasResumed, setHasResumed] = useState(false);
+  const resumeConsumed = useRef(false);
   useEffect(() => {
-    if (resumeGameId && !hasResumed && state.phase === 'not_started') {
-      setHasResumed(true);
+    if (resumeGameId && !resumeConsumed.current && state.phase === 'not_started') {
+      resumeConsumed.current = true;
       loadGame(resumeGameId);
     }
-  }, [resumeGameId, hasResumed, loadGame, state.phase]);
+    if (!resumeGameId) {
+      resumeConsumed.current = false;
+    }
+  }, [resumeGameId, loadGame, state.phase]);
   const { player } = usePlayerContext();
 
   // Handle starting an AI game with coin deduction
@@ -114,6 +118,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     coinsAwarded.current = false;
     awardingInProgress.current = false;
     setGameBonuses([]);
+    if (onClearResumeId) onClearResumeId();
     restart();
   };
   const [hintsEnabled, setHintsEnabled] = useState(true);

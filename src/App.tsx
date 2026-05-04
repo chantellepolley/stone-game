@@ -280,6 +280,7 @@ export default function App() {
           pushMuted={pushMuted}
           onTogglePushMute={handleTogglePushMute}
           onResumeOnlineGame={(gameId, roomCode, p) => { setResumeData({ gameId, roomCode, player: p }); setScreen('online'); }}
+          onClearResumeId={() => setResumeLocalGameId(null)}
         />
       )}
 
