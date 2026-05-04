@@ -50,7 +50,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     return true;
   });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
-  const [menuOpen, setMenuOpen] = useState<'none' | 'newgame' | 'challenges' | 'settings'>('none');
+  const [menuView, setMenuView] = useState<'main' | 'newgame' | 'challenges' | 'settings'>('main');
   const [potmCountdown, setPotmCountdown] = useState('');
   const [bonusCountdown, setBonusCountdown] = useState('');
 
@@ -364,114 +364,133 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
 
       {!showDifficulty ? (
         <div className="flex flex-col items-center gap-3 w-full max-w-xs">
-          {/* Main menu buttons */}
-          <button onClick={() => setMenuOpen(menuOpen === 'newgame' ? 'none' : 'newgame')}
-            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                       bg-[#504840] text-white border-2 border-[#6b5f55]
-                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
-            Start New Game
-          </button>
-          {menuOpen === 'newgame' && (
-            <div className="flex flex-col gap-2 w-full pl-4">
+          {menuView === 'main' && (
+            <>
+              <button onClick={() => setMenuView('newgame')}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                Start New Game
+              </button>
+              <button onClick={() => { if (onShowMyGames) onShowMyGames(); }}
+                className="relative w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                My Games
+                {(pendingNotifications ?? 0) > 0 && (
+                  <span className="absolute top-2 right-3 bg-red-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {pendingNotifications! > 9 ? '9+' : pendingNotifications}
+                  </span>
+                )}
+              </button>
+              <button onClick={() => setMenuView('challenges')}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                Challenges
+              </button>
+              <button onClick={() => setMenuView('settings')}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                Settings
+              </button>
+              {referralCode && (
+                <button onClick={() => setShowReferralPanel(true)}
+                  className="w-full px-5 py-2.5 rounded-xl font-heading text-sm uppercase tracking-wider
+                             text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
+                             border-2 border-amber-500 bg-amber-600/30 shadow-lg">
+                  Refer a Friend <span className="text-[9px] normal-case text-amber-400/60">+100 coins each</span>
+                </button>
+              )}
+            </>
+          )}
+
+          {menuView === 'newgame' && (
+            <>
               <button onClick={() => onStart('pvp', 'medium')}
-                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                           bg-[#3d3632] text-white/80 border border-[#5e5549]
-                           hover:bg-[#504840] transition-all cursor-pointer">
-                2 Players <span className="text-[9px] text-white/40 normal-case">(pass & play)</span>
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                2 Players <span className="text-[10px] text-white/40 normal-case">(pass & play)</span>
               </button>
               <button onClick={() => setShowDifficulty(true)}
-                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                           bg-[#3d3632] text-white/80 border border-[#5e5549]
-                           hover:bg-[#504840] transition-all cursor-pointer">
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                 vs Computer
               </button>
               {onPlayOnline && (
                 <button onClick={onPlayOnline}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-white border border-amber-600/40
-                             hover:bg-[#504840] transition-all cursor-pointer">
-                  Play Online <span className="text-[9px] text-white/40 normal-case">(Challenge Friends)</span>
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-amber-600/60
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                  Play Online <span className="text-[10px] text-white/40 normal-case">(Challenge Friends)</span>
                 </button>
               )}
-            </div>
+              <button onClick={() => setMenuView('main')}
+                className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-1">
+                Back
+              </button>
+            </>
           )}
 
-          <button onClick={() => { setMenuOpen('none'); if (onShowMyGames) onShowMyGames(); }}
-            className="relative w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                       bg-[#504840] text-white border-2 border-[#6b5f55]
-                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
-            My Games
-            {(pendingNotifications ?? 0) > 0 && (
-              <span className="absolute top-2 right-3 bg-red-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {pendingNotifications! > 9 ? '9+' : pendingNotifications}
-              </span>
-            )}
-          </button>
-
-          <button onClick={() => setMenuOpen(menuOpen === 'challenges' ? 'none' : 'challenges')}
-            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                       bg-[#504840] text-white border-2 border-[#6b5f55]
-                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
-            Challenges
-          </button>
-          {menuOpen === 'challenges' && (
-            <div className="flex flex-col gap-2 w-full pl-4">
+          {menuView === 'challenges' && (
+            <>
               {onShowMonthlyStandings && (
                 <button onClick={onShowMonthlyStandings}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-amber-400 border border-amber-600/30
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-amber-400 border-2 border-amber-600/40
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   Player of the Month
                 </button>
               )}
               {onShowLeaderboard && (
                 <button onClick={onShowLeaderboard}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-white/80 border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   Leaderboard
                 </button>
               )}
-            </div>
+              <button onClick={() => setMenuView('main')}
+                className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-1">
+                Back
+              </button>
+            </>
           )}
 
-          <button onClick={() => setMenuOpen(menuOpen === 'settings' ? 'none' : 'settings')}
-            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                       bg-[#504840] text-white border-2 border-[#6b5f55]
-                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
-            Settings
-          </button>
-          {menuOpen === 'settings' && (
-            <div className="flex flex-col gap-2 w-full pl-4">
+          {menuView === 'settings' && (
+            <>
               {onShowFriends && (
                 <button onClick={onShowFriends}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-white/80 border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   My Friends
                 </button>
               )}
               {onShowStats && (
                 <button onClick={onShowStats}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-white/80 border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   My Stats
                 </button>
               )}
               {onShowColors && (
                 <button onClick={onShowColors}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-white/80 border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   Stone Color
                 </button>
               )}
               {onShowTutorial && (
                 <button onClick={onShowTutorial}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-white/80 border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   How to Play
                 </button>
               )}
@@ -485,60 +504,54 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                     onShowFeedback();
                   }
                 }}
-                  className="relative w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-white/80 border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="relative w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   Feedback
                   {pendingFeedbackCount > 0 && (
-                    <span className="absolute top-1.5 right-2 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    <span className="absolute top-2 right-3 bg-red-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                       {pendingFeedbackCount > 9 ? '9+' : pendingFeedbackCount}
                     </span>
                   )}
                 </button>
               )}
               <button onClick={() => { setEditingPassword(true); setNewPassword(''); setPasswordMsg(''); }}
-                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                           bg-[#3d3632] text-white/80 border border-[#5e5549]
-                           hover:bg-[#504840] transition-all cursor-pointer">
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                 Set/Change Password
               </button>
               {pushPermission === 'granted' && onTogglePushMute && (
                 <button onClick={onTogglePushMute}
-                  className={`w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer
-                             ${pushMuted ? 'text-red-400/80' : 'text-green-400/80'}`}>
+                  className={`w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg
+                             ${pushMuted ? 'text-red-400' : 'text-green-400'}`}>
                   Notifications: {pushMuted ? 'OFF' : 'ON'}
                 </button>
               )}
               {pushPermission === 'denied' && (
-                <p className="w-full px-4 py-2 text-red-400/60 text-[10px] text-center">Notifications Blocked (check browser settings)</p>
+                <p className="text-red-400/60 text-[10px] text-center">Notifications Blocked (check browser settings)</p>
               )}
               {pushPermission === 'default' && onRequestPush && (
                 <button onClick={onRequestPush}
-                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                             bg-[#3d3632] text-amber-400/80 border border-[#5e5549]
-                             hover:bg-[#504840] transition-all cursor-pointer">
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-amber-400 border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   Enable Notifications
                 </button>
               )}
               <button onClick={logout}
-                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
-                           bg-[#3d3632] text-red-400/70 border border-[#5e5549]
-                           hover:bg-[#504840] hover:text-red-400 transition-all cursor-pointer">
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-red-400/70 border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] hover:text-red-400 transition-all cursor-pointer shadow-lg">
                 Logout
               </button>
-            </div>
-          )}
-
-          {/* Refer a Friend */}
-          {referralCode && (
-            <button onClick={() => setShowReferralPanel(true)}
-              className="w-full px-5 py-2.5 rounded-xl font-heading text-sm uppercase tracking-wider
-                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
-                         border-2 border-amber-500 bg-amber-600/30 shadow-lg">
-              Refer a Friend <span className="text-[9px] normal-case text-amber-400/60">+100 coins each</span>
-            </button>
+              <button onClick={() => setMenuView('main')}
+                className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-1">
+                Back
+              </button>
+            </>
           )}
         </div>
       ) : (
