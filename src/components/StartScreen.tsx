@@ -671,7 +671,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* Referral announcement popup — admin preview only */}
-      {showReferralAnnouncement && player?.username?.toLowerCase() === 'cpolley' && !showAnnouncement && (
+      {showReferralAnnouncement && player && !showAnnouncement && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-4xl mb-2">&#127873;</p>
