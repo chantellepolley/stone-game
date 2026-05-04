@@ -84,15 +84,15 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         .limit(20);
       if (!data) return;
 
-      const opponentIds = data.filter(g => g.mode === 'online').map(g => g.player1_id === player.id ? g.player2_id : g.player1_id).filter(Boolean);
+      const opponentIds = data.filter((g: any) => g.mode === 'online').map((g: any) => g.player1_id === player.id ? g.player2_id : g.player1_id).filter(Boolean);
       const nameMap: Record<string, string> = {};
       const avatarMap: Record<string, string | null> = {};
       if (opponentIds.length > 0) {
         const { data: players } = await sb.from('players').select('id, username, avatar_url').in('id', opponentIds);
-        players?.forEach(p => { nameMap[p.id] = p.username; avatarMap[p.id] = p.avatar_url; });
+        players?.forEach((p: any) => { nameMap[p.id] = p.username; avatarMap[p.id] = p.avatar_url; });
       }
 
-      setActiveGames(data.map(g => {
+      setActiveGames(data.map((g: any) => {
         const myP = g.player1_id === player.id ? 1 : 2;
         const oppId = myP === 1 ? g.player2_id : g.player1_id;
         const currentPlayer = (g.state as any)?.currentPlayer || 1;
