@@ -184,6 +184,23 @@ export default function OnlineLobby({
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={onBack} />
 
       <div className="flex flex-col items-center gap-6 max-w-sm w-full">
+        {/* Refer a friend — top of page */}
+        <button
+          onClick={() => {
+            const text = `Play STONE with me! We both get 100 coins when you join!\nhttps://stonethegame.com`;
+            if (navigator.share) {
+              navigator.share({ title: 'Join STONE!', text }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(text);
+            }
+          }}
+          className="px-5 py-2.5 rounded-xl text-sm font-heading uppercase tracking-wider
+                     text-white hover:text-amber-200 transition-colors cursor-pointer
+                     border-2 border-amber-500 bg-amber-600 shadow-lg w-full"
+        >
+          Refer a Friend <span className="text-[10px] normal-case text-amber-200">+100 coins each</span>
+        </button>
+
         {/* Wager selection */}
         <div className="w-full flex flex-col items-center gap-2">
           <p className="text-white/60 text-xs font-heading">Wager</p>
@@ -291,23 +308,6 @@ export default function OnlineLobby({
             </div>
           </>
         )}
-
-        {/* Refer a friend */}
-        <button
-          onClick={() => {
-            const text = `Play STONE with me! We both get 100 coins when you join!\nhttps://stonethegame.com`;
-            if (navigator.share) {
-              navigator.share({ title: 'Join STONE!', text }).catch(() => {});
-            } else {
-              navigator.clipboard.writeText(text);
-            }
-          }}
-          className="px-5 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                     text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
-                     border border-amber-500 bg-amber-600/30 w-full"
-        >
-          Refer a Friend <span className="text-[9px] normal-case text-amber-400/60">+100 coins each</span>
-        </button>
 
         <button
           onClick={onBack}

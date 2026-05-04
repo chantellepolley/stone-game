@@ -50,7 +50,14 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     return true;
   });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
-  const [menuView, setMenuView] = useState<'main' | 'newgame' | 'challenges' | 'settings'>('main');
+  const [menuView, setMenuView] = useState<'main' | 'newgame' | 'challenges' | 'settings'>(() => {
+    const saved = localStorage.getItem('stone_menu_view');
+    if (saved === 'newgame' || saved === 'challenges' || saved === 'settings') {
+      localStorage.removeItem('stone_menu_view');
+      return saved;
+    }
+    return 'main';
+  });
   const [potmCountdown, setPotmCountdown] = useState('');
   const [bonusCountdown, setBonusCountdown] = useState('');
 
@@ -398,9 +405,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               {referralCode && (
                 <button onClick={() => setShowReferralPanel(true)}
                   className="w-full px-5 py-2.5 rounded-xl font-heading text-sm uppercase tracking-wider
-                             text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
-                             border-2 border-amber-500 bg-amber-600/30 shadow-lg">
-                  Refer a Friend <span className="text-[9px] normal-case text-amber-400/60">+100 coins each</span>
+                             text-white hover:text-amber-200 transition-colors cursor-pointer
+                             border-2 border-amber-500 bg-amber-600 shadow-lg">
+                  Refer a Friend <span className="text-[10px] normal-case text-amber-200">+100 coins each</span>
                 </button>
               )}
             </>

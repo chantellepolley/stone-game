@@ -265,7 +265,7 @@ export default function App() {
       )}
       {screen === 'online' && (
         <OnlineGame
-          onBack={() => { setScreen('game'); setAutoJoinCode(null); setResumeData(null); setResumeLocalGameId(null); }}
+          onBack={() => { localStorage.setItem('stone_menu_view', 'newgame'); setScreen('game'); setAutoJoinCode(null); setResumeData(null); setResumeLocalGameId(null); }}
           autoJoinCode={autoJoinCode}
           resumeData={resumeData}
           onInviteFriend={handleInviteToPlay}
