@@ -157,6 +157,6 @@ export async function awardGameBonuses(
  * Award referral bonus to both players.
  */
 export async function awardReferralBonus(referrerId: string, newPlayerId: string) {
-  await addCoins(referrerId, 50, 'Referral bonus — friend joined!');
-  await addCoins(newPlayerId, 50, 'Welcome bonus — referred by a friend!');
+  await addCoins(referrerId, 100, 'Referral bonus — friend joined!');
+  await addCoins(newPlayerId, 100, 'Welcome bonus — referred by a friend!');
 }

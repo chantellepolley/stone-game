@@ -44,6 +44,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     if (seen) return false;
     return true;
   });
+  const [showReferralAnnouncement, setShowReferralAnnouncement] = useState(() => {
+    const seen = localStorage.getItem('stone_seen_announcement_referral');
+    if (seen) return false;
+    return true;
+  });
+  const [showReferralPanel, setShowReferralPanel] = useState(false);
   const [potmCountdown, setPotmCountdown] = useState('');
   const [bonusCountdown, setBonusCountdown] = useState('');
 
@@ -508,6 +514,14 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               How to Play
             </button>
           )}
+          {referralCode && (
+            <button onClick={() => setShowReferralPanel(true)}
+              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
+                         border border-amber-600/40 bg-amber-600/10">
+              Refer a Friend
+            </button>
+          )}
           {!isInstalled && (canInstall || showIOSInstructions) && (
             <button onClick={canInstall ? install : () => setShowIOSModal(true)}
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
@@ -593,17 +607,10 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           {passwordMsg && <p className={`text-xs ${passwordMsg.includes('saved') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
           {referralCode && (
             <button
-              onClick={() => {
-                const text = `Join me on STONE! Use my referral code: ${referralCode}\nhttps://stonethegame.com`;
-                if (navigator.share) {
-                  navigator.share({ title: 'Join STONE!', text }).catch(() => {});
-                } else {
-                  navigator.clipboard.writeText(text).then(() => { setRefCopied(true); setTimeout(() => setRefCopied(false), 2000); });
-                }
-              }}
+              onClick={() => setShowReferralPanel(true)}
               className="text-amber-400/60 text-[10px] hover:text-amber-400 transition-colors cursor-pointer"
             >
-              {refCopied ? 'Copied!' : `Refer a Friend (code: ${referralCode})`}
+              Refer a Friend. You both get +100 coins!
             </button>
           )}
         </div>
@@ -629,6 +636,90 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           )}
           <div className="text-[8px] text-white">
             &copy; 2026 Stone The Game. All rights reserved.
+          </div>
+        </div>
+      )}
+
+      {/* Referral announcement popup — admin preview only */}
+      {showReferralAnnouncement && player?.username?.toLowerCase() === 'cpolley' && !showAnnouncement && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-4xl mb-2">&#127873;</p>
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Invite Your Friends!</h2>
+            <p className="text-white/70 text-sm mb-4">
+              You both get <span className="text-amber-400 font-heading">100 coins</span> when they join using your referral code. Share the love and grow the STONE community!
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_referral', '1');
+                setShowReferralAnnouncement(false);
+                setShowReferralPanel(true);
+              }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
+                Share Now
+              </button>
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_referral', '1');
+                setShowReferralAnnouncement(false);
+              }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Referral panel modal */}
+      {showReferralPanel && referralCode && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Refer a Friend</h2>
+            <p className="text-white/70 text-sm mb-4">
+              You both get <span className="text-amber-400 font-heading">+100 coins</span> when they join!
+            </p>
+
+            {/* QR Code */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-white rounded-lg p-2">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://stonethegame.com?ref=${referralCode}`)}`}
+                  alt="Referral QR Code"
+                  width={150}
+                  height={150}
+                  className="block"
+                />
+              </div>
+            </div>
+
+            {/* Referral code display */}
+            <div className="bg-black/30 rounded-lg px-4 py-2 mb-4">
+              <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading mb-1">Your referral code</p>
+              <p className="text-amber-400 font-heading text-lg tracking-wider">{referralCode}</p>
+              <p className="text-[9px] text-white/30 mt-1">stonethegame.com?ref={referralCode}</p>
+            </div>
+
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => {
+                const text = `Join me on STONE! Use my referral code: ${referralCode}. We both get 100 coins!\nhttps://stonethegame.com?ref=${referralCode}`;
+                if (navigator.share) {
+                  navigator.share({ title: 'Join STONE!', text }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(text).then(() => { setRefCopied(true); setTimeout(() => setRefCopied(false), 2000); });
+                }
+              }}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
+                {refCopied ? 'Copied!' : 'Share'}
+              </button>
+              <button onClick={() => setShowReferralPanel(false)}
+                className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -674,7 +765,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Refer a Friend</p>
-                <p>Share your referral code! You both get <span className="text-amber-400">+50 coins</span> when they join!</p>
+                <p>Share your referral code! You both get <span className="text-amber-400">+100 coins</span> when they join!</p>
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Forfeit</p>

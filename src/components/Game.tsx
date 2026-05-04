@@ -506,14 +506,42 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
                 ))}
               </div>
             )}
-            <button
-              onClick={handleRestart}
-              className="px-6 py-3 rounded-lg font-heading text-sm uppercase tracking-wider
-                         bg-highlight-selected text-stone-bg
-                         hover:brightness-110 transition-all cursor-pointer shadow-lg"
-            >
-              Play Again
-            </button>
+            <div className="flex flex-col gap-2 items-center">
+              <div className="flex gap-3">
+                <button
+                  onClick={handleRestart}
+                  className="px-6 py-3 rounded-lg font-heading text-sm uppercase tracking-wider
+                             bg-highlight-selected text-stone-bg
+                             hover:brightness-110 transition-all cursor-pointer shadow-lg"
+                >
+                  Play Again
+                </button>
+                <button
+                  onClick={() => { handleRestart(); }}
+                  className="px-6 py-3 rounded-lg font-heading text-sm uppercase tracking-wider
+                             bg-[#5e5549] text-white border border-[#6b5f55]
+                             hover:bg-[#6b5f55] transition-all cursor-pointer shadow-lg"
+                >
+                  Home
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  const text = `I just played STONE! Join me and we both get 100 coins!\nhttps://stonethegame.com`;
+                  if (navigator.share) {
+                    navigator.share({ title: 'Join STONE!', text }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(text);
+                  }
+                }}
+                className="px-6 py-2 rounded-lg font-heading text-[11px] uppercase tracking-wider
+                           bg-amber-600/80 text-white border border-amber-500/60
+                           hover:bg-amber-600 transition-all cursor-pointer shadow-lg flex items-center gap-2"
+              >
+                Invite a Friend
+                <span className="text-[9px] normal-case text-amber-200">You both get 100 coins!</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

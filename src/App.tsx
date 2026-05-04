@@ -36,6 +36,20 @@ function getJoinCodeFromURL(): string | null {
   return null;
 }
 
+// Capture referral code from URL (?ref=CODE) and save to localStorage
+function captureReferralCode(): void {
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if (ref) {
+    localStorage.setItem('stone_referral_code', ref.toUpperCase());
+    // Clean the URL
+    params.delete('ref');
+    const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }
+}
+captureReferralCode();
+
 export default function App() {
   const playerHook = usePlayer();
   const { player, isLoading } = playerHook;
