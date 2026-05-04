@@ -50,6 +50,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     return true;
   });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
+  const [menuOpen, setMenuOpen] = useState<'none' | 'newgame' | 'challenges' | 'settings'>('none');
   const [potmCountdown, setPotmCountdown] = useState('');
   const [bonusCountdown, setBonusCountdown] = useState('');
 
@@ -362,46 +363,180 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {!showDifficulty ? (
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-white text-sm font-heading tracking-wider">Choose how to play</p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <button
-              onClick={() => onStart('pvp', 'medium')}
-              className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
-                         bg-[#504840] text-white border-2 border-[#6b5f55]
-                         hover:bg-[#5e5549] hover:scale-105 active:scale-95
-                         transition-all cursor-pointer shadow-lg flex flex-col items-center gap-1"
-            >
-              <span>2 Players</span>
-              <span className="text-[10px] text-white/40 normal-case">(pass & play)</span>
-            </button>
-            <button
-              onClick={() => setShowDifficulty(true)}
-              className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
-                         bg-[#504840] text-white border-2 border-[#6b5f55]
-                         hover:bg-[#5e5549] hover:scale-105 active:scale-95
-                         transition-all cursor-pointer shadow-lg"
-            >
-              vs Computer
-            </button>
-            {onPlayOnline && (
-              <button
-                onClick={onPlayOnline}
-                className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-heading text-sm uppercase tracking-wider
-                           bg-[#504840] text-white border-2 border-amber-600/60
-                           hover:bg-[#5e5549] hover:scale-105 active:scale-95
-                           transition-all cursor-pointer shadow-lg flex flex-col items-center gap-1"
-              >
-                <span>Play Online</span>
-                <span className="text-[10px] text-white/40 normal-case">(Challenge Your Friends)</span>
+        <div className="flex flex-col items-center gap-3 w-full max-w-xs">
+          {/* Main menu buttons */}
+          <button onClick={() => setMenuOpen(menuOpen === 'newgame' ? 'none' : 'newgame')}
+            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                       bg-[#504840] text-white border-2 border-[#6b5f55]
+                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+            Start New Game
+          </button>
+          {menuOpen === 'newgame' && (
+            <div className="flex flex-col gap-2 w-full pl-4">
+              <button onClick={() => onStart('pvp', 'medium')}
+                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                           bg-[#3d3632] text-white/80 border border-[#5e5549]
+                           hover:bg-[#504840] transition-all cursor-pointer">
+                2 Players <span className="text-[9px] text-white/40 normal-case">(pass & play)</span>
               </button>
+              <button onClick={() => setShowDifficulty(true)}
+                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                           bg-[#3d3632] text-white/80 border border-[#5e5549]
+                           hover:bg-[#504840] transition-all cursor-pointer">
+                vs Computer
+              </button>
+              {onPlayOnline && (
+                <button onClick={onPlayOnline}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-white border border-amber-600/40
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  Play Online <span className="text-[9px] text-white/40 normal-case">(Challenge Friends)</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          <button onClick={() => { setMenuOpen('none'); if (onShowMyGames) onShowMyGames(); }}
+            className="relative w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                       bg-[#504840] text-white border-2 border-[#6b5f55]
+                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+            My Games
+            {(pendingNotifications ?? 0) > 0 && (
+              <span className="absolute top-2 right-3 bg-red-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {pendingNotifications! > 9 ? '9+' : pendingNotifications}
+              </span>
             )}
-          </div>
+          </button>
+
+          <button onClick={() => setMenuOpen(menuOpen === 'challenges' ? 'none' : 'challenges')}
+            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                       bg-[#504840] text-white border-2 border-[#6b5f55]
+                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+            Challenges
+          </button>
+          {menuOpen === 'challenges' && (
+            <div className="flex flex-col gap-2 w-full pl-4">
+              {onShowMonthlyStandings && (
+                <button onClick={onShowMonthlyStandings}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-amber-400 border border-amber-600/30
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  Player of the Month
+                </button>
+              )}
+              {onShowLeaderboard && (
+                <button onClick={onShowLeaderboard}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-white/80 border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  Leaderboard
+                </button>
+              )}
+            </div>
+          )}
+
+          <button onClick={() => setMenuOpen(menuOpen === 'settings' ? 'none' : 'settings')}
+            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                       bg-[#504840] text-white border-2 border-[#6b5f55]
+                       hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+            Settings
+          </button>
+          {menuOpen === 'settings' && (
+            <div className="flex flex-col gap-2 w-full pl-4">
+              {onShowFriends && (
+                <button onClick={onShowFriends}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-white/80 border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  My Friends
+                </button>
+              )}
+              {onShowStats && (
+                <button onClick={onShowStats}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-white/80 border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  My Stats
+                </button>
+              )}
+              {onShowColors && (
+                <button onClick={onShowColors}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-white/80 border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  Stone Color
+                </button>
+              )}
+              {onShowTutorial && (
+                <button onClick={onShowTutorial}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-white/80 border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  How to Play
+                </button>
+              )}
+              {onShowFeedback && (
+                <button onClick={() => {
+                  if (player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback) {
+                    localStorage.setItem('stone_feedback_last_seen', new Date().toISOString());
+                    setPendingFeedbackCount(0);
+                    onShowAdminFeedback();
+                  } else {
+                    onShowFeedback();
+                  }
+                }}
+                  className="relative w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-white/80 border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  Feedback
+                  {pendingFeedbackCount > 0 && (
+                    <span className="absolute top-1.5 right-2 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {pendingFeedbackCount > 9 ? '9+' : pendingFeedbackCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              <button onClick={() => { setEditingPassword(true); setNewPassword(''); setPasswordMsg(''); }}
+                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                           bg-[#3d3632] text-white/80 border border-[#5e5549]
+                           hover:bg-[#504840] transition-all cursor-pointer">
+                Set/Change Password
+              </button>
+              {pushPermission === 'granted' && onTogglePushMute && (
+                <button onClick={onTogglePushMute}
+                  className={`w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer
+                             ${pushMuted ? 'text-red-400/80' : 'text-green-400/80'}`}>
+                  Notifications: {pushMuted ? 'OFF' : 'ON'}
+                </button>
+              )}
+              {pushPermission === 'denied' && (
+                <p className="w-full px-4 py-2 text-red-400/60 text-[10px] text-center">Notifications Blocked (check browser settings)</p>
+              )}
+              {pushPermission === 'default' && onRequestPush && (
+                <button onClick={onRequestPush}
+                  className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                             bg-[#3d3632] text-amber-400/80 border border-[#5e5549]
+                             hover:bg-[#504840] transition-all cursor-pointer">
+                  Enable Notifications
+                </button>
+              )}
+              <button onClick={logout}
+                className="w-full px-4 py-2.5 rounded-lg font-heading text-xs uppercase tracking-wider
+                           bg-[#3d3632] text-red-400/70 border border-[#5e5549]
+                           hover:bg-[#504840] hover:text-red-400 transition-all cursor-pointer">
+                Logout
+              </button>
+            </div>
+          )}
+
+          {/* Refer a Friend */}
           {referralCode && (
             <button onClick={() => setShowReferralPanel(true)}
-              className="px-5 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+              className="w-full px-5 py-2.5 rounded-xl font-heading text-sm uppercase tracking-wider
                          text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
-                         border border-amber-500 bg-amber-600/30">
+                         border-2 border-amber-500 bg-amber-600/30 shadow-lg">
               Refer a Friend <span className="text-[9px] normal-case text-amber-400/60">+100 coins each</span>
             </button>
           )}
@@ -465,156 +600,31 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
-      {/* Stats, Leaderboard & My Games */}
-      {!showDifficulty && (
-        <div className="flex gap-3 flex-wrap justify-center">
-          {onShowMyGames && (
-            <button onClick={onShowMyGames}
-              className="relative px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white hover:text-amber-400 transition-colors cursor-pointer">
-              My Games
-              {(pendingNotifications ?? 0) > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                  {pendingNotifications! > 9 ? '9+' : pendingNotifications}
-                </span>
-              )}
-            </button>
-          )}
-          {onShowFriends && (
-            <button onClick={onShowFriends}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white hover:text-amber-400 transition-colors cursor-pointer">
-              Friends
-            </button>
-          )}
-          {onShowStats && (
-            <button onClick={onShowStats}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white hover:text-amber-400 transition-colors cursor-pointer">
-              My Stats
-            </button>
-          )}
-          {onShowLeaderboard && (
-            <button onClick={onShowLeaderboard}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white hover:text-amber-400 transition-colors cursor-pointer">
-              Leaderboard
-            </button>
-          )}
-          {onShowMonthlyStandings && (
-            <button onClick={onShowMonthlyStandings}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer">
-              Player of the Month
-            </button>
-          )}
-          {onShowColors && (
-            <button onClick={onShowColors}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white hover:text-amber-400 transition-colors cursor-pointer">
-              Stone Color
-            </button>
-          )}
-          {onShowTutorial && (
-            <button onClick={onShowTutorial}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white hover:text-amber-400 transition-colors cursor-pointer">
-              How to Play
-            </button>
-          )}
-          {!isInstalled && (canInstall || showIOSInstructions) && (
-            <button onClick={canInstall ? install : () => setShowIOSModal(true)}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer">
-              Install App
-            </button>
-          )}
-          {onShowFeedback && (
-            <button onClick={() => {
-              if (player?.username?.toLowerCase() === 'cpolley' && onShowAdminFeedback) {
-                localStorage.setItem('stone_feedback_last_seen', new Date().toISOString());
-                setPendingFeedbackCount(0);
-                onShowAdminFeedback();
-              } else {
-                onShowFeedback();
-              }
-            }}
-              className="relative px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-white hover:text-amber-400 transition-colors cursor-pointer">
-              Feedback
-              {pendingFeedbackCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                  {pendingFeedbackCount > 9 ? '9+' : pendingFeedbackCount}
-                </span>
-              )}
-            </button>
-          )}
+      {/* Password editing overlay */}
+      {editingPassword && (
+        <div className="flex items-center gap-2">
+          <input
+            type="password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleSavePassword(); if (e.key === 'Escape') { setEditingPassword(false); setPasswordMsg(''); } }}
+            placeholder="New password"
+            className="px-3 py-1.5 rounded-lg bg-black/30 border border-[#6b5f55] text-white text-sm font-heading
+                       focus:outline-none focus:border-amber-400 transition-colors w-36"
+          />
+          <button onClick={handleSavePassword} disabled={savingPassword}
+            className="px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                       bg-amber-600 text-white hover:bg-amber-500 cursor-pointer
+                       disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+            {savingPassword ? '...' : 'Save'}
+          </button>
+          <button onClick={() => { setEditingPassword(false); setPasswordMsg(''); }}
+            className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer">
+            Cancel
+          </button>
         </div>
       )}
-
-      {/* Account actions */}
-      {!showDifficulty && player && (
-        <div className="flex flex-col items-center gap-2">
-          {editingPassword ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="password"
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleSavePassword(); if (e.key === 'Escape') { setEditingPassword(false); setPasswordMsg(''); } }}
-                placeholder="New password"
-                className="px-3 py-1.5 rounded-lg bg-black/30 border border-[#6b5f55] text-white text-sm font-heading
-                           focus:outline-none focus:border-amber-400 transition-colors w-36"
-              />
-              <button onClick={handleSavePassword} disabled={savingPassword}
-                className="px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
-                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer
-                           disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                {savingPassword ? '...' : 'Save'}
-              </button>
-              <button onClick={() => { setEditingPassword(false); setPasswordMsg(''); }}
-                className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer">
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="flex gap-3 flex-wrap justify-center">
-              <button onClick={() => { setEditingPassword(true); setNewPassword(''); setPasswordMsg(''); }}
-                className="text-white/60 text-[10px] hover:text-white transition-colors cursor-pointer">
-                {'{'}Set/Change Password{'}'}
-              </button>
-              {pushPermission === 'granted' && onTogglePushMute && (
-                <button onClick={onTogglePushMute}
-                  className={`text-[10px] transition-colors cursor-pointer ${pushMuted ? 'text-red-400/60 hover:text-red-400' : 'text-green-400/60 hover:text-green-400'}`}>
-                  Notifications: {pushMuted ? 'OFF' : 'ON'}
-                </button>
-              )}
-              {pushPermission === 'denied' && (
-                <span className="text-red-400/60 text-[10px]">Notifications Blocked (check browser settings)</span>
-              )}
-              {pushPermission === 'default' && onRequestPush && (
-                <button onClick={onRequestPush}
-                  className="text-amber-400/60 text-[10px] hover:text-amber-400 transition-colors cursor-pointer">
-                  Enable Notifications
-                </button>
-              )}
-              <button onClick={logout}
-                className="text-white/60 text-[10px] hover:text-red-400 transition-colors cursor-pointer">
-                Logout
-              </button>
-            </div>
-          )}
-          {passwordMsg && <p className={`text-xs ${passwordMsg.includes('saved') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
-          {referralCode && (
-            <button
-              onClick={() => setShowReferralPanel(true)}
-              className="text-amber-400/60 text-[10px] hover:text-amber-400 transition-colors cursor-pointer"
-            >
-              Refer a Friend. You both get +100 coins!
-            </button>
-          )}
-        </div>
-      )}
+      {passwordMsg && <p className={`text-xs ${passwordMsg.includes('saved') ? 'text-green-400' : 'text-red-400'}`}>{passwordMsg}</p>}
 
       {/* Footer */}
       {!showDifficulty && (
