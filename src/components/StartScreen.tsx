@@ -397,6 +397,14 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </button>
             )}
           </div>
+          {referralCode && (
+            <button onClick={() => setShowReferralPanel(true)}
+              className="px-5 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
+                         border border-amber-600/40 bg-amber-600/10">
+              Refer a Friend <span className="text-[9px] normal-case text-amber-400/60">+100 coins each</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4">
@@ -512,14 +520,6 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
                          text-white hover:text-amber-400 transition-colors cursor-pointer">
               How to Play
-            </button>
-          )}
-          {referralCode && (
-            <button onClick={() => setShowReferralPanel(true)}
-              className="px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
-                         text-amber-400 hover:text-amber-300 transition-colors cursor-pointer
-                         border border-amber-600/40 bg-amber-600/10">
-              Refer a Friend
             </button>
           )}
           {!isInstalled && (canInstall || showIOSInstructions) && (
