@@ -212,6 +212,20 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
           score -= isExpert ? 150 : 50; // Expert is much more cautious about risky captures
         }
       }
+
+      // Expert: prefer using uncrowned pieces for captures when crowned pieces are available
+      // A crowned piece is more valuable — don't risk it when an uncrowned one can do the job
+      if (isExpert && movingPiece?.crowned && move.from.type === 'board') {
+        const srcPieces = state.board[move.from.index!].filter(p => p.owner === player);
+        const hasUncrowned = srcPieces.some(p => !p.crowned);
+        if (hasUncrowned) {
+          score -= 300; // Strong penalty for using crowned piece when uncrowned available
+        }
+        // Extra penalty if capture leaves crowned piece exposed
+        if (destFriendly < 2 && threats > 0) {
+          score -= 200; // Crowned piece exposed after capture is very bad
+        }
+      }
     } else {
       // Medium: simpler capture scoring
       score += captureValue;
@@ -294,6 +308,16 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
       if (leftBehind) {
         const threats = countThreats(newState, leftBehind.routePos, player);
         score -= isExpert ? (200 + threats * 100) : (80 + threats * 60);
+      }
+    }
+
+    // Expert: when leaving a stack, prefer to move uncrowned pieces and keep crowned ones safe
+    if (isExpert && movingPiece?.crowned && srcBefore >= 2) {
+      const srcPieces = state.board[move.from.index].filter(p => p.owner === player);
+      const hasUncrowned = srcPieces.some(p => !p.crowned);
+      // If there's an uncrowned piece that could move instead, penalize using crowned
+      if (hasUncrowned && !move.bearsOff) {
+        score -= 150;
       }
     }
   }
