@@ -310,7 +310,7 @@ export default function OnlineLobby({
         )}
 
         <button
-          onClick={onBack}
+          onClick={() => { localStorage.setItem('stone_menu_view', 'newgame'); onBack(); }}
           className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-2"
         >
           Back

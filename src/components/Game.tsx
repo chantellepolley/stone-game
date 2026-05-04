@@ -119,6 +119,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     awardingInProgress.current = false;
     setGameBonuses([]);
     if (onClearResumeId) onClearResumeId();
+    localStorage.removeItem('stone_menu_view');
     restart();
   };
   const [hintsEnabled, setHintsEnabled] = useState(true);
