@@ -109,6 +109,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       }));
     };
     loadGames();
+    const interval = setInterval(loadGames, 15000);
+    return () => clearInterval(interval);
   }, [player, onlinePhase]);
 
   // Check friend status with opponent

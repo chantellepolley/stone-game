@@ -159,6 +159,8 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       }));
     };
     loadGames();
+    const interval = setInterval(loadGames, 15000);
+    return () => clearInterval(interval);
   }, [player, state.phase]);
 
   // Show rules automatically on first ever game
