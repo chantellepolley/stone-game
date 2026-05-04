@@ -125,8 +125,9 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   // Load active games for tabs bar
   useEffect(() => {
     if (!player || state.phase === 'not_started') return;
+    let sb: any;
     const loadGames = async () => {
-      const { supabase: sb } = await import('../lib/supabase');
+      if (!sb) { sb = (await import('../lib/supabase')).supabase; }
       const { data } = await sb
         .from('games')
         .select('id, room_code, player1_id, player2_id, state, mode')
@@ -159,8 +160,26 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       }));
     };
     loadGames();
-    const interval = setInterval(loadGames, 15000);
-    return () => clearInterval(interval);
+
+    // Subscribe to realtime changes for instant tab updates
+    let channel: any;
+    import('../lib/supabase').then(({ supabase: s }) => {
+      sb = s;
+      channel = s.channel('game-tabs-local')
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'games',
+        }, (payload: any) => {
+          const g = payload.new;
+          if (g.player1_id === player.id || g.player2_id === player.id) {
+            loadGames();
+          }
+        })
+        .subscribe();
+    });
+
+    return () => { if (channel && sb) sb.removeChannel(channel); };
   }, [player, state.phase]);
 
   // Show rules automatically on first ever game

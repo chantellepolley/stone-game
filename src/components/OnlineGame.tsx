@@ -71,8 +71,9 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   // Load active games (online + AI) for the tabs bar
   useEffect(() => {
     if (!player || onlinePhase !== 'playing') return;
+    let sb: any;
     const loadGames = async () => {
-      const { supabase: sb } = await import('../lib/supabase');
+      if (!sb) { sb = (await import('../lib/supabase')).supabase; }
       const { data } = await sb
         .from('games')
         .select('id, room_code, player1_id, player2_id, state, mode')
@@ -109,8 +110,26 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       }));
     };
     loadGames();
-    const interval = setInterval(loadGames, 15000);
-    return () => clearInterval(interval);
+
+    // Subscribe to realtime changes on games table for instant updates
+    let channel: any;
+    import('../lib/supabase').then(({ supabase: s }) => {
+      sb = s;
+      channel = s.channel('game-tabs-online')
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'games',
+        }, (payload: any) => {
+          const g = payload.new;
+          if (g.player1_id === player.id || g.player2_id === player.id) {
+            loadGames();
+          }
+        })
+        .subscribe();
+    });
+
+    return () => { if (channel && sb) sb.removeChannel(channel); };
   }, [player, onlinePhase]);
 
   // Check friend status with opponent
