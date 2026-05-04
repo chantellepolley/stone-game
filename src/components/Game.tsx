@@ -36,9 +36,10 @@ interface GameProps {
   onRequestPush?: () => void;
   pushMuted?: boolean;
   onTogglePushMute?: () => void;
+  onResumeOnlineGame?: (gameId: string, roomCode: string, player: 1 | 2) => void;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, pushPermission, onRequestPush, pushMuted, onTogglePushMute }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, pushPermission, onRequestPush, pushMuted, onTogglePushMute, onResumeOnlineGame }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame } = useGame();
   const { spend, earn } = useCoins();
   const [currentWager, setCurrentWager] = useState(0);
@@ -119,6 +120,46 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [showMobileRules, setShowMobileRules] = useState(false);
+  const [activeGames, setActiveGames] = useState<Array<{ id: string; room_code: string; opponent_name: string; my_player: 1 | 2; mode: string }>>([]);
+
+  // Load active games for tabs bar
+  useEffect(() => {
+    if (!player || state.phase === 'not_started') return;
+    const loadGames = async () => {
+      const { supabase: sb } = await import('../lib/supabase');
+      const { data } = await sb
+        .from('games')
+        .select('id, room_code, player1_id, player2_id, state, mode')
+        .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
+        .eq('status', 'active')
+        .in('mode', ['online', 'ai'])
+        .order('updated_at', { ascending: false })
+        .limit(20);
+      if (!data) return;
+
+      const opponentIds = data.filter(g => g.mode === 'online').map(g => g.player1_id === player.id ? g.player2_id : g.player1_id).filter(Boolean);
+      const nameMap: Record<string, string> = {};
+      if (opponentIds.length > 0) {
+        const { data: players } = await sb.from('players').select('id, username').in('id', opponentIds);
+        players?.forEach(p => { nameMap[p.id] = p.username; });
+      }
+
+      setActiveGames(data.map(g => {
+        const myP = g.player1_id === player.id ? 1 : 2;
+        const oppId = myP === 1 ? g.player2_id : g.player1_id;
+        const aiDiff = (g.state as any)?.aiDifficulty || 'medium';
+        const isAI = g.mode === 'ai';
+        return {
+          id: g.id,
+          room_code: g.room_code,
+          opponent_name: isAI ? `AI (${aiDiff.charAt(0).toUpperCase() + aiDiff.slice(1)})` : (oppId ? (nameMap[oppId] || 'Unknown') : 'Waiting'),
+          my_player: myP as 1 | 2,
+          mode: g.mode,
+        };
+      }));
+    };
+    loadGames();
+  }, [player, state.phase]);
 
   // Show rules automatically on first ever game
   const [showFirstTimeRules, setShowFirstTimeRules] = useState(() => {
@@ -249,6 +290,35 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
           </button>
         </div>
       </div>
+
+      {/* Active games tabs */}
+      {activeGames.length > 1 && (
+        <div className="flex gap-1.5 shrink-0 overflow-x-auto max-w-full px-1 py-0.5 no-scrollbar justify-center">
+          {activeGames.map(g => {
+            const isCurrent = g.mode === 'ai' && g.id === resumeGameId;
+            return (
+              <button
+                key={g.id}
+                onClick={() => {
+                  if (isCurrent) return;
+                  if (g.mode === 'online' && onResumeOnlineGame) {
+                    onResumeOnlineGame(g.id, g.room_code, g.my_player);
+                  } else if (g.mode === 'ai') {
+                    loadGame(g.id);
+                  }
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-heading shrink-0 transition-all
+                  ${isCurrent
+                    ? 'bg-amber-600/30 border border-amber-400/50 text-white'
+                    : 'bg-black/20 border border-[#6b5f55]/30 text-white/50 hover:text-white/80 cursor-pointer'
+                  }`}
+              >
+                <span className="truncate max-w-[60px]">{g.opponent_name}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Mobile: bottom bar — always pinned */}
       <div className="lg:hidden flex items-center gap-1 py-0.5 shrink-0">

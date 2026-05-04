@@ -23,9 +23,10 @@ interface OnlineGameProps {
   autoJoinCode?: string | null;
   resumeData?: { gameId: string; roomCode: string; player: 1 | 2; inviteId?: string } | null;
   onInviteFriend?: (playerId: string, wager: number) => void;
+  onResumeLocalGame?: (gameId: string) => void;
 }
 
-export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteFriend }: OnlineGameProps) {
+export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteFriend, onResumeLocalGame }: OnlineGameProps) {
   const {
     state, roll, selectMove, undo, canUndo, validMoves,
     awaitingJesterChoice, chooseJesterDoubles,
@@ -43,7 +44,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [activeGames, setActiveGames] = useState<Array<{ id: string; room_code: string; opponent_name: string; opponent_avatar: string | null; my_player: 1 | 2; is_my_turn: boolean }>>([]);
+  const [activeGames, setActiveGames] = useState<Array<{ id: string; room_code: string; opponent_name: string; opponent_avatar: string | null; my_player: 1 | 2; is_my_turn: boolean; mode: string }>>([]);
   const { player } = usePlayerContext();
   const { addFriendById, getFriendStatus } = useFriends();
   const [friendStatus, setFriendStatus] = useState<'none' | 'pending' | 'accepted' | 'sent'>('none');
@@ -67,7 +68,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     }
   }, [state.phase, state.winner, gameWager, myPlayer, earn, player]);
 
-  // Load active online games for the tabs bar
+  // Load active games (online + AI) for the tabs bar
   useEffect(() => {
     if (!player || onlinePhase !== 'playing') return;
     const loadGames = async () => {
@@ -77,28 +78,33 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         .select('id, room_code, player1_id, player2_id, state, mode')
         .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
         .eq('status', 'active')
-        .eq('mode', 'online')
+        .in('mode', ['online', 'ai'])
         .order('updated_at', { ascending: false })
         .limit(20);
       if (!data) return;
 
-      const opponentIds = data.map(g => g.player1_id === player.id ? g.player2_id : g.player1_id).filter(Boolean);
-      const { data: players } = await sb.from('players').select('id, username, avatar_url').in('id', opponentIds);
+      const opponentIds = data.filter(g => g.mode === 'online').map(g => g.player1_id === player.id ? g.player2_id : g.player1_id).filter(Boolean);
       const nameMap: Record<string, string> = {};
       const avatarMap: Record<string, string | null> = {};
-      players?.forEach(p => { nameMap[p.id] = p.username; avatarMap[p.id] = p.avatar_url; });
+      if (opponentIds.length > 0) {
+        const { data: players } = await sb.from('players').select('id, username, avatar_url').in('id', opponentIds);
+        players?.forEach(p => { nameMap[p.id] = p.username; avatarMap[p.id] = p.avatar_url; });
+      }
 
       setActiveGames(data.map(g => {
         const myP = g.player1_id === player.id ? 1 : 2;
         const oppId = myP === 1 ? g.player2_id : g.player1_id;
         const currentPlayer = (g.state as any)?.currentPlayer || 1;
+        const aiDiff = (g.state as any)?.aiDifficulty || 'medium';
+        const isAI = g.mode === 'ai';
         return {
           id: g.id,
           room_code: g.room_code,
-          opponent_name: oppId ? (nameMap[oppId] || 'Unknown') : 'Waiting',
-          opponent_avatar: oppId ? (avatarMap[oppId] || null) : null,
+          opponent_name: isAI ? `AI (${aiDiff.charAt(0).toUpperCase() + aiDiff.slice(1)})` : (oppId ? (nameMap[oppId] || 'Unknown') : 'Waiting'),
+          opponent_avatar: isAI ? null : (oppId ? (avatarMap[oppId] || null) : null),
           my_player: myP as 1 | 2,
-          is_my_turn: currentPlayer === myP,
+          is_my_turn: isAI ? true : currentPlayer === myP,
+          mode: g.mode,
         };
       }));
     };
@@ -457,6 +463,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                 key={g.id}
                 onClick={() => {
                   if (isCurrent) return;
+                  if (g.mode === 'ai' && onResumeLocalGame) {
+                    leave();
+                    onResumeLocalGame(g.id);
+                    return;
+                  }
                   leave();
                   resumeGame(g.id, g.room_code, g.my_player);
                   coinsHandled.current = false;

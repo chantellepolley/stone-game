@@ -255,6 +255,7 @@ export default function App() {
           autoJoinCode={autoJoinCode}
           resumeData={resumeData}
           onInviteFriend={handleInviteToPlay}
+          onResumeLocalGame={(gameId) => { setResumeLocalGameId(gameId); setScreen('game'); }}
         />
       )}
       {screen === 'game' && (
@@ -278,6 +279,7 @@ export default function App() {
           onRequestPush={requestPermission}
           pushMuted={pushMuted}
           onTogglePushMute={handleTogglePushMute}
+          onResumeOnlineGame={(gameId, roomCode, p) => { setResumeData({ gameId, roomCode, player: p }); setScreen('online'); }}
         />
       )}
 
