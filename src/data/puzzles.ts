@@ -3,18 +3,21 @@ import type { Piece, PlayerId } from '../types/game';
 export interface PuzzleDef {
   id: string;
   name: string;
-  category: 'bear_off' | 'capture' | 'jester';
-  difficulty: 'apprentice' | 'journeyman' | 'master';
+  category: 'bear_off' | 'capture' | 'jester' | 'strategy';
+  difficulty: 'apprentice' | 'journeyman' | 'master' | 'grandmaster';
   description: string;
   objective: string;
   /** Cost in coins to unlock (0 = free) */
   cost: number;
   /** Coin reward for completing */
   reward: number;
-  /** Fixed dice values */
+  /** Fixed dice values for turn 1 */
   dice: [number, number];
   /** Whether dice are doubles (4 moves) */
   isDoubles: boolean;
+  /** Second turn dice (multi-turn puzzle). If set, player gets a 2nd turn after using turn 1 dice. */
+  turn2Dice?: [number, number];
+  turn2IsDoubles?: boolean;
   /** Pre-set board pieces: [owner, routePos, crowned?][] */
   pieces: { owner: PlayerId; routePos: number; crowned?: boolean }[];
   /** Pieces already borne off (home) */
@@ -300,9 +303,49 @@ const masterstrokePuzzle: PuzzleDef = {
   hint: 'One piece must do all the work. Think about which die to use first so you land on BOTH targets.',
 };
 
+// ─── PUZZLE 5: The Long Game (Grandmaster, multi-turn) ────────────
+// Two turns. Turn 1 dice: 4,3. Turn 2 dice: doubles of 5.
+// You have 4 pieces to bear off but they're spread out.
+// In turn 2 you get four 5s — but overshoot only works if ALL pieces
+// are in the last 5 spaces (routePos 25-29).
+//
+// The key: in turn 1, you MUST use die 4 on piece A (21→25) and
+// die 3 on piece B (23→26) to get them into the last 5 zone.
+// Any other assignment leaves a piece outside the zone, blocking
+// overshoot and making turn 2 impossible.
+//
+// Wrong paths that seem reasonable:
+// - 3 on A (21→24): A stays outside last 5, overshoot blocked in turn 2
+// - 4 on C or D: wastes the die, A still at 21 (outside last 5)
+// - 4 on B (23→27): works for B, but 3 on A (21→24) leaves A out
+const longGamePuzzle: PuzzleDef = {
+  id: 'long-game-1',
+  name: 'The Long Game',
+  category: 'strategy',
+  difficulty: 'grandmaster',
+  description: 'Two turns to bear off everything. Plan your first moves carefully — the wrong setup makes turn 2 impossible.',
+  objective: 'Bear off all 4 pieces across 2 turns',
+  cost: 75,
+  reward: 50,
+  dice: [4, 3],
+  isDoubles: false,
+  turn2Dice: [5, 5],
+  turn2IsDoubles: true,
+  pieces: [
+    { owner: 1, routePos: 21, crowned: true },  // A: 9 from home, needs 4 to reach zone
+    { owner: 1, routePos: 23, crowned: true },  // B: 7 from home, needs 3 to reach zone
+    { owner: 1, routePos: 25, crowned: true },  // C: 5 from home, already in zone
+    { owner: 1, routePos: 26, crowned: true },  // D: 4 from home, already in zone
+  ],
+  homeCount: { 1: 9, 2: 0 },
+  checkSolved: (state) => state.home[1].length >= 13,
+  hint: 'In turn 2 you have four 5s. Pieces can only overshoot if ALL your pieces are in the last 5 spaces (positions 25-29). Use turn 1 to get every piece into that zone.',
+};
+
 export const PUZZLES: PuzzleDef[] = [
   bearOffPuzzle,
   capturePuzzle,
   jesterPuzzle,
   masterstrokePuzzle,
+  longGamePuzzle,
 ];

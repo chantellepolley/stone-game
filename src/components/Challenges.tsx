@@ -109,12 +109,14 @@ const CATEGORY_LABELS: Record<string, { label: string; icon: string }> = {
   bear_off: { label: 'Bear Off', icon: '\u{1F3E0}' },
   capture: { label: 'Capture', icon: '\u2694\uFE0F' },
   jester: { label: 'Jester', icon: '\u{1F0CF}' },
+  strategy: { label: 'Strategy', icon: '\u{1F9E0}' },
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   apprentice: 'text-green-400',
   journeyman: 'text-amber-400',
   master: 'text-red-400',
+  grandmaster: 'text-purple-400',
 };
 
 // ─── Component ────────────────────────────────────────────────────
@@ -130,6 +132,8 @@ export default function Challenges({ onBack }: ChallengesProps) {
   const [rewardClaimed, setRewardClaimed] = useState(false);
   const [completed, setCompleted] = useState(getCompletedPuzzles);
   const [unlocked, setUnlocked] = useState(getUnlockedPuzzles);
+  const [currentTurn, setCurrentTurn] = useState(1);
+  const [showTurnBanner, setShowTurnBanner] = useState(false);
   const capturedThisPuzzle = useRef(0);
   const undoStack = useRef<GameState[]>([]);
 
@@ -153,6 +157,8 @@ export default function Challenges({ onBack }: ChallengesProps) {
     setSolved(false);
     setFailed(false);
     setRewardClaimed(false);
+    setCurrentTurn(1);
+    setShowTurnBanner(false);
     capturedThisPuzzle.current = 0;
     undoStack.current = [];
   }, []);
@@ -211,9 +217,34 @@ export default function Challenges({ onBack }: ChallengesProps) {
     setState(gs);
     setSolved(false);
     setFailed(false);
+    setCurrentTurn(1);
+    setShowTurnBanner(false);
     capturedThisPuzzle.current = 0;
     undoStack.current = [];
   }, [activePuzzle]);
+
+  // ── Transition to turn 2 for multi-turn puzzles ──
+  const advanceToTurn2 = useCallback(() => {
+    if (!state || !activePuzzle?.turn2Dice) return;
+    const [d1, d2] = activePuzzle.turn2Dice;
+    const d1J = isJester(d1), d2J = isJester(d2);
+    const remaining: number[] = [];
+    if (d1J && d2J) { remaining.push(1, 2); }
+    else if (d1J || d2J) { const n = d1J ? d2 : d1; remaining.push(n, n, n, n); }
+    else if (activePuzzle.turn2IsDoubles || d1 === d2) { remaining.push(d1, d1, d1, d1); }
+    else { remaining.push(d1, d2); }
+
+    setState(prev => prev ? {
+      ...prev,
+      dice: { values: activePuzzle.turn2Dice!, remaining, hasRolled: true, pendingDoubleJester: d1J && d2J },
+      phase: 'moving' as GamePhase,
+      currentPlayer: 1 as const,
+    } : prev);
+    setCurrentTurn(2);
+    setShowTurnBanner(true);
+    undoStack.current = [];
+    setTimeout(() => setShowTurnBanner(false), 2000);
+  }, [state, activePuzzle]);
 
   // ── Check win/fail after each move ──
   useEffect(() => {
@@ -233,16 +264,28 @@ export default function Challenges({ onBack }: ChallengesProps) {
     // Check if out of moves (and puzzle not solved = fail)
     if (state.phase === 'moving' && state.dice.remaining.length > 0 && !awaitingJesterChoice) {
       if (!canPlayerMove(state)) {
+        // Multi-turn: if turn 1 ended with blocked moves and there's a turn 2, advance
+        if (currentTurn === 1 && activePuzzle.turn2Dice) {
+          advanceToTurn2();
+          return;
+        }
         setFailed(true);
       }
     }
-    // Turn ended (all dice used or blocked) but puzzle not solved
-    if (state.phase === 'rolling' || state.phase === 'no_moves' || (state.phase === 'moving' && state.dice.remaining.length === 0 && !state.dice.pendingDoubleJester)) {
+    // Turn ended (all dice used or blocked)
+    const turnEnded = state.phase === 'rolling' || state.phase === 'no_moves' ||
+      (state.phase === 'moving' && state.dice.remaining.length === 0 && !state.dice.pendingDoubleJester);
+    if (turnEnded) {
+      // Multi-turn: advance to turn 2 if available
+      if (currentTurn === 1 && activePuzzle.turn2Dice) {
+        advanceToTurn2();
+        return;
+      }
       if (!activePuzzle.checkSolved(checkState)) {
         setFailed(true);
       }
     }
-  }, [state, activePuzzle, solved, awaitingJesterChoice]);
+  }, [state, activePuzzle, solved, awaitingJesterChoice, currentTurn, advanceToTurn2]);
 
   // ── Claim reward ──
   const claimReward = useCallback(async () => {
@@ -272,6 +315,12 @@ export default function Challenges({ onBack }: ChallengesProps) {
           </div>
           <h2 className="text-amber-400 font-heading text-sm uppercase tracking-wider text-center mt-1">{activePuzzle.name}</h2>
           <p className="text-white/50 text-[10px] text-center">{activePuzzle.objective}</p>
+          {activePuzzle.turn2Dice && (
+            <div className="flex justify-center gap-2 mt-1">
+              <span className={`text-[10px] font-heading uppercase tracking-wider px-2 py-0.5 rounded ${currentTurn === 1 ? 'bg-amber-600/30 text-amber-400' : 'text-white/20'}`}>Turn 1</span>
+              <span className={`text-[10px] font-heading uppercase tracking-wider px-2 py-0.5 rounded ${currentTurn === 2 ? 'bg-amber-600/30 text-amber-400' : 'text-white/20'}`}>Turn 2</span>
+            </div>
+          )}
         </div>
 
         {/* Dice display */}
@@ -323,6 +372,16 @@ export default function Challenges({ onBack }: ChallengesProps) {
             <p className="text-amber-400/60 text-[10px] text-center italic">
               Hint: {activePuzzle.hint}
             </p>
+          </div>
+        )}
+
+        {/* Turn 2 transition banner */}
+        {showTurnBanner && (
+          <div className="fixed top-1/4 left-1/2 -translate-x-1/2 z-40 animate-[slideIn_0.3s_ease-out]">
+            <div className="bg-[#504840] border-2 border-amber-600/60 rounded-xl px-8 py-4 shadow-2xl text-center">
+              <p className="text-amber-400 font-heading text-lg uppercase tracking-wider">Turn 2</p>
+              <p className="text-white/50 text-[10px] mt-1">New dice loaded</p>
+            </div>
           </div>
         )}
 
@@ -449,7 +508,8 @@ export default function Challenges({ onBack }: ChallengesProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 text-[10px] text-white/40">
                     <span>Reward: <span className="text-amber-400 inline-flex items-center gap-0.5">+{puzzle.reward} <JesterCoin size={10} /></span></span>
-                    <span>Dice: {puzzle.dice.map(d => d === 6 ? 'J' : d).join(', ')}</span>
+                    <span>Dice: {puzzle.dice.map(d => d === 6 ? 'J' : d).join(', ')}{puzzle.turn2Dice ? ` + ${puzzle.turn2Dice.map(d => d === 6 ? 'J' : d).join(', ')}` : ''}</span>
+                    {puzzle.turn2Dice && <span className="text-purple-400">2 turns</span>}
                   </div>
 
                   {isUnlocked ? (
