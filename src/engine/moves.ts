@@ -1,4 +1,4 @@
-import type { GameState, Move, Piece, PlayerId } from '../types/game';
+import type { GameState, GamePhase, Move, Piece, PlayerId } from '../types/game';
 import { GAME_CONFIG } from '../config/gameConfig';
 
 const { PLAYER_ROUTE, HOME_STRETCH_LENGTH, CAPTURE_MAX_OPPONENTS, NUM_SPACES } = GAME_CONFIG;
