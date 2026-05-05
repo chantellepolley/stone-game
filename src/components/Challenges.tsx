@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import type { GameState, GamePhase, Move, PlayerId } from '../types/game';
+import type { GameState, GamePhase, Move } from '../types/game';
 import { getValidMoves, getMultiStepMoves, executeMove, canPlayerMove, checkWinCondition } from '../engine';
 import { isJester } from '../engine/dice';
 import { PUZZLES, buildPuzzleState, type PuzzleDef } from '../data/puzzles';
@@ -159,7 +159,7 @@ export default function Challenges({ onBack }: ChallengesProps) {
 
   // ── Unlock a puzzle ──
   const handleUnlock = useCallback(async (puzzle: PuzzleDef) => {
-    if (!player || coins < puzzle.cost) return;
+    if (!player || (coins ?? 0) < puzzle.cost) return;
     await addCoins(player.id, -puzzle.cost, `Unlocked puzzle: ${puzzle.name}`);
     await refreshCoins();
     markPuzzleUnlocked(puzzle.id);
@@ -416,7 +416,7 @@ export default function Challenges({ onBack }: ChallengesProps) {
           {PUZZLES.map(puzzle => {
             const isCompleted = completed.has(puzzle.id);
             const isUnlocked = puzzle.cost === 0 || unlocked.has(puzzle.id);
-            const canAfford = coins >= puzzle.cost;
+            const canAfford = (coins ?? 0) >= puzzle.cost;
             const cat = CATEGORY_LABELS[puzzle.category] || { label: puzzle.category, icon: '' };
 
             return (
