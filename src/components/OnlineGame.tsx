@@ -65,8 +65,16 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
           setGameBonuses(bonuses);
         });
       }
+      // Mark this game result as seen so the notification banner doesn't show it
+      if (currentGameId) {
+        const seen: string[] = JSON.parse(localStorage.getItem('stone_seen_results') || '[]');
+        if (!seen.includes(currentGameId)) {
+          seen.push(currentGameId);
+          localStorage.setItem('stone_seen_results', JSON.stringify(seen.slice(-50)));
+        }
+      }
     }
-  }, [state.phase, state.winner, gameWager, myPlayer, earn, player]);
+  }, [state.phase, state.winner, gameWager, myPlayer, earn, player, currentGameId]);
 
   // Load active games (online + AI) for the tabs bar
   useEffect(() => {
