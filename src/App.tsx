@@ -136,8 +136,36 @@ export default function App() {
   useEffect(() => {
     pollNotifications();
     const interval = setInterval(pollNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [pollNotifications]);
+
+    // Realtime subscription for instant badge updates
+    if (!player) return () => clearInterval(interval);
+    const channel = supabase
+      .channel('badge-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'games',
+        filter: `player1_id=eq.${player.id}`,
+      }, () => pollNotifications())
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'games',
+        filter: `player2_id=eq.${player.id}`,
+      }, () => pollNotifications())
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'game_invites',
+        filter: `to_player_id=eq.${player.id}`,
+      }, () => pollNotifications())
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [pollNotifications, player]);
 
   const handleTogglePushMute = useCallback(async () => {
     if (pushMuted) {
