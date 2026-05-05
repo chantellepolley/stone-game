@@ -9,6 +9,7 @@ interface GameInvite {
   roomCode: string;
   gameId: string;
   createdAt: string;
+  wager: number;
 }
 
 interface NotificationsProps {
@@ -37,13 +38,16 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
 
     if (inviteData && inviteData.length > 0) {
       const fromIds = inviteData.map(i => i.from_player_id);
-      const { data: players } = await supabase
-        .from('players')
-        .select('id, username')
-        .in('id', fromIds);
+      const gameIds = inviteData.map(i => i.game_id);
+      const [{ data: players }, { data: gamesData }] = await Promise.all([
+        supabase.from('players').select('id, username').in('id', fromIds),
+        supabase.from('games').select('id, wager').in('id', gameIds),
+      ]);
 
       const nameMap: Record<string, string> = {};
       players?.forEach(p => { nameMap[p.id] = p.username; });
+      const wagerMap: Record<string, number> = {};
+      gamesData?.forEach(g => { wagerMap[g.id] = g.wager || 0; });
 
       setInvites(inviteData.map(i => ({
         id: i.id,
@@ -51,6 +55,7 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
         roomCode: i.room_code,
         gameId: i.game_id,
         createdAt: i.created_at,
+        wager: wagerMap[i.game_id] || 0,
       })));
     } else {
       setInvites([]);
@@ -120,6 +125,9 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
           className="bg-[#504840] border-2 border-amber-600/60 rounded-xl p-3 shadow-2xl animate-[slideIn_0.3s_ease-out]">
           <p className="text-white text-sm font-heading mb-2">
             New game invite from <span className="text-amber-400">{invite.fromUsername}</span>
+            {invite.wager > 0 && (
+              <span className="text-amber-400/80 text-xs ml-1">({invite.wager} coin wager)</span>
+            )}
           </p>
           <div className="flex gap-2">
             <button

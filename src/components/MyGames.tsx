@@ -70,7 +70,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           .limit(20),
         supabase
           .from('games')
-          .select('id, room_code, player1_id, player2_id, status, updated_at, mode, winner_id, wager')
+          .select('id, room_code, player1_id, player2_id, status, state, updated_at, mode, winner_id, wager')
           .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
           .eq('status', 'completed')
           .order('updated_at', { ascending: false })
