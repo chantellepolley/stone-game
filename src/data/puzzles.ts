@@ -263,8 +263,46 @@ const jesterPuzzle: PuzzleDef = {
   hint: 'After using 1 and 2, think about which doubles value lets you bear off the piece at position 26 AND move the far piece into range.',
 };
 
+// ─── PUZZLE 4: The Masterstroke (Hard) ─────────────────────────────
+// Two P1 pieces, two P2 targets. Dice 5,2.
+// Only solution: use BOTH dice on piece A in the right order (2 first, then 5).
+// Traps: splitting dice between pieces gives only 1 capture.
+//        Using 5 on A first moves it past target X without capturing.
+const masterstrokePuzzle: PuzzleDef = {
+  id: 'masterstroke-1',
+  name: 'The Masterstroke',
+  category: 'capture',
+  difficulty: 'master',
+  description: 'Two targets, two pieces, but only one path captures both. Every move counts.',
+  objective: 'Capture both opponent pieces in one turn',
+  cost: 50,
+  reward: 25,
+  dice: [5, 2],
+  isDoubles: false,
+  // P1 piece A at routePos 1 (space 1). P1 piece B at routePos 6 (space 6, red herring).
+  // P2 single at space 3 (routePos 3 for P1, reachable by A with 2: 1+2=3, capture!)
+  // P2 single at space 8 (routePos 8 for P1, reachable by A with 5 FROM space 3: 3+5=8, capture!)
+  // P2 space 3 = P2 routePos 16. P2 space 8 = P2 routePos 11.
+  // Wrong: A uses 5 first (goes to space 6, stacks with B, no capture), then only 1 target reachable.
+  // Wrong: Split dice between A and B — each can only reach 1 target.
+  // Only correct: A uses 2 first (capture at 3), then A uses 5 (capture at 8).
+  pieces: [
+    { owner: 1, routePos: 1 },   // Piece A at space 1
+    { owner: 1, routePos: 6 },   // Piece B at space 6 (distraction)
+    { owner: 2, routePos: 16 },  // P2 target at space 3
+    { owner: 2, routePos: 11 },  // P2 target at space 8
+    // Safe P2 stacks for context
+    { owner: 2, routePos: 1 },
+    { owner: 2, routePos: 1 },
+  ],
+  homeCount: { 1: 11, 2: 0 },
+  checkSolved: (state) => state.jail[2].length >= 2,
+  hint: 'One piece must do all the work. Think about which die to use first so you land on BOTH targets.',
+};
+
 export const PUZZLES: PuzzleDef[] = [
   bearOffPuzzle,
   capturePuzzle,
   jesterPuzzle,
+  masterstrokePuzzle,
 ];
