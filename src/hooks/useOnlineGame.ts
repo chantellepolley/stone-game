@@ -815,21 +815,7 @@ export function useOnlineGame() {
       };
       setState(newState);
       broadcastState(newState);
-      setTimeout(() => {
-        setState(prev => {
-          if (prev.phase !== 'no_moves') return prev;
-          const switched: GameState = {
-            ...prev,
-            currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
-            dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
-            phase: 'rolling',
-            turnCount: prev.turnCount + 1,
-          };
-          broadcastState(switched);
-          saveGameState(switched);
-          return switched;
-        });
-      }, 3500);
+      // useEffect handles the auto-advance after display timeout
       return;
     } else {
       const d1J = isJester(dice.values[0]), d2J = isJester(dice.values[1]);
@@ -873,6 +859,28 @@ export function useOnlineGame() {
     setState(newState);
     broadcastState(newState, move);
   }, [isMyTurn, state]);
+
+  // ── Auto-advance after blocked mid-turn (no_moves from selectMove) ──
+  useEffect(() => {
+    if (state.phase !== 'no_moves') return;
+    const blocked = state.dice.remaining.length > 0;
+    const timer = setTimeout(() => {
+      setState(prev => {
+        if (prev.phase !== 'no_moves') return prev;
+        const switched: GameState = {
+          ...prev,
+          currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
+          dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
+          phase: 'rolling',
+          turnCount: prev.turnCount + 1,
+        };
+        broadcastState(switched);
+        saveGameState(switched);
+        return switched;
+      });
+    }, blocked ? 2500 : 3500);
+    return () => clearTimeout(timer);
+  }, [state.phase, state.dice.remaining.length]);
 
   const chooseJesterDoubles = useCallback((value: number) => {
     if (!isMyTurn) return;

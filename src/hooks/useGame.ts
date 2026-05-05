@@ -188,6 +188,7 @@ export function useGame() {
   // ── Auto-switch after "no valid moves" display ──
   useEffect(() => {
     if (state.phase !== 'no_moves') return;
+    const blocked = state.dice.remaining.length > 0;
     const timer = setTimeout(() => {
       setState(prev => ({
         ...prev,
@@ -196,9 +197,9 @@ export function useGame() {
         phase: 'rolling',
         turnCount: prev.turnCount + 1,
       }));
-    }, 3500); // Show the roll for 3.5 seconds
+    }, blocked ? 2500 : 3500);
     return () => clearTimeout(timer);
-  }, [state.phase]);
+  }, [state.phase, state.dice.remaining.length]);
 
   // ── Human actions ──
 

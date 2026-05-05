@@ -621,28 +621,36 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       )}
 
       {/* No valid moves overlay */}
-      {state.phase === 'no_moves' && (
-        <div className="fixed top-1/4 left-1/2 -translate-x-1/2 z-40 animate-[slideIn_0.3s_ease-out]">
-          <div className="bg-[#504840] border-2 border-red-600/50 rounded-xl px-6 py-4 shadow-2xl text-center">
-            <p className="text-red-400 font-heading text-sm uppercase tracking-wider">No valid moves!</p>
-            {state.dice.values[0] > 0 && (
-              <div className="flex gap-2 justify-center my-2">
-                {state.dice.values.map((v, i) => (
-                  <div key={i} className="w-10 h-10 rounded-lg border-2 border-red-600/40 flex items-center justify-center"
-                    style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '60px', filter: 'brightness(1.2)' }}>
-                    {v === 6 ? (
-                      <img src="/jester-dice.png" alt="Jester" className="w-8 h-8 rounded-full object-cover" />
-                    ) : (
-                      <span className="text-white font-bold text-lg">{v}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            <p className="text-white/50 text-[10px]">Skipping turn...</p>
+      {state.phase === 'no_moves' && (() => {
+        const blocked = state.dice.remaining.length > 0;
+        const diceToShow = blocked ? state.dice.remaining : state.dice.values.filter(v => v > 0);
+        return (
+          <div className="fixed top-1/4 left-1/2 -translate-x-1/2 z-40 animate-[slideIn_0.3s_ease-out]">
+            <div className="bg-[#504840] border-2 border-red-600/50 rounded-xl px-6 py-4 shadow-2xl text-center">
+              <p className="text-red-400 font-heading text-sm uppercase tracking-wider">
+                {blocked ? 'Blocked!' : 'No valid moves!'}
+              </p>
+              {diceToShow.length > 0 && (
+                <div className="flex gap-2 justify-center my-2">
+                  {diceToShow.map((v, i) => (
+                    <div key={i} className="w-10 h-10 rounded-lg border-2 border-red-600/40 flex items-center justify-center"
+                      style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '60px', filter: 'brightness(1.2)' }}>
+                      {v === 6 ? (
+                        <img src="/jester-dice.png" alt="Jester" className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <span className="text-white font-bold text-lg">{v}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-white/50 text-[10px]">
+                {blocked ? `Can't use remaining ${state.dice.remaining.join(', ')}` : 'Skipping turn...'}
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Incoming wager proposal from opponent */}
       {wagerProposal && (

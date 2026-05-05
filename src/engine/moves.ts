@@ -427,13 +427,24 @@ export function executeMove(state: GameState, move: Move): GameState {
   });
 
   // 8. Check if turn ends
-  const outOfMoves = s.dice.remaining.length === 0 || !canPlayerMoveWith(s);
-  const awaitingJesterChoice = s.dice.remaining.length === 0 && s.dice.pendingDoubleJester;
-  if (outOfMoves && !awaitingJesterChoice) {
+  const diceExhausted = s.dice.remaining.length === 0;
+  const blocked = !diceExhausted && !canPlayerMoveWith(s);
+  const awaitingJesterChoice = diceExhausted && s.dice.pendingDoubleJester;
+  if (diceExhausted && !awaitingJesterChoice) {
+    // All dice used — clean turn end
     s.currentPlayer = player === 1 ? 2 : 1;
     s.dice = { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false };
     s.phase = 'rolling';
     s.turnCount++;
+  } else if (blocked) {
+    // Dice remain but no valid moves — show overlay before switching
+    s.phase = 'no_moves' as GamePhase;
+    s.moveLog.push({
+      turn: s.turnCount,
+      player,
+      action: `${GAME_CONFIG.PLAYER_NAMES[player]} blocked — cannot use remaining ${s.dice.remaining.join(', ')}`,
+      timestamp: Date.now(),
+    });
   }
 
   return s;
