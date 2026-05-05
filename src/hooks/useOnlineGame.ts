@@ -9,6 +9,7 @@ import { recordGameResult } from '../lib/statsTracker';
 import { loadPlayerColor } from '../utils/stoneColors';
 import { sendPushNotification } from './usePushNotifications';
 import { deductCoins, addCoins } from '../lib/coins';
+import { usePlayerContext } from '../contexts/PlayerContext';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /** Validate and repair a game state loaded from DB */
@@ -72,14 +73,11 @@ export function useOnlineGame() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const myUsernameRef = useRef<string | null>(null);
+  const { player: ctxPlayer } = usePlayerContext();
+  const myUsernameRef = useRef<string | null>(ctxPlayer?.username || null);
   useEffect(() => {
-    const token = localStorage.getItem('stone_device_token');
-    if (token) {
-      supabase.from('players').select('username').eq('device_token', token).single()
-        .then(({ data }) => { if (data) myUsernameRef.current = data.username; });
-    }
-  }, []);
+    if (ctxPlayer?.username) myUsernameRef.current = ctxPlayer.username;
+  }, [ctxPlayer?.username]);
 
   const isMyTurn = myPlayer !== null && state.currentPlayer === myPlayer && state.phase !== 'game_over' && state.phase !== 'not_started';
 
