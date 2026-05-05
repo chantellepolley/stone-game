@@ -90,7 +90,7 @@ export default function App() {
     if (!player) return;
     let count = 0;
 
-    // Count pending game invites only
+    // Count pending game invites
     const { count: inviteCount } = await supabase
       .from('game_invites')
       .select('id', { count: 'exact', head: true })
@@ -98,19 +98,26 @@ export default function App() {
       .eq('status', 'pending');
     count += (inviteCount || 0);
 
-    // Count games where it's my turn
+    // Count online games where it's my turn (exclude AI, local, and waiting-for-opponent)
     const { data: activeGames } = await supabase
       .from('games')
-      .select('id, state, player1_id')
+      .select('id, state, player1_id, player2_id, mode')
       .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
-      .in('status', ['active'])
+      .eq('status', 'active')
+      .eq('mode', 'online')
       .limit(20);
 
     if (activeGames) {
       for (const g of activeGames) {
-        const myPlayer = g.player1_id === player.id ? 1 : 2;
-        const currentPlayer = (g.state as any)?.currentPlayer;
-        if (currentPlayer === myPlayer) count++;
+        // Skip games still waiting for an opponent
+        if (!g.player2_id) continue;
+        const myP = g.player1_id === player.id ? 1 : 2;
+        const state = g.state as any;
+        if (!state) continue;
+        // Only count if game is in a playable phase and it's my turn
+        const phase = state.phase;
+        if (phase === 'game_over' || phase === 'not_started') continue;
+        if (state.currentPlayer === myP) count++;
       }
     }
 
