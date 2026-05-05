@@ -16,6 +16,7 @@ import AdminFeedback from './components/AdminFeedback';
 import AdminPlayers from './components/AdminPlayers';
 import MonthlyStandings from './components/MonthlyStandings';
 import HallOfFame from './components/HallOfFame';
+import Challenges from './components/Challenges';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { loadPlayerColor, savePlayerColor, syncColorFromDb } from './utils/stoneColors';
 import { usePlayer } from './hooks/usePlayer';
@@ -24,7 +25,7 @@ import { CoinsProvider } from './contexts/CoinsContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
 
-type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players' | 'monthly-standings' | 'hall-of-fame';
+type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players' | 'monthly-standings' | 'hall-of-fame' | 'challenges';
 
 function getJoinCodeFromURL(): string | null {
   const path = window.location.pathname;
@@ -234,6 +235,7 @@ export default function App() {
       {screen === 'admin-players' && <AdminPlayers onBack={() => setScreen('game')} />}
       {screen === 'monthly-standings' && <MonthlyStandings onBack={() => setScreen('game')} onShowHallOfFame={() => setScreen('hall-of-fame')} />}
       {screen === 'hall-of-fame' && <HallOfFame onBack={() => setScreen('monthly-standings')} />}
+      {screen === 'challenges' && <Challenges onBack={() => setScreen('game')} />}
       {screen === 'colors' && (
         <ColorPicker
           selectedId={stoneColor}
@@ -289,6 +291,7 @@ export default function App() {
           onShowAdminFeedback={() => setScreen('admin-feedback')}
           onShowAdminPlayers={() => setScreen('admin-players')}
           onShowMonthlyStandings={() => setScreen('monthly-standings')}
+          onShowChallenges={() => setScreen('challenges')}
           pushPermission={pushPermission}
           onRequestPush={requestPermission}
           pushMuted={pushMuted}

@@ -24,13 +24,14 @@ interface StartScreenProps {
   onShowAdminFeedback?: () => void;
   onShowAdminPlayers?: () => void;
   onShowMonthlyStandings?: () => void;
+  onShowChallenges?: () => void;
   pushPermission?: NotificationPermission;
   onRequestPush?: () => void;
   pushMuted?: boolean;
   onTogglePushMute?: () => void;
 }
 
-export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, pushPermission, onRequestPush, pushMuted, onTogglePushMute }: StartScreenProps) {
+export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, onShowChallenges, pushPermission, onRequestPush, pushMuted, onTogglePushMute }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
   const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
@@ -458,6 +459,14 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                              bg-[#504840] text-white border-2 border-[#6b5f55]
                              hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                   Leaderboard
+                </button>
+              )}
+              {onShowChallenges && player?.username?.toLowerCase() === 'cpolley' && (
+                <button onClick={onShowChallenges}
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                  Puzzles
                 </button>
               )}
               <button onClick={() => setMenuView('main')}
