@@ -80,6 +80,13 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
     setFriendRequests(newFriendCount);
 
     // Check for recently completed games the player hasn't seen
+    // Only show games completed after the feature was enabled (or after first app load)
+    let resultsCutoff = localStorage.getItem('stone_results_cutoff');
+    if (!resultsCutoff) {
+      // First time: set cutoff to now so old games don't flood in
+      resultsCutoff = new Date().toISOString();
+      localStorage.setItem('stone_results_cutoff', resultsCutoff);
+    }
     const seenResults: string[] = JSON.parse(localStorage.getItem('stone_seen_results') || '[]');
     const { data: recentCompleted } = await supabase
       .from('games')
@@ -87,6 +94,7 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
       .or(`player1_id.eq.${player.id},player2_id.eq.${player.id}`)
       .eq('status', 'completed')
       .eq('mode', 'online')
+      .gt('updated_at', resultsCutoff)
       .order('updated_at', { ascending: false })
       .limit(5);
 
