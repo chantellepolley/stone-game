@@ -14,6 +14,11 @@ interface ChallengesProps {
   onBack: () => void;
 }
 
+function goHome(onBack: () => void) {
+  localStorage.removeItem('stone_menu_view');
+  onBack();
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────
 
 function createPuzzleGameState(puzzle: PuzzleDef): GameState {
@@ -310,7 +315,7 @@ export default function Challenges({ onBack }: ChallengesProps) {
               className="text-white/50 text-xs hover:text-white/80 transition-colors cursor-pointer font-heading uppercase tracking-wider">
               Back
             </button>
-            <img src="/logo.png" alt="STONE" className="h-10 object-contain cursor-pointer" onClick={onBack} />
+            <img src="/logo.png" alt="STONE" className="h-10 object-contain cursor-pointer" onClick={() => goHome(onBack)} />
             <div className="w-12" />
           </div>
           <h2 className="text-amber-400 font-heading text-sm uppercase tracking-wider text-center mt-1">{activePuzzle.name}</h2>
@@ -452,10 +457,10 @@ export default function Challenges({ onBack }: ChallengesProps) {
       {/* Header */}
       <div className="shrink-0 px-4 pt-4 pb-3">
         <div className="flex items-center justify-center mb-2">
-          <img src="/logo.png" alt="STONE" className="h-12 object-contain cursor-pointer" onClick={onBack} />
+          <img src="/logo.png" alt="STONE" className="h-12 object-contain cursor-pointer" onClick={() => goHome(onBack)} />
         </div>
         <div className="flex items-center justify-between">
-          <button onClick={onBack}
+          <button onClick={() => { localStorage.setItem('stone_menu_view', 'challenges'); onBack(); }}
             className="text-white/50 text-xs hover:text-white/80 transition-colors cursor-pointer font-heading uppercase tracking-wider">
             Back
           </button>
