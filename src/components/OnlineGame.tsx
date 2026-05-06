@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import type { GameState } from '../types/game';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
