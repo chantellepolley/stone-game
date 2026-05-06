@@ -200,18 +200,15 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     setReplayState(null);
   }, [currentGameId]);
   useEffect(() => {
-    console.log('[REPLAY] effect:', { onlinePhase, isMyTurn, recapShown: recapShown.current, hasLastTurn: !!state.lastTurnMoves, myPlayer, lastTurnPlayer: state.lastTurnMoves?.player, lastTurnDice: state.lastTurnMoves?.dice });
     if (onlinePhase !== 'playing' || recapShown.current) return;
     if (!isMyTurn) return;
 
     const lastTurn = state.lastTurnMoves;
     if (!lastTurn || lastTurn.player === myPlayer || lastTurn.moves.length === 0) {
-      console.log('[REPLAY] skipping:', !lastTurn ? 'no data' : lastTurn.player === myPlayer ? 'my own turn' : 'no moves');
       recapShown.current = true;
       return;
     }
 
-    console.log('[REPLAY] STARTING replay with dice:', lastTurn.dice, 'moves:', lastTurn.moves.length);
     recapShown.current = true;
     setReplayingTurn(true);
 
@@ -224,18 +221,17 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     }
 
     // Show the current board with opponent's dice overlay
+    // Include dice values in remaining so they render as active (bright), not used (faded)
     const opponentPlayer = lastTurn.player;
     const replayData = {
       ...state,
       currentPlayer: opponentPlayer,
-      dice: { values: diceVals, remaining: [], hasRolled: true, pendingDoubleJester: false },
+      dice: { values: diceVals, remaining: [...diceVals], hasRolled: true, pendingDoubleJester: false },
     };
-    console.log('[REPLAY] setting replayState, dice:', replayData.dice);
     setReplayState(replayData);
 
     // After showing dice, clear replay
     const timer = setTimeout(() => {
-      console.log('[REPLAY] clearing');
       setReplayState(null);
       setReplayingTurn(false);
     }, 2500);
