@@ -222,8 +222,16 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
     // Show pre-turn board state with the opponent's dice
     const pre = lastTurn.preState;
-    setReplayState({ ...pre, dice: { values: lastTurn.dice, remaining: [], hasRolled: true, pendingDoubleJester: false } });
-    setReplayDice(lastTurn.dice);
+    // Use stored dice, or extract from the dice consumed in moves as fallback
+    let diceVals = lastTurn.dice;
+    if (!diceVals || (diceVals[0] === 0 && diceVals[1] === 0)) {
+      // Fallback: reconstruct from moves' diceConsumed
+      const consumed = lastTurn.moves.flatMap(m => m.diceConsumed);
+      if (consumed.length >= 2) diceVals = [consumed[0], consumed[1]] as [number, number];
+      else if (consumed.length === 1) diceVals = [consumed[0], consumed[0]] as [number, number];
+    }
+    setReplayState({ ...pre, dice: { values: diceVals, remaining: [], hasRolled: true, pendingDoubleJester: false } });
+    setReplayDice(diceVals);
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     let stepState = pre;
