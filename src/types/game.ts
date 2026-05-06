@@ -49,7 +49,7 @@ export interface GameState {
   /** Last move made (for replay on reconnect) */
   lastMove?: Move | null;
   /** Full sequence of moves from the last completed turn (for replay on reconnect) */
-  lastTurnMoves?: { player: PlayerId; dice: [number, number]; moves: Move[]; preState: GameState } | null;
+  lastTurnMoves?: { player: PlayerId; dice: [number, number]; moves: Move[] } | null;
 }
 
 export type MoveSource =

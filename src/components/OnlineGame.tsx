@@ -10,7 +10,6 @@ import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
 import { showNotification } from '../hooks/usePushNotifications';
 import { awardGameBonuses, type BonusResult } from '../lib/bonuses';
-import { executeMove as execMove } from '../engine';
 import JesterCoin from './JesterCoin';
 import Board from './Board';
 import DiceArea from './DiceArea';
@@ -192,75 +191,50 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
   // Replay opponent's full turn when entering the game (dice + all moves)
   const recapShown = useRef(false);
-  const [replayMove, setReplayMove] = useState<typeof pendingOpponentMove>(null);
   const [replayingTurn, setReplayingTurn] = useState(false);
   const [replayState, setReplayState] = useState<GameState | null>(null);
-  const finalStateRef = useRef<GameState | null>(null);
   // Reset replay state when switching games
   useEffect(() => {
     recapShown.current = false;
     setReplayingTurn(false);
-    setReplayMove(null);
     setReplayState(null);
-    finalStateRef.current = null;
   }, [currentGameId]);
   useEffect(() => {
     if (onlinePhase !== 'playing' || recapShown.current) return;
     if (!isMyTurn) return;
 
     const lastTurn = state.lastTurnMoves;
-    if (!lastTurn || lastTurn.player === myPlayer || lastTurn.moves.length === 0 || !lastTurn.preState) {
+    if (!lastTurn || lastTurn.player === myPlayer || lastTurn.moves.length === 0) {
       recapShown.current = true;
       return;
     }
 
     recapShown.current = true;
-    finalStateRef.current = state;
     setReplayingTurn(true);
 
-    // Show pre-turn board state with the opponent's dice
-    const pre = lastTurn.preState;
-    // Use stored dice, or extract from the dice consumed in moves as fallback
+    // Get dice values (stored or reconstructed from moves)
     let diceVals = lastTurn.dice;
     if (!diceVals || (diceVals[0] === 0 && diceVals[1] === 0)) {
-      // Fallback: reconstruct from moves' diceConsumed
       const consumed = lastTurn.moves.flatMap(m => m.diceConsumed);
       if (consumed.length >= 2) diceVals = [consumed[0], consumed[1]] as [number, number];
       else if (consumed.length === 1) diceVals = [consumed[0], consumed[0]] as [number, number];
     }
-    setReplayState({ ...pre, dice: { values: diceVals, remaining: [], hasRolled: true, pendingDoubleJester: false } });
 
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    let stepState = pre;
-    const moveDelay = 1200; // show dice for 1.2s first
-
-    // Step through each move: show animation, then apply to advance board
-    lastTurn.moves.forEach((move, i) => {
-      // Show move animation (pendingAIMove triggers Board animation)
-      timers.push(setTimeout(() => {
-        if (move.bearsOff) playHomeSound();
-        else if (move.captures) playJailedSound();
-        else if (move.crowns) playCrownedSound();
-        setReplayMove(move);
-      }, moveDelay + i * 900));
-
-      // After animation, apply the move to advance the displayed state
-      timers.push(setTimeout(() => {
-        setReplayMove(null);
-        stepState = execMove(stepState, move);
-        // Keep dice visible throughout replay
-        setReplayState({ ...stepState, dice: { values: diceVals, remaining: [], hasRolled: true, pendingDoubleJester: false } });
-      }, moveDelay + i * 900 + 500));
+    // Show the current board with opponent's dice overlay
+    const opponentPlayer = lastTurn.player;
+    setReplayState({
+      ...state,
+      currentPlayer: opponentPlayer,
+      dice: { values: diceVals, remaining: [], hasRolled: true, pendingDoubleJester: false },
     });
 
-    // End replay: restore the real final state
-    const totalTime = moveDelay + lastTurn.moves.length * 900 + 300;
-    timers.push(setTimeout(() => {
+    // After showing dice, clear replay
+    const timer = setTimeout(() => {
       setReplayState(null);
       setReplayingTurn(false);
-    }, totalTime));
+    }, 2500);
 
-    return () => timers.forEach(clearTimeout);
+    return () => clearTimeout(timer);
   }, [onlinePhase, isMyTurn, state.lastTurnMoves, myPlayer]);
 
   // Play "your turn" sound + vibrate + system notification
@@ -463,10 +437,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       </div>
 
       {/* Replay banner */}
-      {replayingTurn && (
+      {replayingTurn && replayState && (
         <div className="shrink-0 text-center py-1">
-          <span className="text-amber-400/80 text-[10px] font-heading uppercase tracking-wider animate-pulse">
-            Replaying {opponentName || 'opponent'}'s turn...
+          <span className="text-amber-400/80 text-[10px] font-heading uppercase tracking-wider">
+            {opponentName || 'Opponent'} rolled:
           </span>
         </div>
       )}
@@ -503,7 +477,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             state={replayState || state}
             validMoves={isMyTurn && !replayingTurn ? validMoves : []}
             onSelectMove={selectMove}
-            pendingAIMove={pendingOpponentMove || replayMove}
+            pendingAIMove={pendingOpponentMove}
             hintsEnabled={hintsEnabled}
             myPlayer={myPlayer || 1}
           />
