@@ -48,6 +48,8 @@ export interface GameState {
   doublesCount?: Record<PlayerId, number>;
   /** Last move made (for replay on reconnect) */
   lastMove?: Move | null;
+  /** Full sequence of moves from the last completed turn (for replay on reconnect) */
+  lastTurnMoves?: { player: PlayerId; dice: [number, number]; moves: Move[] } | null;
 }
 
 export type MoveSource =

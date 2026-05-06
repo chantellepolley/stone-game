@@ -56,6 +56,8 @@ export function useOnlineGame() {
   const [opponentColor, setOpponentColor] = useState<string | null>(null);
   const [myGameColor, setMyGameColor] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
+  const currentTurnMoves = useRef<Move[]>([]);
+  const currentTurnDice = useRef<[number, number]>([0, 0]);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const [gameWager, setGameWager] = useState(0);
   const [wagerProposal, setWagerProposal] = useState<{ amount: number; from: string } | null>(null);
@@ -786,6 +788,8 @@ export function useOnlineGame() {
 
     const dice = rollDice();
     const player = state.currentPlayer;
+    currentTurnMoves.current = [];
+    currentTurnDice.current = dice.values;
 
     // Track jester and doubles counts
     const jesterCount = { ...(state.jesterCount || { 1: 0, 2: 0 }) };
@@ -848,11 +852,22 @@ export function useOnlineGame() {
     else if (move.captures) playJailedSound();
     else if (move.crowns) playCrownedSound();
 
+    currentTurnMoves.current.push(move);
+
     let newState = executeMove(state, move);
     newState = { ...newState, lastMove: move };
     const winner = checkWinCondition(newState);
     if (winner) newState = { ...newState, winner, phase: 'game_over' };
-    if (newState.currentPlayer !== state.currentPlayer) undoStack.current = [];
+
+    // When turn switches (all dice used) or game ends, save the full turn for replay
+    if (newState.currentPlayer !== state.currentPlayer || newState.phase === 'game_over') {
+      newState = { ...newState, lastTurnMoves: {
+        player: state.currentPlayer,
+        dice: currentTurnDice.current,
+        moves: [...currentTurnMoves.current],
+      }};
+      undoStack.current = [];
+    }
 
     setState(newState);
     broadcastState(newState, move);
@@ -871,6 +886,11 @@ export function useOnlineGame() {
           dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
           phase: 'rolling',
           turnCount: prev.turnCount + 1,
+          lastTurnMoves: {
+            player: prev.currentPlayer,
+            dice: currentTurnDice.current,
+            moves: [...currentTurnMoves.current],
+          },
         };
         broadcastState(switched);
         saveGameState(switched);
