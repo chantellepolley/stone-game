@@ -3,7 +3,7 @@ import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
-import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
+import { playYourTurnSound, playHomeSound, playJailedSound, playCrownedSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
 import { loadPlayerColor } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
