@@ -9,6 +9,7 @@ import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
 import { showNotification } from '../hooks/usePushNotifications';
 import { awardGameBonuses, type BonusResult } from '../lib/bonuses';
+import { executeMove as execMove } from '../engine';
 import JesterCoin from './JesterCoin';
 import Board from './Board';
 import DiceArea from './DiceArea';
@@ -193,48 +194,63 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const [replayMove, setReplayMove] = useState<typeof pendingOpponentMove>(null);
   const [replayingTurn, setReplayingTurn] = useState(false);
   const [replayDice, setReplayDice] = useState<[number, number] | null>(null);
+  const [replayState, setReplayState] = useState<GameState | null>(null);
+  const finalStateRef = useRef<GameState | null>(null);
   // Reset replay state when switching games
   useEffect(() => {
     recapShown.current = false;
     setReplayingTurn(false);
     setReplayDice(null);
     setReplayMove(null);
+    setReplayState(null);
+    finalStateRef.current = null;
   }, [currentGameId]);
   useEffect(() => {
     if (onlinePhase !== 'playing' || recapShown.current) return;
     if (!isMyTurn) return;
 
     const lastTurn = state.lastTurnMoves;
-    if (!lastTurn || lastTurn.player === myPlayer || lastTurn.moves.length === 0) {
+    if (!lastTurn || lastTurn.player === myPlayer || lastTurn.moves.length === 0 || !lastTurn.preState) {
       recapShown.current = true;
       return;
     }
 
     recapShown.current = true;
+    finalStateRef.current = state;
     setReplayingTurn(true);
 
-    // Step 1: Show dice roll
+    // Show pre-turn board state with the opponent's dice
+    const pre = lastTurn.preState;
+    setReplayState({ ...pre, dice: { values: lastTurn.dice, remaining: [], hasRolled: true, pendingDoubleJester: false } });
     setReplayDice(lastTurn.dice);
-    let delay = 1200; // show dice for 1.2s
 
-    // Step 2: Replay each move sequentially
     const timers: ReturnType<typeof setTimeout>[] = [];
+    let stepState = pre;
+    const moveDelay = 1200; // show dice for 1.2s first
+
+    // Step through each move: show animation, then apply to advance board
     lastTurn.moves.forEach((move, i) => {
+      // Show move animation (pendingAIMove triggers Board animation)
       timers.push(setTimeout(() => {
         if (move.bearsOff) playHomeSound();
         else if (move.captures) playJailedSound();
         else if (move.crowns) playCrownedSound();
         setReplayMove(move);
-      }, delay + i * 900));
+      }, moveDelay + i * 900));
+
+      // After animation, apply the move to advance the displayed state
       timers.push(setTimeout(() => {
         setReplayMove(null);
-      }, delay + i * 900 + 600));
+        stepState = execMove(stepState, move);
+        setReplayState({ ...stepState });
+      }, moveDelay + i * 900 + 500));
     });
 
-    // Step 3: Clean up
-    const totalTime = delay + lastTurn.moves.length * 900 + 200;
+    // End replay: restore the real final state
+    const totalTime = moveDelay + lastTurn.moves.length * 900 + 300;
     timers.push(setTimeout(() => {
       setReplayDice(null);
+      setReplayState(null);
       setReplayingTurn(false);
     }, totalTime));
 
@@ -478,7 +494,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
         <div className="flex-1 max-w-[1050px] w-full min-h-0">
           <Board
-            state={state}
+            state={replayState || state}
             validMoves={isMyTurn && !replayingTurn ? validMoves : []}
             onSelectMove={selectMove}
             pendingAIMove={pendingOpponentMove || replayMove}
