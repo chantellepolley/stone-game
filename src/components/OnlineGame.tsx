@@ -194,14 +194,12 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const recapShown = useRef(false);
   const [replayMove, setReplayMove] = useState<typeof pendingOpponentMove>(null);
   const [replayingTurn, setReplayingTurn] = useState(false);
-  const [replayDice, setReplayDice] = useState<[number, number] | null>(null);
   const [replayState, setReplayState] = useState<GameState | null>(null);
   const finalStateRef = useRef<GameState | null>(null);
   // Reset replay state when switching games
   useEffect(() => {
     recapShown.current = false;
     setReplayingTurn(false);
-    setReplayDice(null);
     setReplayMove(null);
     setReplayState(null);
     finalStateRef.current = null;
@@ -231,7 +229,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       else if (consumed.length === 1) diceVals = [consumed[0], consumed[0]] as [number, number];
     }
     setReplayState({ ...pre, dice: { values: diceVals, remaining: [], hasRolled: true, pendingDoubleJester: false } });
-    setReplayDice(diceVals);
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     let stepState = pre;
@@ -251,14 +248,14 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       timers.push(setTimeout(() => {
         setReplayMove(null);
         stepState = execMove(stepState, move);
-        setReplayState({ ...stepState });
+        // Keep dice visible throughout replay
+        setReplayState({ ...stepState, dice: { values: diceVals, remaining: [], hasRolled: true, pendingDoubleJester: false } });
       }, moveDelay + i * 900 + 500));
     });
 
     // End replay: restore the real final state
     const totalTime = moveDelay + lastTurn.moves.length * 900 + 300;
     timers.push(setTimeout(() => {
-      setReplayDice(null);
       setReplayState(null);
       setReplayingTurn(false);
     }, totalTime));
@@ -477,9 +474,9 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       {/* Mobile: dice */}
       <div className="lg:hidden flex items-center justify-center gap-2 shrink-0">
         <DiceArea
-          dice={replayDice ? { values: replayDice, remaining: [], hasRolled: true, pendingDoubleJester: false } : state.dice}
-          phase={replayDice ? 'moving' : state.phase}
-          currentPlayer={replayDice ? (myPlayer === 1 ? 2 : 1) : state.currentPlayer}
+          dice={replayState ? replayState.dice : state.dice}
+          phase={replayState ? 'moving' : state.phase}
+          currentPlayer={replayState ? replayState.currentPlayer : state.currentPlayer}
           onRoll={roll}
           awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
           onChooseJesterDoubles={chooseJesterDoubles}
@@ -514,9 +511,9 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
         <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center z-10">
           <DiceArea
-            dice={replayDice ? { values: replayDice, remaining: [], hasRolled: true, pendingDoubleJester: false } : state.dice}
-            phase={replayDice ? 'moving' : state.phase}
-            currentPlayer={replayDice ? (myPlayer === 1 ? 2 : 1) : state.currentPlayer}
+            dice={replayState ? replayState.dice : state.dice}
+            phase={replayState ? 'moving' : state.phase}
+            currentPlayer={replayState ? replayState.currentPlayer : state.currentPlayer}
             onRoll={roll}
             awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
             onChooseJesterDoubles={chooseJesterDoubles}
