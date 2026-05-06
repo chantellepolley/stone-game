@@ -49,7 +49,19 @@ export interface GameState {
   /** Last move made (for replay on reconnect) */
   lastMove?: Move | null;
   /** Full sequence of moves from the last completed turn (for replay on reconnect) */
-  lastTurnMoves?: { player: PlayerId; dice: [number, number]; moves: Move[] } | null;
+  lastTurnMoves?: {
+    player: PlayerId;
+    dice: [number, number];
+    moves: Move[];
+    /** Minimal board snapshot before the turn (no nested lastTurnMoves) */
+    snapshot?: {
+      board: Piece[][];
+      bench: Record<PlayerId, Piece[]>;
+      jail: Record<PlayerId, Piece[]>;
+      home: Record<PlayerId, Piece[]>;
+      currentPlayer: PlayerId;
+    };
+  } | null;
 }
 
 export type MoveSource =

@@ -4,7 +4,8 @@ import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
-import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
+import { playYourTurnSound, playHomeSound, playJailedSound, playCrownedSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
+import { executeMove as execMove } from '../engine';
 import { loadPlayerColor } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
@@ -193,11 +194,13 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const recapShown = useRef(false);
   const [replayingTurn, setReplayingTurn] = useState(false);
   const [replayState, setReplayState] = useState<GameState | null>(null);
+  const [replayMove, setReplayMove] = useState<Move | null>(null);
   // Reset replay state when switching games
   useEffect(() => {
     recapShown.current = false;
     setReplayingTurn(false);
     setReplayState(null);
+    setReplayMove(null);
   }, [currentGameId]);
   useEffect(() => {
     if (onlinePhase !== 'playing' || recapShown.current) return;
@@ -212,7 +215,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     recapShown.current = true;
     setReplayingTurn(true);
 
-    // Get dice values (stored or reconstructed from moves)
+    // Get dice values
     let diceVals = lastTurn.dice;
     if (!diceVals || (diceVals[0] === 0 && diceVals[1] === 0)) {
       const consumed = lastTurn.moves.flatMap(m => m.diceConsumed);
@@ -220,23 +223,61 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       else if (consumed.length === 1) diceVals = [consumed[0], consumed[0]] as [number, number];
     }
 
-    // Show the current board with opponent's dice overlay
-    // Include dice values in remaining so they render as active (bright), not used (faded)
-    const opponentPlayer = lastTurn.player;
-    const replayData = {
-      ...state,
-      currentPlayer: opponentPlayer,
-      dice: { values: diceVals, remaining: [...diceVals], hasRolled: true, pendingDoubleJester: false },
-    };
-    setReplayState(replayData);
+    const replayDice = { values: diceVals, remaining: [...diceVals], hasRolled: true, pendingDoubleJester: false };
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // After showing dice, clear replay
-    const timer = setTimeout(() => {
-      setReplayState(null);
-      setReplayingTurn(false);
-    }, 2500);
+    if (lastTurn.snapshot) {
+      // Full replay: show pre-turn board, dice, then animate each move
+      const snap = lastTurn.snapshot;
+      let stepState: GameState = {
+        ...state,
+        board: snap.board,
+        bench: snap.bench,
+        jail: snap.jail,
+        home: snap.home,
+        currentPlayer: snap.currentPlayer,
+        dice: replayDice,
+      };
+      setReplayState(stepState);
 
-    return () => clearTimeout(timer);
+      const diceDelay = 1200;
+      lastTurn.moves.forEach((move, i) => {
+        // Show move animation
+        timers.push(setTimeout(() => {
+          if (move.bearsOff) playHomeSound();
+          else if (move.captures) playJailedSound();
+          else if (move.crowns) playCrownedSound();
+          setReplayMove(move);
+        }, diceDelay + i * 900));
+
+        // Apply move to advance board
+        timers.push(setTimeout(() => {
+          setReplayMove(null);
+          stepState = { ...execMove(stepState, move), dice: replayDice };
+          setReplayState({ ...stepState });
+        }, diceDelay + i * 900 + 500));
+      });
+
+      const totalTime = diceDelay + lastTurn.moves.length * 900 + 400;
+      timers.push(setTimeout(() => {
+        setReplayState(null);
+        setReplayMove(null);
+        setReplayingTurn(false);
+      }, totalTime));
+    } else {
+      // No snapshot: just show dice for 2.5s
+      setReplayState({
+        ...state,
+        currentPlayer: lastTurn.player,
+        dice: replayDice,
+      });
+      timers.push(setTimeout(() => {
+        setReplayState(null);
+        setReplayingTurn(false);
+      }, 2500));
+    }
+
+    return () => timers.forEach(clearTimeout);
   }, [onlinePhase, isMyTurn, state.lastTurnMoves, myPlayer]);
 
   // Play "your turn" sound + vibrate + system notification
@@ -479,7 +520,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             state={replayState || state}
             validMoves={isMyTurn && !replayingTurn ? validMoves : []}
             onSelectMove={selectMove}
-            pendingAIMove={pendingOpponentMove}
+            pendingAIMove={pendingOpponentMove || replayMove}
             hintsEnabled={hintsEnabled}
             myPlayer={myPlayer || 1}
           />

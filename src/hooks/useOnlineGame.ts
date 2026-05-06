@@ -58,6 +58,7 @@ export function useOnlineGame() {
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const currentTurnMoves = useRef<Move[]>([]);
   const currentTurnDice = useRef<[number, number]>([0, 0]);
+  const preTurnSnapshot = useRef<{ board: any[][]; bench: Record<1|2, any[]>; jail: Record<1|2, any[]>; home: Record<1|2, any[]>; currentPlayer: 1|2 } | null>(null);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const [gameWager, setGameWager] = useState(0);
   const [wagerProposal, setWagerProposal] = useState<{ amount: number; from: string } | null>(null);
@@ -790,6 +791,13 @@ export function useOnlineGame() {
     const player = state.currentPlayer;
     currentTurnMoves.current = [];
     currentTurnDice.current = [...dice.values] as [number, number];
+    preTurnSnapshot.current = {
+      board: JSON.parse(JSON.stringify(state.board)),
+      bench: JSON.parse(JSON.stringify(state.bench)),
+      jail: JSON.parse(JSON.stringify(state.jail)),
+      home: JSON.parse(JSON.stringify(state.home)),
+      currentPlayer: state.currentPlayer,
+    };
 
     // Track jester and doubles counts
     const jesterCount = { ...(state.jesterCount || { 1: 0, 2: 0 }) };
@@ -865,6 +873,7 @@ export function useOnlineGame() {
         player: state.currentPlayer,
         dice: [...currentTurnDice.current] as [number, number],
         moves: [...currentTurnMoves.current],
+        snapshot: preTurnSnapshot.current || undefined,
       }};
       undoStack.current = [];
     }
@@ -890,6 +899,7 @@ export function useOnlineGame() {
             player: prev.currentPlayer,
             dice: [...currentTurnDice.current] as [number, number],
             moves: [...currentTurnMoves.current],
+            snapshot: preTurnSnapshot.current || undefined,
           },
         };
         broadcastState(switched);
