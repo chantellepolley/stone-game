@@ -37,7 +37,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     chatMessages, sendChat, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
     myProposalStatus,
-    sendNudge, lastNudge, myGameColor, currentGameId,
+    sendNudge, lastNudge, myGameColor, currentGameId, sawTurnLive,
   } = useOnlineGame();
   const { coins, spend, earn } = useCoins();
   const coinsHandled = useRef(false);
@@ -198,6 +198,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   // Reset replay state when switching games
   useEffect(() => {
     recapShown.current = false;
+    sawTurnLive.current = false;
     setReplayingTurn(false);
     setReplayState(null);
     setReplayMove(null);
@@ -205,6 +206,13 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   useEffect(() => {
     if (onlinePhase !== 'playing' || recapShown.current) return;
     if (!isMyTurn) return;
+
+    // Skip replay if we watched the opponent's moves live via broadcast
+    if (sawTurnLive.current) {
+      sawTurnLive.current = false;
+      recapShown.current = true;
+      return;
+    }
 
     const lastTurn = state.lastTurnMoves;
     if (!lastTurn || lastTurn.player === myPlayer || lastTurn.moves.length === 0) {

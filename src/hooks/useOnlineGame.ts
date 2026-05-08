@@ -59,6 +59,7 @@ export function useOnlineGame() {
   const currentTurnMoves = useRef<Move[]>([]);
   const currentTurnDice = useRef<[number, number]>([0, 0]);
   const preTurnSnapshot = useRef<{ board: any[][]; bench: Record<1|2, any[]>; jail: Record<1|2, any[]>; home: Record<1|2, any[]>; currentPlayer: 1|2 } | null>(null);
+  const sawTurnLive = useRef(false);
   const [chatMessages, setChatMessages] = useState<Array<{ id: string; sender: string; text: string; timestamp: number; isMine: boolean; avatarUrl?: string | null }>>([]);
   const [gameWager, setGameWager] = useState(0);
   const [wagerProposal, setWagerProposal] = useState<{ amount: number; from: string } | null>(null);
@@ -254,6 +255,8 @@ export function useOnlineGame() {
 
     channel
       .on('broadcast', { event: 'state_update' }, ({ payload }) => {
+        // Mark that we're seeing moves live — skip replay on reconnect
+        sawTurnLive.current = true;
         if (payload.move) {
           const move = payload.move as Move;
           if (move.bearsOff) playHomeSound();
@@ -1212,6 +1215,6 @@ export function useOnlineGame() {
     chatMessages, sendChat, sendInvite, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
     myProposalStatus,
-    sendNudge, lastNudge,
+    sendNudge, lastNudge, sawTurnLive,
   };
 }
