@@ -462,22 +462,6 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                     <span className="text-white/30 text-[10px] font-heading">
                       {g.mode === 'online' ? g.room_code : g.mode === 'ai' ? 'AI' : '2P'}
                     </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setConfirmEndGameId(g.id); }}
-                      className="px-1.5 py-0.5 rounded text-[7px] font-heading uppercase
-                                 bg-white/10 text-white/50 hover:text-white hover:bg-white/20 cursor-pointer transition-colors"
-                      title="End game (no winner)"
-                    >
-                      End
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleCancelGame(g.id); }}
-                      className="px-1.5 py-0.5 rounded text-[7px] font-heading uppercase
-                                 bg-red-900/30 text-red-400/60 hover:text-red-400 hover:bg-red-900/50 cursor-pointer transition-colors"
-                      title="Cancel and remove game"
-                    >
-                      Cancel
-                    </button>
                   </div>
                 </button>
               ))}
