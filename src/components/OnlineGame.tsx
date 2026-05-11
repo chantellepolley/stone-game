@@ -3,7 +3,9 @@ import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
-import { playYourTurnSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
+import type { GameState, Move } from '../types/game';
+import { playYourTurnSound, playHomeSound, playJailedSound, playCrownedSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
+import { executeMove as execMove } from '../engine';
 import { loadPlayerColor } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
@@ -188,31 +190,94 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   }, [chatOpen, roomCode, opponentMsgCount]);
   const chatUnread = lastSeenOpponentCount === null ? 0 : chatOpen ? 0 : Math.max(0, opponentMsgCount - lastSeenOpponentCount);
 
-  // Show what opponent rolled when entering a game where they already moved
+  // Replay opponent's turn when entering a game they already moved in
   const recapShown = useRef(false);
-  const [lastRollToast, setLastRollToast] = useState<{ name: string; dice: [number, number] } | null>(null);
-  useEffect(() => { recapShown.current = false; }, [currentGameId]);
+  const [replayingTurn, setReplayingTurn] = useState(false);
+  const [replayState, setReplayState] = useState<GameState | null>(null);
+  const [replayMove, setReplayMove] = useState<Move | null>(null);
+  const replayTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const replaySafety = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Force-clear replay (safety valve, also used on game switch)
+  const clearReplay = useCallback(() => {
+    replayTimers.current.forEach(clearTimeout);
+    replayTimers.current = [];
+    if (replaySafety.current) { clearTimeout(replaySafety.current); replaySafety.current = null; }
+    setReplayingTurn(false);
+    setReplayState(null);
+    setReplayMove(null);
+  }, []);
+
+  useEffect(() => { recapShown.current = false; clearReplay(); }, [currentGameId, clearReplay]);
+
   useEffect(() => {
     if (onlinePhase !== 'playing' || recapShown.current || !isMyTurn) return;
     recapShown.current = true;
 
-    // Skip if we watched live
     if (sawTurnLive.current) { sawTurnLive.current = false; return; }
 
     const lastTurn = state.lastTurnMoves;
     if (!lastTurn || lastTurn.player === myPlayer || lastTurn.moves.length === 0) return;
 
+    // Capture data once — immune to future state changes
+    const snap = lastTurn.snapshot;
+    const moves = [...lastTurn.moves];
     let diceVals = lastTurn.dice;
     if (!diceVals || (diceVals[0] === 0 && diceVals[1] === 0)) {
-      const consumed = lastTurn.moves.flatMap(m => m.diceConsumed);
+      const consumed = moves.flatMap(m => m.diceConsumed);
       if (consumed.length >= 2) diceVals = [consumed[0], consumed[1]] as [number, number];
       else if (consumed.length === 1) diceVals = [consumed[0], consumed[0]] as [number, number];
       else return;
     }
 
-    setLastRollToast({ name: opponentName || 'Opponent', dice: diceVals });
-    setTimeout(() => setLastRollToast(null), 3500);
-  }, [onlinePhase, isMyTurn, myPlayer]);
+    if (!snap) {
+      // No snapshot — just show dice toast briefly, no board manipulation
+      setReplayingTurn(true);
+      setReplayState({
+        ...state,
+        currentPlayer: lastTurn.player,
+        dice: { values: diceVals, remaining: [...diceVals], hasRolled: true, pendingDoubleJester: false },
+      });
+      const t = setTimeout(clearReplay, 2500);
+      replayTimers.current.push(t);
+      replaySafety.current = setTimeout(clearReplay, 4000);
+      return;
+    }
+
+    // Full replay with snapshot
+    setReplayingTurn(true);
+    const replayDice = { values: diceVals, remaining: [...diceVals], hasRolled: true, pendingDoubleJester: false };
+    let stepState: GameState = {
+      ...state,
+      board: snap.board, bench: snap.bench, jail: snap.jail, home: snap.home,
+      currentPlayer: snap.currentPlayer,
+      dice: replayDice,
+    };
+    setReplayState(stepState);
+
+    const diceDelay = 1200;
+    moves.forEach((move, i) => {
+      replayTimers.current.push(setTimeout(() => {
+        if (move.bearsOff) playHomeSound();
+        else if (move.captures) playJailedSound();
+        else if (move.crowns) playCrownedSound();
+        setReplayMove(move);
+      }, diceDelay + i * 900));
+
+      replayTimers.current.push(setTimeout(() => {
+        setReplayMove(null);
+        stepState = { ...execMove(stepState, move), dice: replayDice };
+        setReplayState({ ...stepState });
+      }, diceDelay + i * 900 + 500));
+    });
+
+    const totalTime = diceDelay + moves.length * 900 + 400;
+    replayTimers.current.push(setTimeout(clearReplay, totalTime));
+    // Safety: always clear after max 15 seconds no matter what
+    replaySafety.current = setTimeout(clearReplay, 15000);
+
+    // NO effect cleanup that clears timers — they run independently via refs
+  }, [onlinePhase, isMyTurn, myPlayer, clearReplay]); // deliberately excludes state.lastTurnMoves
 
   // Play "your turn" sound + vibrate + system notification
   useEffect(() => {
@@ -413,35 +478,25 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         )}
       </div>
 
-      {/* Toast: what opponent rolled */}
-      {lastRollToast && (
-        <div className="shrink-0 flex items-center justify-center gap-2 py-1.5 animate-[slideIn_0.3s_ease-out]">
-          <span className="text-amber-400/80 text-[10px] font-heading uppercase tracking-wider">
-            {lastRollToast.name} rolled
+      {/* Replay banner */}
+      {replayingTurn && (
+        <div className="shrink-0 text-center py-1">
+          <span className="text-amber-400/80 text-[10px] font-heading uppercase tracking-wider animate-pulse">
+            Replaying {opponentName || 'opponent'}'s turn...
           </span>
-          {lastRollToast.dice.map((v, i) => (
-            <div key={i} className="w-8 h-8 rounded-md border border-amber-600/40 flex items-center justify-center"
-              style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '50px', filter: 'brightness(1.2)' }}>
-              {v === 6 ? (
-                <img src="/jester-dice.png" alt="Jester" className="w-6 h-6 rounded-full object-cover" />
-              ) : (
-                <span className="text-white font-bold text-sm">{v}</span>
-              )}
-            </div>
-          ))}
         </div>
       )}
 
       {/* Mobile: dice */}
       <div className="lg:hidden flex items-center justify-center gap-2 shrink-0">
         <DiceArea
-          dice={state.dice}
-          phase={state.phase}
-          currentPlayer={state.currentPlayer}
+          dice={replayState ? replayState.dice : state.dice}
+          phase={replayState ? 'moving' : state.phase}
+          currentPlayer={replayState ? replayState.currentPlayer : state.currentPlayer}
           onRoll={roll}
           awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
           onChooseJesterDoubles={chooseJesterDoubles}
-          isAITurn={!isMyTurn}
+          isAITurn={!isMyTurn || replayingTurn}
           player1Name={p1Name}
           player2Name={p2Name}
         />
@@ -461,10 +516,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
         <div className="flex-1 max-w-[1050px] w-full min-h-0">
           <Board
-            state={state}
-            validMoves={isMyTurn ? validMoves : []}
+            state={replayState || state}
+            validMoves={isMyTurn && !replayingTurn ? validMoves : []}
             onSelectMove={selectMove}
-            pendingAIMove={pendingOpponentMove}
+            pendingAIMove={pendingOpponentMove || replayMove}
             hintsEnabled={hintsEnabled}
             myPlayer={myPlayer || 1}
           />
@@ -472,13 +527,13 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
         <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center z-10">
           <DiceArea
-            dice={state.dice}
-            phase={state.phase}
-            currentPlayer={state.currentPlayer}
+            dice={replayState ? replayState.dice : state.dice}
+            phase={replayState ? 'moving' : state.phase}
+            currentPlayer={replayState ? replayState.currentPlayer : state.currentPlayer}
             onRoll={roll}
             awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
             onChooseJesterDoubles={chooseJesterDoubles}
-            isAITurn={!isMyTurn}
+            isAITurn={!isMyTurn || replayingTurn}
             player1Name={p1Name}
             player2Name={p2Name}
           />
