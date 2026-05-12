@@ -491,7 +491,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       <div className="lg:hidden flex items-center justify-center gap-2 shrink-0">
         <DiceArea
           dice={replayState ? replayState.dice : state.dice}
-          phase={replayState ? 'moving' : state.phase}
+          phase={replayState ? 'not_started' : state.phase}
           currentPlayer={replayState ? replayState.currentPlayer : state.currentPlayer}
           onRoll={roll}
           awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
@@ -528,7 +528,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         <div className="hidden lg:flex flex-col gap-4 w-[200px] shrink-0 items-center z-10">
           <DiceArea
             dice={replayState ? replayState.dice : state.dice}
-            phase={replayState ? 'moving' : state.phase}
+            phase={replayState ? 'not_started' : state.phase}
             currentPlayer={replayState ? replayState.currentPlayer : state.currentPlayer}
             onRoll={roll}
             awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
