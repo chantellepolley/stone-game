@@ -54,6 +54,7 @@ export function useOnlineGame() {
   const [opponentName, setOpponentName] = useState<string | null>(null);
   const [opponentAvatar, setOpponentAvatar] = useState<string | null>(null);
   const [opponentColor, setOpponentColor] = useState<string | null>(null);
+  const opponentColorRef = useRef<string | null>(null);
   const [myGameColor, setMyGameColor] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const currentTurnMoves = useRef<Move[]>([]);
@@ -292,20 +293,24 @@ export function useOnlineGame() {
       })
       .on('broadcast', { event: 'ping' }, ({ payload }) => {
         setOpponentConnected(true);
-        if (payload?.color) setOpponentColor(payload.color);
+        // Colors come from DB only — don't accept broadcast colors (causes flashing)
         if (payload.needState && player === 1) {
           channel.send({ type: 'broadcast', event: 'state_update', payload: { state: stateRef.current } });
         }
       })
       .on('broadcast', { event: 'player_joined' }, ({ payload }) => {
         setOpponentConnected(true);
-        if (payload?.color) setOpponentColor(payload.color);
+        // If opponent just joined and we don't have their color yet, load from DB
+        if (!opponentColorRef.current && gameDbId.current) {
+          const oppField = player === 1 ? 'p2_color' : 'p1_color';
+          supabase.from('games').select(oppField).eq('id', gameDbId.current).single()
+            .then(({ data }) => { if (data && (data as any)[oppField]) { setOpponentColor((data as any)[oppField]); opponentColorRef.current = (data as any)[oppField]; } });
+        }
         if (player === 1) {
           setOnlinePhase('playing');
           setTimeout(() => {
             channel.send({ type: 'broadcast', event: 'state_update', payload: { state: stateRef.current } });
-            // Send our color to the opponent
-            channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
+            channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
           }, 200);
         }
       })
@@ -364,7 +369,7 @@ export function useOnlineGame() {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           if (player === 2) {
-            await channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
+            await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
             let retries = 0;
             const retryInterval = setInterval(async () => {
               if (stateReceivedRef.current) { clearInterval(retryInterval); return; }
@@ -391,12 +396,12 @@ export function useOnlineGame() {
                 setError('Could not connect to this game. Try resuming from My Games.');
                 return;
               }
-              await channel.send({ type: 'broadcast', event: 'player_joined', payload: { color: loadPlayerColor() } });
+              await channel.send({ type: 'broadcast', event: 'player_joined', payload: {} });
               await channel.send({ type: 'broadcast', event: 'ping', payload: { needState: true } });
             }, 1500);
           }
           pingRef.current = window.setInterval(() => {
-            channel.send({ type: 'broadcast', event: 'ping', payload: { needState: false, color: loadPlayerColor() } });
+            channel.send({ type: 'broadcast', event: 'ping', payload: { needState: false } });
           }, 5000);
         }
       });
@@ -561,7 +566,7 @@ export function useOnlineGame() {
         // We're player 1 — resume as P1, don't overwrite player2
         setMyPlayer(1);
         // Load colors before rendering
-        if (game.p2_color) setOpponentColor(game.p2_color);
+        if (game.p2_color) { setOpponentColor(game.p2_color); opponentColorRef.current = game.p2_color; }
         if (game.p1_color) setMyGameColor(game.p1_color);
         if (game.state) {
           const loadedState = validateState(game.state);
@@ -584,7 +589,6 @@ export function useOnlineGame() {
           gameId: game.id, roomCode: upperCode, myPlayer: 1,
         }));
         joinChannel(upperCode, 1, true);
-        saveMyColor(1, true);
         setTimeout(() => {
           if (channelRef.current) {
             channelRef.current.send({ type: 'broadcast', event: 'player_joined', payload: {} });
@@ -617,7 +621,7 @@ export function useOnlineGame() {
       }
 
       // Load colors from DB BEFORE rendering the board
-      if (game.p1_color) setOpponentColor(game.p1_color);
+      if (game.p1_color) { setOpponentColor(game.p1_color); opponentColorRef.current = game.p1_color; }
       if (game.p2_color) setMyGameColor(game.p2_color);
 
       // Load saved state from DB so we have it ready
@@ -660,8 +664,6 @@ export function useOnlineGame() {
     // preserveStateReceived if we already loaded state from DB
     joinChannel(upperCode, 2, stateReceivedRef.current);
 
-    // Backfill color for old games that don't have it stored
-    saveMyColor(2, true);
   }, []);
 
   async function resumeGameInternal(gameId: string, code: string, player: PlayerId) {
@@ -721,7 +723,7 @@ export function useOnlineGame() {
     if (game) {
       const oppColor = player === 1 ? game.p2_color : game.p1_color;
       const myColor = player === 1 ? game.p1_color : game.p2_color;
-      if (oppColor) setOpponentColor(oppColor);
+      if (oppColor) { setOpponentColor(oppColor); opponentColorRef.current = oppColor; }
       if (myColor) setMyGameColor(myColor);
     }
 
@@ -770,9 +772,6 @@ export function useOnlineGame() {
     // preserveStateReceived=true so the P2 retry loop doesn't error out
     // when we already loaded state from DB
     joinChannel(code, player, true);
-
-    // Backfill color for old games that don't have it stored
-    saveMyColor(player, true);
 
     // Announce presence after a short delay so the channel is subscribed
     setTimeout(() => {
@@ -967,6 +966,7 @@ export function useOnlineGame() {
     setOpponentName(null);
     setOpponentAvatar(null);
     setOpponentColor(null);
+    opponentColorRef.current = null;
     setChatMessages([]);
     setGameWager(0);
     setRoomCode('');
