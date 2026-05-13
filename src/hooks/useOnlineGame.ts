@@ -105,6 +105,28 @@ export function useOnlineGame() {
     };
   }, []);
 
+  // ── Watch for color changes in the game DB (e.g. opponent buys a new color) ──
+  const colorSubRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  useEffect(() => {
+    if (!gameDbId.current || myPlayer === null) return;
+    const gameId = gameDbId.current;
+    const ch = supabase.channel(`color-watch-${gameId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
+        (payload) => {
+          const row = payload.new as any;
+          const oppField = myPlayer === 1 ? 'p2_color' : 'p1_color';
+          const myField = myPlayer === 1 ? 'p1_color' : 'p2_color';
+          if (row[oppField] && row[oppField] !== opponentColorRef.current) {
+            setOpponentColor(row[oppField]);
+            opponentColorRef.current = row[oppField];
+          }
+          if (row[myField]) setMyGameColor(row[myField]);
+        })
+      .subscribe();
+    colorSubRef.current = ch;
+    return () => { supabase.removeChannel(ch); colorSubRef.current = null; };
+  }, [myPlayer, gameDbId.current]);
+
   // ── Reconnect when app comes back from background ──
   useEffect(() => {
     const handleVisibility = async () => {
