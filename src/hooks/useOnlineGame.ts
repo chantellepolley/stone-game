@@ -230,33 +230,7 @@ export function useOnlineGame() {
     return data?.id || null;
   }
 
-  // ── Save my color to the game DB ──
-  // onReconnect=true means we only backfill if color is null (prevents race conditions)
-  // onReconnect=false (default) means always write (used when player changes color mid-game)
-  async function saveMyColor(player: PlayerId, onReconnect = false) {
-    if (!gameDbId.current) return;
-    const myId = await getMyPlayerId();
-    if (!myId) return;
 
-    const field = player === 1 ? 'p1_color' : 'p2_color';
-
-    // Verify we are actually this player in the game
-    const { data: game } = await supabase.from('games').select(`player1_id, player2_id, ${field}`).eq('id', gameDbId.current).single();
-    if (!game) return;
-    if (player === 1 && game.player1_id !== myId) return;
-    if (player === 2 && game.player2_id !== myId) return;
-
-    // On reconnect, only backfill if color is null (don't overwrite)
-    if (onReconnect && (game as any)[field]) return;
-
-    let color = loadPlayerColor();
-    const { data: stats } = await supabase.from('player_stats').select('selected_color').eq('player_id', myId).single();
-    if (stats?.selected_color) {
-      color = stats.selected_color;
-      localStorage.setItem('stone_color', color);
-    }
-    await supabase.from('games').update({ [field]: color }).eq('id', gameDbId.current);
-  }
 
   // ── Save state to DB on every change ──
   async function saveGameState(newState: GameState) {
@@ -320,7 +294,7 @@ export function useOnlineGame() {
           channel.send({ type: 'broadcast', event: 'state_update', payload: { state: stateRef.current } });
         }
       })
-      .on('broadcast', { event: 'player_joined' }, ({ payload }) => {
+      .on('broadcast', { event: 'player_joined' }, () => {
         setOpponentConnected(true);
         // If opponent just joined and we don't have their color yet, load from DB
         if (!opponentColorRef.current && gameDbId.current) {
