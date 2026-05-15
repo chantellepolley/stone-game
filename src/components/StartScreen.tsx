@@ -51,6 +51,16 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     return true;
   });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
+  const [referrerPrompt, setReferrerPrompt] = useState<{ id: string; username: string } | null>(() => {
+    try {
+      const raw = localStorage.getItem('stone_referrer');
+      if (raw) {
+        localStorage.removeItem('stone_referrer');
+        return JSON.parse(raw);
+      }
+    } catch {}
+    return null;
+  });
   const [menuView, setMenuView] = useState<'main' | 'newgame' | 'challenges' | 'settings'>(() => {
     const saved = localStorage.getItem('stone_menu_view');
     if (saved === 'newgame' || saved === 'challenges' || saved === 'settings') {
@@ -675,6 +685,35 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           )}
           <div className="text-[8px] text-white">
             &copy; 2026 Stone The Game. All rights reserved.
+          </div>
+        </div>
+      )}
+
+      {/* Post-signup: invite referrer to play */}
+      {referrerPrompt && player && onPlayOnline && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-4xl mb-2">&#127881;</p>
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Welcome to STONE!</h2>
+            <p className="text-white/70 text-sm mb-1">
+              You were referred by <span className="text-amber-400 font-heading">{referrerPrompt.username}</span>
+            </p>
+            <p className="text-green-400 text-sm font-heading mb-4">You both got +100 coins!</p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => {
+                setReferrerPrompt(null);
+                if (onPlayOnline) onPlayOnline();
+              }}
+                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+                Play {referrerPrompt.username}!
+              </button>
+              <button onClick={() => setReferrerPrompt(null)}
+                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors">
+                Later
+              </button>
+            </div>
           </div>
         </div>
       )}

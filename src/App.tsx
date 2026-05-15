@@ -337,7 +337,7 @@ export default function App() {
       )}
 
       {/* Notifications overlay - always rendered */}
-      <Notifications onAcceptInvite={handleAcceptNotificationInvite} />
+      <Notifications onAcceptInvite={handleAcceptNotificationInvite} onInviteToPlay={handleInviteToPlay} />
     </CoinsProvider>
     </PlayerContext.Provider>
     </ErrorBoundary>

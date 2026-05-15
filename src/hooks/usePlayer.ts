@@ -120,6 +120,28 @@ export function usePlayer() {
           // Import dynamically to avoid circular deps
           const { awardReferralBonus } = await import('../lib/bonuses');
           await awardReferralBonus(referrer.id, data.id);
+
+          // Auto-add as friends (skip the request/accept flow)
+          await supabase.from('friends').insert({
+            player_id: referrer.id,
+            friend_id: data.id,
+            status: 'accepted',
+          });
+
+          // Send push notification to the referrer
+          const { data: referrerData } = await supabase.from('players').select('username').eq('id', referrer.id).single();
+          sendPushNotification(
+            referrer.id,
+            'STONE - Referral Success!',
+            `${username} joined using your referral! You both got 100 coins!`,
+            'referral-success'
+          );
+
+          // Save referrer info so we can show "Play with them?" after signup
+          localStorage.setItem('stone_referrer', JSON.stringify({
+            id: referrer.id,
+            username: referrerData?.username || 'Your friend',
+          }));
         }
       }
 

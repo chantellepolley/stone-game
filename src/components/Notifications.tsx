@@ -19,14 +19,21 @@ interface GameResult {
   wager: number;
 }
 
-interface NotificationsProps {
-  onAcceptInvite?: (gameId: string, roomCode: string, inviteId?: string) => void;
+interface ReferralNotif {
+  playerId: string;
+  playerName: string;
 }
 
-export default function Notifications({ onAcceptInvite }: NotificationsProps) {
+interface NotificationsProps {
+  onAcceptInvite?: (gameId: string, roomCode: string, inviteId?: string) => void;
+  onInviteToPlay?: (playerId: string, wager: number) => void;
+}
+
+export default function Notifications({ onAcceptInvite, onInviteToPlay }: NotificationsProps) {
   const { player } = usePlayerContext();
   const [invites, setInvites] = useState<GameInvite[]>([]);
   const [gameResults, setGameResults] = useState<GameResult[]>([]);
+  const [referralNotifs, setReferralNotifs] = useState<ReferralNotif[]>([]);
   const [friendRequests, setFriendRequests] = useState<number>(0);
   const prevInviteCount = useRef(0);
   const prevFriendCount = useRef(0);
@@ -78,6 +85,19 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
 
     const newFriendCount = count || 0;
     setFriendRequests(newFriendCount);
+
+    // Check for new referral signups (people who used my referral code)
+    const seenReferrals: string[] = JSON.parse(localStorage.getItem('stone_seen_referrals') || '[]');
+    const { data: referredPlayers } = await supabase
+      .from('players')
+      .select('id, username')
+      .eq('referred_by', player.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (referredPlayers) {
+      const unseen = referredPlayers.filter(p => !seenReferrals.includes(p.id));
+      setReferralNotifs(unseen.map(p => ({ playerId: p.id, playerName: p.username })));
+    }
 
     // Check for recently completed games the player hasn't seen
     // Only show games completed after the feature was enabled (or after first app load)
@@ -164,15 +184,22 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
   const handleDismissResult = (gameId: string) => {
     const seen: string[] = JSON.parse(localStorage.getItem('stone_seen_results') || '[]');
     seen.push(gameId);
-    // Keep only last 50 to avoid unbounded growth
     localStorage.setItem('stone_seen_results', JSON.stringify(seen.slice(-50)));
     setDismissed(prev => new Set(prev).add(gameId));
   };
 
+  const handleDismissReferral = (playerId: string) => {
+    const seen: string[] = JSON.parse(localStorage.getItem('stone_seen_referrals') || '[]');
+    seen.push(playerId);
+    localStorage.setItem('stone_seen_referrals', JSON.stringify(seen.slice(-50)));
+    setDismissed(prev => new Set(prev).add('ref-' + playerId));
+  };
+
   const visibleInvites = invites.filter(i => !dismissed.has(i.id));
   const visibleResults = gameResults.filter(r => !dismissed.has(r.id));
+  const visibleReferrals = referralNotifs.filter(r => !dismissed.has('ref-' + r.playerId));
 
-  if (visibleInvites.length === 0 && visibleResults.length === 0 && friendRequests === 0) return null;
+  if (visibleInvites.length === 0 && visibleResults.length === 0 && visibleReferrals.length === 0 && friendRequests === 0) return null;
 
   return (
     <div className="fixed top-2 right-2 z-50 flex flex-col gap-2 max-w-xs">
@@ -227,6 +254,35 @@ export default function Notifications({ onAcceptInvite }: NotificationsProps) {
           >
             OK
           </button>
+        </div>
+      ))}
+
+      {/* Referral signup notifications */}
+      {visibleReferrals.map(ref => (
+        <div key={'ref-' + ref.playerId}
+          className="bg-[#504840] border-2 border-green-600/60 rounded-xl p-3 shadow-2xl animate-[slideIn_0.3s_ease-out]">
+          <p className="text-white text-sm font-heading mb-1">
+            <span className="text-green-400">{ref.playerName}</span> joined using your referral!
+          </p>
+          <p className="text-amber-400 text-xs mb-2">+100 coins</p>
+          <div className="flex gap-2">
+            {onInviteToPlay && (
+              <button
+                onClick={() => { onInviteToPlay(ref.playerId, 0); handleDismissReferral(ref.playerId); }}
+                className="flex-1 px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors"
+              >
+                Invite to Play
+              </button>
+            )}
+            <button
+              onClick={() => handleDismissReferral(ref.playerId)}
+              className="px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                         bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors"
+            >
+              OK
+            </button>
+          </div>
         </div>
       ))}
 
