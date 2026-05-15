@@ -222,9 +222,16 @@ export default function Notifications({ onAcceptInvite, onInviteToPlay }: Notifi
               Play Now!
             </button>
             <button
-              onClick={() => handleDeclineInvite(invite.id)}
+              onClick={() => setDismissed(prev => new Set(prev).add(invite.id))}
               className="px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
                          bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors"
+            >
+              Later
+            </button>
+            <button
+              onClick={() => handleDeclineInvite(invite.id)}
+              className="px-3 py-1.5 rounded-lg text-xs font-heading uppercase tracking-wider
+                         bg-red-900/40 text-red-400/70 hover:text-red-400 cursor-pointer transition-colors"
             >
               Decline
             </button>
