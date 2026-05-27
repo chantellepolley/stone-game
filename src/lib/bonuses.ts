@@ -156,8 +156,32 @@ export async function awardGameBonuses(
 
 /**
  * Award referral bonus to both players.
+ * During promo, gives boosted amounts + POTM points.
  */
-export async function awardReferralBonus(referrerId: string, newPlayerId: string) {
-  await addCoins(referrerId, 100, 'Referral bonus — friend joined!');
-  await addCoins(newPlayerId, 100, 'Welcome bonus — referred by a friend!');
+export async function awardReferralBonus(
+  referrerId: string,
+  newPlayerId: string,
+  referrerUsername?: string,
+): Promise<{ referrerCoins: number; newPlayerCoins: number; isPromo: boolean }> {
+  const { getReferralAmounts, checkReferralCap, isPromoActive } = await import('./referralPromo');
+
+  let amounts = getReferralAmounts(referrerUsername);
+
+  // If promo is active but referrer hit the cap, fall back to normal amounts
+  if (amounts.isPromo) {
+    const underCap = await checkReferralCap(referrerId);
+    if (!underCap) {
+      amounts = { referrerCoins: 100, newPlayerCoins: 100, referrerPoints: 0, isPromo: false };
+    }
+  }
+
+  await addCoins(referrerId, amounts.referrerCoins, amounts.isPromo ? 'Referral PROMO bonus — friend joined!' : 'Referral bonus — friend joined!');
+  await addCoins(newPlayerId, amounts.newPlayerCoins, amounts.isPromo ? 'Welcome PROMO bonus — referred by a friend!' : 'Welcome bonus — referred by a friend!');
+
+  // Award POTM points during promo
+  if (amounts.referrerPoints > 0 && isPromoActive(referrerUsername)) {
+    await addMonthlyPoints(referrerId, amounts.referrerPoints, 'wins_online', 'Referral promo bonus');
+  }
+
+  return { referrerCoins: amounts.referrerCoins, newPlayerCoins: amounts.newPlayerCoins, isPromo: amounts.isPromo };
 }

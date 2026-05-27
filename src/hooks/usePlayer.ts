@@ -117,9 +117,12 @@ export function usePlayer() {
           .single();
         if (referrer && referrer.id !== data.id) {
           await supabase.from('players').update({ referred_by: referrer.id }).eq('id', data.id);
+          const { data: referrerData } = await supabase.from('players').select('username').eq('id', referrer.id).single();
+          const referrerName = referrerData?.username || 'Your friend';
+
           // Import dynamically to avoid circular deps
           const { awardReferralBonus } = await import('../lib/bonuses');
-          await awardReferralBonus(referrer.id, data.id);
+          const result = await awardReferralBonus(referrer.id, data.id, referrerName);
 
           // Auto-add as friends (skip the request/accept flow)
           await supabase.from('friends').insert({
@@ -129,18 +132,20 @@ export function usePlayer() {
           });
 
           // Send push notification to the referrer
-          const { data: referrerData } = await supabase.from('players').select('username').eq('id', referrer.id).single();
+          const coinText = `You both got ${result.referrerCoins} coins!`;
+          const promoText = result.isPromo ? ' +25 POTM points!' : '';
           sendPushNotification(
             referrer.id,
-            'STONE - Referral Success!',
-            `${username} joined using your referral! You both got 100 coins!`,
+            result.isPromo ? 'STONE - Referral PROMO!' : 'STONE - Referral Success!',
+            `${username} joined using your referral! ${coinText}${promoText}`,
             'referral-success'
           );
 
           // Save referrer info so we can show "Play with them?" after signup
           localStorage.setItem('stone_referrer', JSON.stringify({
             id: referrer.id,
-            username: referrerData?.username || 'Your friend',
+            username: referrerName,
+            coins: result.newPlayerCoins,
           }));
         }
       }

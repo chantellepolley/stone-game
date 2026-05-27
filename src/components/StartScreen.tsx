@@ -6,6 +6,7 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { AI_WAGER } from '../lib/coins';
 
 import { supabase } from '../lib/supabase';
+import { isPromoActive as checkPromo } from '../lib/referralPromo';
 import JesterCoin from './JesterCoin';
 import AvatarEditor from './AvatarEditor';
 
@@ -52,7 +53,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     return true;
   });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
-  const [referrerPrompt, setReferrerPrompt] = useState<{ id: string; username: string } | null>(() => {
+  const [showPromoAnnouncement, setShowPromoAnnouncement] = useState(false);
+  const [promoCountdown, setPromoCountdown] = useState('');
+  const [referrerPrompt, setReferrerPrompt] = useState<{ id: string; username: string; coins?: number } | null>(() => {
     try {
       const raw = localStorage.getItem('stone_referrer');
       if (raw) {
@@ -147,6 +150,25 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   useEffect(() => {
     if (editingName && nameInputRef.current) nameInputRef.current.focus();
   }, [editingName]);
+
+  // Check referral promo
+  useEffect(() => {
+    if (!player) return;
+    import('../lib/referralPromo').then(({ isPromoActive, getPromoTimeRemaining, formatTimeRemaining }) => {
+      if (isPromoActive(player.username)) {
+        const seen = localStorage.getItem('stone_seen_announcement_referral_promo');
+        if (!seen) setShowPromoAnnouncement(true);
+        // Update countdown
+        setPromoCountdown(formatTimeRemaining(getPromoTimeRemaining()));
+        const interval = setInterval(() => {
+          const remaining = getPromoTimeRemaining();
+          setPromoCountdown(formatTimeRemaining(remaining));
+          if (remaining <= 0) clearInterval(interval);
+        }, 60000);
+        return () => clearInterval(interval);
+      }
+    });
+  }, [player]);
 
   // Load referral code
   useEffect(() => {
@@ -706,7 +728,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <p className="text-white/70 text-sm mb-1">
               You were referred by <span className="text-amber-400 font-heading">{referrerPrompt.username}</span>
             </p>
-            <p className="text-green-400 text-sm font-heading mb-4">You both got +100 coins!</p>
+            <p className="text-green-400 text-sm font-heading mb-4">You both got +{referrerPrompt.coins || 100} coins!</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
                 setReferrerPrompt(null);
@@ -758,6 +780,43 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
+      {/* Referral promo announcement */}
+      {showPromoAnnouncement && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-4xl mb-2">&#128293;</p>
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Referral Boost!</h2>
+            <p className="text-white/70 text-sm mb-2">
+              For the next <span className="text-amber-400 font-heading">{promoCountdown}</span>, earn
+            </p>
+            <div className="bg-black/20 rounded-lg p-3 mb-3 space-y-1">
+              <p className="text-amber-400 font-heading text-lg">200 coins per referral</p>
+              <p className="text-green-400 font-heading text-sm">+25 Player of the Month points</p>
+              <p className="text-white/40 text-[10px]">Max 5 referrals during promo. Your friend gets 200 coins too!</p>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_referral_promo', '1');
+                setShowPromoAnnouncement(false);
+                setShowReferralPanel(true);
+              }}
+                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+                Share Now
+              </button>
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_announcement_referral_promo', '1');
+                setShowPromoAnnouncement(false);
+              }}
+                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors">
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Avatar editor */}
       {avatarEditFile && (
         <AvatarEditor
@@ -768,12 +827,24 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* Referral panel modal */}
-      {showReferralPanel && referralCode && (
+      {showReferralPanel && referralCode && (() => {
+        const promoActive = checkPromo(player?.username);
+        const coinAmount = promoActive ? 200 : 100;
+        const shareText = promoActive
+          ? `Join me on STONE! Use my referral code: ${referralCode}. We both get 200 coins (PROMO)!\nhttps://stonethegame.com?ref=${referralCode}`
+          : `Join me on STONE! Use my referral code: ${referralCode}. We both get 100 coins!\nhttps://stonethegame.com?ref=${referralCode}`;
+        return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <h2 className="text-amber-400 font-heading text-xl mb-1">Refer a Friend</h2>
+            {promoActive && (
+              <div className="bg-amber-600/20 border border-amber-600/40 rounded-lg px-3 py-1.5 mb-2">
+                <p className="text-amber-400 font-heading text-xs">PROMO ACTIVE {promoCountdown && `(${promoCountdown} left)`}</p>
+                <p className="text-green-400 text-[10px]">+25 POTM points per referral</p>
+              </div>
+            )}
             <p className="text-white/70 text-sm mb-4">
-              You both get <span className="text-amber-400 font-heading">+100 coins</span> when they join!
+              You both get <span className="text-amber-400 font-heading">+{coinAmount} coins</span> when they join!
             </p>
 
             {/* QR Code */}
@@ -798,11 +869,10 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
 
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
-                const text = `Join me on STONE! Use my referral code: ${referralCode}. We both get 100 coins!\nhttps://stonethegame.com?ref=${referralCode}`;
                 if (navigator.share) {
-                  navigator.share({ title: 'Join STONE!', text }).catch(() => {});
+                  navigator.share({ title: 'Join STONE!', text: shareText }).catch(() => {});
                 } else {
-                  navigator.clipboard.writeText(text).then(() => { setRefCopied(true); setTimeout(() => setRefCopied(false), 2000); });
+                  navigator.clipboard.writeText(shareText).then(() => { setRefCopied(true); setTimeout(() => setRefCopied(false), 2000); });
                 }
               }}
                 className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
@@ -817,7 +887,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
           </div>
         </div>
-      )}
+        ); })()}
 
       {/* Coin rules modal */}
       {showCoinRules && (
