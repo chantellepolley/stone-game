@@ -52,7 +52,8 @@ export async function checkReferralCap(referrerId: string): Promise<boolean> {
     .eq('referred_by', referrerId)
     .gte('created_at', new Date(REFERRAL_PROMO.startUtc).toISOString())
     .lte('created_at', new Date(REFERRAL_PROMO.endUtc).toISOString());
-  return (count || 0) < REFERRAL_PROMO.maxReferralsDuringPromo;
+  // count includes the current signup (referred_by is set before this check)
+  return (count || 0) <= REFERRAL_PROMO.maxReferralsDuringPromo;
 }
 
 export function formatTimeRemaining(ms: number): string {
