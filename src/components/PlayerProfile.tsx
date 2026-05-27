@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useFriends } from '../hooks/useFriends';
-import JesterCoin from './JesterCoin';
+
 
 interface PlayerProfileProps {
   playerId: string;
