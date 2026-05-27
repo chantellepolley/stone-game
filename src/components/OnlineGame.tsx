@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import type { GameState, Move } from '../types/game';
 import { playYourTurnSound, playHomeSound, playJailedSound, playCrownedSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
-import { executeMove as execMove } from '../engine';
+import { executeMove as execMove, canPlayerMove } from '../engine';
 import { loadPlayerColor } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
@@ -40,6 +40,15 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     sendNudge, lastNudge, myGameColor, currentGameId, sawTurnLive,
   } = useOnlineGame();
   const { coins, spend, earn } = useCoins();
+
+  // Compute which jester doubles values would result in no valid moves
+  const disabledJesterValues = useMemo(() => {
+    if (!awaitingJesterChoice) return [];
+    return [1, 2, 3, 4, 5, 6].filter(v => {
+      const testState = { ...state, dice: { ...state.dice, remaining: [v, v, v, v], pendingDoubleJester: false } };
+      return !canPlayerMove(testState);
+    });
+  }, [awaitingJesterChoice, state]);
   const coinsHandled = useRef(false);
   const [gameBonuses, setGameBonuses] = useState<BonusResult[]>([]);
   const [hintsEnabled, setHintsEnabled] = useState(true);
@@ -496,6 +505,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
           onRoll={roll}
           awaitingJesterChoice={awaitingJesterChoice && isMyTurn}
           onChooseJesterDoubles={chooseJesterDoubles}
+          disabledJesterValues={disabledJesterValues}
           isAITurn={!isMyTurn || replayingTurn}
           player1Name={p1Name}
           player2Name={p2Name}

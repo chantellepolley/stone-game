@@ -13,6 +13,8 @@ interface DiceAreaProps {
   onRoll: () => void;
   awaitingJesterChoice?: boolean;
   onChooseJesterDoubles?: (value: number) => void;
+  /** Values that would result in no valid moves (disabled in jester choice UI) */
+  disabledJesterValues?: number[];
   isAITurn?: boolean;
   externalRolling?: boolean;
   player1Name?: string;
@@ -99,7 +101,7 @@ function DieFace({ value, used, rolling, player }: { value: number; used: boolea
   );
 }
 
-export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJesterChoice, onChooseJesterDoubles, isAITurn, externalRolling, player1Name, player2Name }: DiceAreaProps) {
+export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJesterChoice, onChooseJesterDoubles, disabledJesterValues, isAITurn, externalRolling, player1Name, player2Name }: DiceAreaProps) {
   const [rolling, setRolling] = useState(false);
   const [rollFaces, setRollFaces] = useState<[number, number]>([1, 1]);
   const canRoll = phase === 'rolling' && !isAITurn;
@@ -209,18 +211,22 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
         <div className="flex flex-col items-center gap-2">
           <div className="text-xs text-amber-500 font-heading">Choose your doubles:</div>
           <div className="flex gap-1.5">
-            {[1, 2, 3, 4, 5, 6].map(v => (
-              <button
-                key={v}
-                onClick={() => onChooseJesterDoubles(v)}
-                className="w-10 h-10 rounded-lg bg-stone-light border-2 border-amber-600/60
-                           text-stone-bg font-bold text-lg
-                           hover:bg-amber-100 hover:scale-110 active:scale-95
-                           transition-all cursor-pointer shadow-md"
-              >
-                {v}
-              </button>
-            ))}
+            {[1, 2, 3, 4, 5, 6].map(v => {
+              const disabled = disabledJesterValues?.includes(v);
+              return (
+                <button
+                  key={v}
+                  onClick={() => !disabled && onChooseJesterDoubles(v)}
+                  className={`w-10 h-10 rounded-lg border-2 font-bold text-lg transition-all shadow-md
+                    ${disabled
+                      ? 'bg-[#3d3632] border-[#6b5f55]/30 text-white/20 cursor-not-allowed'
+                      : 'bg-stone-light border-amber-600/60 text-stone-bg hover:bg-amber-100 hover:scale-110 active:scale-95 cursor-pointer'
+                    }`}
+                >
+                  {v}
+                </button>
+              );
+            })}
           </div>
           <div className="text-[10px] text-stone-light/40">4 moves of your chosen value</div>
         </div>

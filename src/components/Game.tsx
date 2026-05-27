@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useGame } from '../hooks/useGame';
+import { canPlayerMove } from '../engine';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
@@ -44,6 +45,14 @@ interface GameProps {
 export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, onShowChallenges, pushPermission, onRequestPush, pushMuted, onTogglePushMute, onResumeOnlineGame, onClearResumeId }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame, currentGameId } = useGame();
   const { spend, earn } = useCoins();
+
+  const disabledJesterValues = useMemo(() => {
+    if (!awaitingJesterChoice) return [];
+    return [1, 2, 3, 4, 5, 6].filter(v => {
+      const testState = { ...state, dice: { ...state.dice, remaining: [v, v, v, v], pendingDoubleJester: false } };
+      return !canPlayerMove(testState);
+    });
+  }, [awaitingJesterChoice, state]);
   const [currentWager, setCurrentWager] = useState(0);
   const wagerRef = useRef(0);
   const coinsAwarded = useRef(false);
@@ -252,6 +261,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
           onRoll={roll}
           awaitingJesterChoice={awaitingJesterChoice && !isAITurn}
           onChooseJesterDoubles={chooseJesterDoubles}
+          disabledJesterValues={disabledJesterValues}
           isAITurn={isAITurn}
           externalRolling={aiRolling}
         />
