@@ -7,6 +7,7 @@ import { AI_WAGER } from '../lib/coins';
 
 import { supabase } from '../lib/supabase';
 import JesterCoin from './JesterCoin';
+import AvatarEditor from './AvatarEditor';
 
 interface StartScreenProps {
   onStart: (mode: GameMode, difficulty: AIDifficulty, wager?: number) => void;
@@ -156,14 +157,21 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     });
   }, [player]);
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [avatarEditFile, setAvatarEditFile] = useState<File | null>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return; }
-    setUploadingAvatar(true);
-    await updateAvatar(file);
-    setUploadingAvatar(false);
+    setAvatarEditFile(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleAvatarSave = async (croppedFile: File) => {
+    setAvatarEditFile(null);
+    setUploadingAvatar(true);
+    await updateAvatar(croppedFile);
+    setUploadingAvatar(false);
   };
 
   const handleSavePassword = async () => {
@@ -748,6 +756,15 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
           </div>
         </div>
+      )}
+
+      {/* Avatar editor */}
+      {avatarEditFile && (
+        <AvatarEditor
+          file={avatarEditFile}
+          onSave={handleAvatarSave}
+          onCancel={() => setAvatarEditFile(null)}
+        />
       )}
 
       {/* Referral panel modal */}
