@@ -167,7 +167,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           import('../hooks/usePushNotifications').then(({ sendPushNotification }) => {
             sendPushNotification(
               player.id,
-              'STONE - Referral Boost!',
+              'STONE - Referral Boost Challenge!',
               'For 48 hours: earn 200 coins + 25 POTM points for every friend you invite!',
               'referral-promo',
             );
@@ -801,7 +801,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-4xl mb-2">&#128293;</p>
-            <h2 className="text-amber-400 font-heading text-xl mb-1">Referral Boost!</h2>
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Referral Boost Challenge!</h2>
             <p className="text-white/70 text-sm mb-2">
               For the next <span className="text-amber-400 font-heading">{promoCountdown}</span>, earn
             </p>
