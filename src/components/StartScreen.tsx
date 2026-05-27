@@ -154,10 +154,26 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   // Check referral promo
   useEffect(() => {
     if (!player) return;
-    import('../lib/referralPromo').then(({ isPromoActive, getPromoTimeRemaining, formatTimeRemaining }) => {
+    import('../lib/referralPromo').then(({ isPromoActive, getPromoTimeRemaining, formatTimeRemaining, getPromoConfig }) => {
       if (isPromoActive(player.username)) {
+        const config = getPromoConfig();
         const seen = localStorage.getItem('stone_seen_announcement_referral_promo');
         if (!seen) setShowPromoAnnouncement(true);
+
+        // Send one-time push notification for this promo
+        const pushKey = `stone_promo_push_sent_${config.id}`;
+        if (!localStorage.getItem(pushKey)) {
+          localStorage.setItem(pushKey, '1');
+          import('../hooks/usePushNotifications').then(({ sendPushNotification }) => {
+            sendPushNotification(
+              player.id,
+              'STONE - Referral Boost!',
+              'For 48 hours: earn 200 coins + 25 POTM points for every friend you invite!',
+              'referral-promo',
+            );
+          });
+        }
+
         // Update countdown
         setPromoCountdown(formatTimeRemaining(getPromoTimeRemaining()));
         const interval = setInterval(() => {
@@ -448,7 +464,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                   className="w-full px-5 py-2.5 rounded-xl font-heading text-sm uppercase tracking-wider
                              text-white hover:text-amber-200 transition-colors cursor-pointer
                              border-2 border-amber-500 bg-amber-600 shadow-lg">
-                  Refer a Friend <span className="text-[10px] normal-case text-amber-200">+100 coins each</span>
+                  Refer a Friend <span className="text-[10px] normal-case text-amber-200">+{checkPromo(player?.username) ? '200' : '100'} coins each</span>
                 </button>
               )}
             </>
@@ -755,7 +771,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <p className="text-4xl mb-2">&#127873;</p>
             <h2 className="text-amber-400 font-heading text-xl mb-1">Invite Your Friends!</h2>
             <p className="text-white/70 text-sm mb-4">
-              You both get <span className="text-amber-400 font-heading">100 coins</span> when they join using your referral code. Share the love and grow the STONE community!
+              You both get <span className="text-amber-400 font-heading">{checkPromo(player?.username) ? '200' : '100'} coins</span> when they join using your referral code. Share the love and grow the STONE community!
             </p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
@@ -930,7 +946,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Refer a Friend</p>
-                <p>Share your referral code! You both get <span className="text-amber-400">+100 coins</span> when they join!</p>
+                <p>Share your referral code! You both get <span className="text-amber-400">+{checkPromo(player?.username) ? '200' : '100'} coins</span> when they join!</p>
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Forfeit</p>
