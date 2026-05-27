@@ -2,14 +2,13 @@ import { supabase } from './supabase';
 
 const REFERRAL_PROMO = {
   id: 'referral-boost-may2026',
-  // Dates will be set when admin approves — for now use a test window
-  startUtc: Date.UTC(2026, 4, 27, 12, 0, 0), // May 27, 2026 noon UTC
-  endUtc:   Date.UTC(2026, 4, 29, 12, 0, 0), // May 29, 2026 noon UTC (48h)
+  startUtc: Date.UTC(2026, 4, 27, 0, 0, 0),  // May 27, 2026 midnight UTC
+  endUtc:   Date.UTC(2026, 4, 29, 0, 0, 0),  // May 29, 2026 midnight UTC (48h)
   referrerCoins: 200,
   newPlayerCoins: 200,
   referrerPotmPoints: 25,
   maxReferralsDuringPromo: 5,
-  adminOnly: true, // flip to false when ready for everyone
+  adminOnly: false, // LIVE
   adminUsername: 'cpolley',
 };
 
