@@ -316,12 +316,13 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame, onInviteToP
                         ) : (
                           <div className="space-y-0.5">
                             {playerLogs[entry.player_id].map((log, j) => {
+                              const isMe = entry.player_id === player?.id;
                               const date = new Date(log.created_at);
-                              const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                              const timeStr = isMe ? `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}` : '';
                               return (
                                 <div key={j} className="flex items-center justify-between text-[9px]">
                                   <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-white/30 shrink-0 w-12">{timeStr}</span>
+                                    {isMe && <span className="text-white/30 shrink-0 w-12">{timeStr}</span>}
                                     <span className="text-white/50 truncate">{log.reason}</span>
                                   </div>
                                   <span className={`font-heading shrink-0 ml-2 ${log.points > 0 ? 'text-green-400' : 'text-red-400'}`}>
