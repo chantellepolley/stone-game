@@ -268,7 +268,7 @@ export default function App() {
       {screen === 'tutorial' && <Tutorial onFinish={() => setScreen('game')} />}
       {screen === 'admin-feedback' && <AdminFeedback onBack={() => setScreen('game')} />}
       {screen === 'admin-players' && <AdminPlayers onBack={() => setScreen('game')} />}
-      {screen === 'monthly-standings' && <MonthlyStandings onBack={() => setScreen('game')} onShowHallOfFame={() => setScreen('hall-of-fame')} />}
+      {screen === 'monthly-standings' && <MonthlyStandings onBack={() => setScreen('game')} onShowHallOfFame={() => setScreen('hall-of-fame')} onInviteToPlay={handleInviteToPlay} />}
       {screen === 'hall-of-fame' && <HallOfFame onBack={() => setScreen('monthly-standings')} />}
       {screen === 'challenges' && <Challenges onBack={() => setScreen('game')} />}
       {screen === 'colors' && (
@@ -279,7 +279,7 @@ export default function App() {
         />
       )}
       {screen === 'stats' && <PlayerStats onBack={() => setScreen('game')} onInviteToPlay={handleInviteToPlay} />}
-      {screen === 'leaderboard' && <Leaderboard onBack={() => setScreen('game')} />}
+      {screen === 'leaderboard' && <Leaderboard onBack={() => setScreen('game')} onInviteToPlay={handleInviteToPlay} />}
       {screen === 'my-games' && (
         <MyGames
           onResume={(gameId, roomCode, player, mode) => {

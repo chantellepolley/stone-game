@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useFriends } from '../hooks/useFriends';
 import JesterCoin from './JesterCoin';
+import PlayerProfile from './PlayerProfile';
 
 interface LeaderEntry {
   player_id: string;
@@ -16,7 +17,7 @@ interface LeaderEntry {
 
 type TabType = 'wins' | 'coins';
 
-export default function Leaderboard({ onBack }: { onBack: () => void }) {
+export default function Leaderboard({ onBack, onInviteToPlay }: { onBack: () => void; onInviteToPlay?: (playerId: string, wager: number) => void }) {
   const { player } = usePlayerContext();
   const { addFriendById } = useFriends();
   const [winEntries, setWinEntries] = useState<LeaderEntry[]>([]);
@@ -25,6 +26,7 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
   const [tab, setTab] = useState<TabType>('wins');
   const [friendAdded, setFriendAdded] = useState<Set<string>>(new Set());
   const [friendStatusMap, setFriendStatusMap] = useState<Map<string, string>>(new Map());
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -92,7 +94,8 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
     const pct = e.games_played > 0 ? Math.round((e.wins / e.games_played) * 100) : 0;
     return (
       <tr key={e.player_id}
-        className={`border-b border-white/5 ${isMe ? 'text-amber-400' : 'text-white/80'}`}>
+        onClick={() => !isMe && setViewingProfile(e.player_id)}
+        className={`border-b border-white/5 ${isMe ? 'text-amber-400' : 'text-white/80 cursor-pointer hover:bg-white/5'}`}>
         <td className="py-1.5 px-1 font-heading">{i + 1}</td>
         <td className="py-1.5 px-1 truncate max-w-[120px]">
           <div className="flex items-center gap-1.5">
@@ -204,6 +207,14 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
           Back
         </button>
       </div>
+
+      {viewingProfile && (
+        <PlayerProfile
+          playerId={viewingProfile}
+          onClose={() => setViewingProfile(null)}
+          onInviteToPlay={onInviteToPlay}
+        />
+      )}
     </div>
   );
 }

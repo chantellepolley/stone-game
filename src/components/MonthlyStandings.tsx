@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getMonthlyStandings, getCurrentMonth, getTimeUntilMonthEnd, getTimeUntilCompetitionStart, hasCompetitionStarted, formatMonthName, getPointLog } from '../lib/monthlyPoints';
 import { CHAMPION_STONES } from '../utils/stoneColors';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import PlayerProfile from './PlayerProfile';
 
 const CHAMPION_CLIP = 'polygon(50% 0%, 65% 25%, 100% 15%, 75% 40%, 100% 50%, 75% 60%, 100% 85%, 65% 75%, 50% 100%, 35% 75%, 0% 85%, 25% 60%, 0% 50%, 25% 40%, 0% 15%, 35% 25%)';
 
@@ -18,10 +19,11 @@ interface StandingEntry {
   avatar_url?: string | null;
 }
 
-export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack: () => void; onShowHallOfFame?: () => void }) {
+export default function MonthlyStandings({ onBack, onShowHallOfFame, onInviteToPlay }: { onBack: () => void; onShowHallOfFame?: () => void; onInviteToPlay?: (playerId: string, wager: number) => void }) {
   const { player } = usePlayerContext();
   const [standings, setStandings] = useState<StandingEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
   const [countdown, setCountdown] = useState('');
   const [started, setStarted] = useState(hasCompetitionStarted());
   const [pointLog, setPointLog] = useState<Array<{ points: number; reason: string; created_at: string }>>([]);
@@ -282,15 +284,17 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
                         }`}>
                           {i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : `${i + 1}`}
                         </span>
-                        {entry.avatar_url ? (
-                          <img src={entry.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-[#6b5f55] shrink-0" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55] shrink-0">
-                            <span className="text-xs font-heading text-white/40">{entry.username?.[0]?.toUpperCase()}</span>
-                          </div>
-                        )}
+                        <div className="cursor-pointer" onClick={(e) => { e.stopPropagation(); if (entry.player_id !== player?.id) setViewingProfile(entry.player_id); }}>
+                          {entry.avatar_url ? (
+                            <img src={entry.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-[#6b5f55] shrink-0 hover:ring-2 hover:ring-amber-400/50" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55] shrink-0 hover:ring-2 hover:ring-amber-400/50">
+                              <span className="text-xs font-heading text-white/40">{entry.username?.[0]?.toUpperCase()}</span>
+                            </div>
+                          )}
+                        </div>
                         <div className="min-w-0">
-                          <div className="text-white text-sm font-heading truncate">{entry.username}</div>
+                          <div className="text-white text-sm font-heading truncate cursor-pointer hover:text-amber-400 transition-colors" onClick={(e) => { e.stopPropagation(); if (entry.player_id !== player?.id) setViewingProfile(entry.player_id); }}>{entry.username}</div>
                           <div className="text-[8px] text-white/30">
                             {entry.wins_online}W online, {entry.wins_ai_expert}W expert, {entry.login_days}d login
                           </div>
@@ -414,6 +418,14 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame }: { onBack:
           Back
         </button>
       </div>
+
+      {viewingProfile && (
+        <PlayerProfile
+          playerId={viewingProfile}
+          onClose={() => setViewingProfile(null)}
+          onInviteToPlay={onInviteToPlay}
+        />
+      )}
     </div>
   );
 }
