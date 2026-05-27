@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import PlayerProfile from './PlayerProfile';
 
 interface PlayerRow {
   id: string;
@@ -26,11 +27,12 @@ interface PlayerDetail {
   total_games: number;
 }
 
-export default function AdminPlayers({ onBack }: { onBack: () => void }) {
+export default function AdminPlayers({ onBack, onInviteToPlay }: { onBack: () => void; onInviteToPlay?: (playerId: string, wager: number) => void }) {
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [details, setDetails] = useState<Record<string, PlayerDetail>>({});
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -173,7 +175,8 @@ export default function AdminPlayers({ onBack }: { onBack: () => void }) {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <div className="text-white text-sm font-heading truncate">{p.username}</div>
+                      <div className="text-white text-sm font-heading truncate cursor-pointer hover:text-amber-400 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setViewingProfile(p.id); }}>{p.username}</div>
                       <div className="text-[9px] text-white/40">
                         Joined {formatDate(p.created_at)}
                         {p.referred_by && <span className="text-amber-400/60 ml-1">via {p.referred_by}</span>}
@@ -230,6 +233,14 @@ export default function AdminPlayers({ onBack }: { onBack: () => void }) {
           Back
         </button>
       </div>
+
+      {viewingProfile && (
+        <PlayerProfile
+          playerId={viewingProfile}
+          onClose={() => setViewingProfile(null)}
+          onInviteToPlay={onInviteToPlay}
+        />
+      )}
     </div>
   );
 }

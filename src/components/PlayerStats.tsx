@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { getCoinHistory, AI_WAGER } from '../lib/coins';
 import JesterCoin from './JesterCoin';
+import PlayerProfile from './PlayerProfile';
 import type { AIDifficulty } from '../types/game';
 
 interface Stats {
@@ -50,6 +51,7 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
   const [coinHistory, setCoinHistory] = useState<Array<{ amount: number; reason: string; balance_after: number; created_at: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'overview' | 'history' | 'rivals' | 'coins'>('overview');
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
 
   useEffect(() => {
     if (!player) return;
@@ -279,7 +281,8 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
                 return (
                   <div key={h.opponent_id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-black/20">
                     <div>
-                      <div className="text-white text-sm font-heading">{h.opponent_name}</div>
+                      <div className="text-white text-sm font-heading cursor-pointer hover:text-amber-400 transition-colors"
+                        onClick={() => setViewingProfile(h.opponent_id)}>{h.opponent_name}</div>
                       <div className="text-[9px] text-white/40">{h.total} games played</div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -340,6 +343,14 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
           Back
         </button>
       </div>
+
+      {viewingProfile && (
+        <PlayerProfile
+          playerId={viewingProfile}
+          onClose={() => setViewingProfile(null)}
+          onInviteToPlay={onInviteToPlay ? (id, _w) => onInviteToPlay(id) : undefined}
+        />
+      )}
     </div>
   );
 }

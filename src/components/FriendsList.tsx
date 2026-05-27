@@ -4,6 +4,7 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { ONLINE_WAGER_TIERS } from '../lib/coins';
 import JesterCoin from './JesterCoin';
+import PlayerProfile from './PlayerProfile';
 
 interface FriendsListProps {
   onBack: () => void;
@@ -20,6 +21,7 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
   const [tab, setTab] = useState<'friends' | 'requests'>('friends');
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [inviteWager, setInviteWager] = useState(0);
+  const [viewingProfile, setViewingProfile] = useState<string | null>(null);
 
   useEffect(() => {
     if (player) {
@@ -75,7 +77,8 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
             <span className="text-[10px] text-white/40 font-heading">{f.username[0].toUpperCase()}</span>
           </div>
         )}
-        <span className={`text-sm font-heading ${isOnline ? 'text-white' : 'text-white/60'}`}>{f.username}</span>
+        <span className={`text-sm font-heading cursor-pointer hover:text-amber-400 transition-colors ${isOnline ? 'text-white' : 'text-white/60'}`}
+          onClick={() => setViewingProfile(f.playerId)}>{f.username}</span>
       </div>
       {onInviteToPlay && (
         <button
@@ -177,7 +180,8 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
                         <span className="text-[10px] text-white/40 font-heading">{r.username[0].toUpperCase()}</span>
                       </div>
                     )}
-                    <span className="text-white text-sm font-heading">{r.username}</span>
+                    <span className="text-white text-sm font-heading cursor-pointer hover:text-amber-400 transition-colors"
+                      onClick={() => setViewingProfile(r.fromPlayerId)}>{r.username}</span>
                   </div>
                   <button
                     onClick={() => handleAccept(r.id)}
@@ -245,6 +249,14 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
             </div>
           </div>
         </div>
+      )}
+
+      {viewingProfile && (
+        <PlayerProfile
+          playerId={viewingProfile}
+          onClose={() => setViewingProfile(null)}
+          onInviteToPlay={onInviteToPlay}
+        />
       )}
     </div>
   );
