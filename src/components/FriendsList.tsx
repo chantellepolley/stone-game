@@ -14,7 +14,7 @@ interface FriendsListProps {
 export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps) {
   const { player } = usePlayerContext();
   const { coins, spend } = useCoins();
-  const { friends, pendingRequests, loading, loadFriends, getPendingRequests, addFriend, acceptFriend } = useFriends();
+  const { friends, pendingRequests, sentRequests, loading, loadFriends, getPendingRequests, getSentRequests, addFriend, acceptFriend } = useFriends();
   const [addInput, setAddInput] = useState('');
   const [addMsg, setAddMsg] = useState('');
   const [addLoading, setAddLoading] = useState(false);
@@ -27,8 +27,9 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
     if (player) {
       loadFriends();
       getPendingRequests();
+      getSentRequests();
     }
-  }, [player, loadFriends, getPendingRequests]);
+  }, [player, loadFriends, getPendingRequests, getSentRequests]);
 
   const handleAdd = async () => {
     const trimmed = addInput.trim();
@@ -166,32 +167,57 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
           </div>
         ) : (
           /* Requests tab */
-          <div className="w-full overflow-y-auto space-y-1.5 max-h-[40vh]">
-            {pendingRequests.length === 0 ? (
+          <div className="w-full overflow-y-auto space-y-1.5 max-h-[45vh]">
+            {pendingRequests.length === 0 && sentRequests.length === 0 ? (
               <p className="text-white/40 text-sm text-center py-4">No pending requests</p>
             ) : (
-              pendingRequests.map(r => (
-                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-black/20">
-                  <div className="flex items-center gap-2">
-                    {r.avatarUrl ? (
-                      <img src={r.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#6b5f55]" />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
-                        <span className="text-[10px] text-white/40 font-heading">{r.username[0].toUpperCase()}</span>
-                      </div>
-                    )}
-                    <span className="text-white text-sm font-heading cursor-pointer hover:text-amber-400 transition-colors"
-                      onClick={() => setViewingProfile(r.fromPlayerId)}>{r.username}</span>
+              <>
+                {pendingRequests.length > 0 && (
+                  <div className="text-[9px] text-green-400/60 uppercase tracking-wider px-1">Received</div>
+                )}
+                {pendingRequests.map(r => (
+                  <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-black/20">
+                    <div className="flex items-center gap-2">
+                      {r.avatarUrl ? (
+                        <img src={r.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#6b5f55]" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
+                          <span className="text-[10px] text-white/40 font-heading">{r.username[0].toUpperCase()}</span>
+                        </div>
+                      )}
+                      <span className="text-white text-sm font-heading cursor-pointer hover:text-amber-400 transition-colors"
+                        onClick={() => setViewingProfile(r.fromPlayerId)}>{r.username}</span>
+                    </div>
+                    <button
+                      onClick={() => handleAccept(r.id)}
+                      className="px-3 py-1 rounded text-[9px] font-heading uppercase tracking-wider
+                                 bg-green-600/60 text-white hover:bg-green-600 cursor-pointer transition-colors"
+                    >
+                      Accept
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleAccept(r.id)}
-                    className="px-3 py-1 rounded text-[9px] font-heading uppercase tracking-wider
-                               bg-green-600/60 text-white hover:bg-green-600 cursor-pointer transition-colors"
-                  >
-                    Accept
-                  </button>
-                </div>
-              ))
+                ))}
+
+                {sentRequests.length > 0 && (
+                  <div className="text-[9px] text-white/30 uppercase tracking-wider px-1 pt-2">Sent</div>
+                )}
+                {sentRequests.map(r => (
+                  <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-black/20">
+                    <div className="flex items-center gap-2">
+                      {r.avatarUrl ? (
+                        <img src={r.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#6b5f55]" />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
+                          <span className="text-[10px] text-white/40 font-heading">{r.username[0].toUpperCase()}</span>
+                        </div>
+                      )}
+                      <span className="text-white/60 text-sm font-heading cursor-pointer hover:text-amber-400 transition-colors"
+                        onClick={() => setViewingProfile(r.fromPlayerId)}>{r.username}</span>
+                    </div>
+                    <span className="text-[9px] text-amber-400/60 font-heading uppercase">Pending</span>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         )}

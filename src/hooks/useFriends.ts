@@ -23,6 +23,7 @@ export function useFriends() {
   const { player } = usePlayerContext();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadFriends = useCallback(async () => {
@@ -122,6 +123,38 @@ export function useFriends() {
     setPendingRequests(result);
   }, [player]);
 
+  const getSentRequests = useCallback(async () => {
+    if (!player) return;
+
+    const { data: requests } = await supabase
+      .from('friends')
+      .select('id, friend_id, created_at')
+      .eq('player_id', player.id)
+      .eq('status', 'pending');
+
+    if (!requests || requests.length === 0) {
+      setSentRequests([]);
+      return;
+    }
+
+    const toIds = requests.map(r => r.friend_id);
+    const { data: players } = await supabase
+      .from('players')
+      .select('id, username, avatar_url')
+      .in('id', toIds);
+
+    const playerMap: Record<string, { username: string; avatar_url: string | null }> = {};
+    players?.forEach(p => { playerMap[p.id] = { username: p.username, avatar_url: p.avatar_url }; });
+
+    setSentRequests(requests.map(r => ({
+      id: r.id,
+      fromPlayerId: r.friend_id,
+      username: playerMap[r.friend_id]?.username || 'Unknown',
+      avatarUrl: playerMap[r.friend_id]?.avatar_url || null,
+      createdAt: r.created_at,
+    })));
+  }, [player]);
+
   const addFriend = useCallback(async (username: string): Promise<string | true> => {
     if (!player) return 'Not logged in';
 
@@ -219,9 +252,11 @@ export function useFriends() {
   return {
     friends,
     pendingRequests,
+    sentRequests,
     loading,
     loadFriends,
     getPendingRequests,
+    getSentRequests,
     addFriend,
     addFriendById,
     isFriend,
