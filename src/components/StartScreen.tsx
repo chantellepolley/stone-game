@@ -339,7 +339,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
-      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer" onClick={() => setShowDifficulty(false)} />
+      <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain cursor-pointer mt-2" onClick={() => { setShowDifficulty(false); setMenuView('main'); }} />
 
       {player && !editingName && (
         <div className="flex flex-col items-center gap-2">
