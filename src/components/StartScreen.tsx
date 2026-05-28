@@ -849,14 +849,22 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto">
             <h2 className="text-amber-400 font-heading text-lg mb-3 text-center">Board Theme</h2>
+            <p className="text-white/40 text-[10px] text-center mb-3">Select a theme then play a game to see it</p>
             <div className="space-y-2">
               {BOARD_THEMES.map(t => {
                 const isSelected = selectedTheme === t.id;
+                const isAdmin = player?.username?.toLowerCase() === 'cpolley';
+                const owned = t.price === 0 || isAdmin; // admin gets all free for preview
                 return (
                   <button key={t.id}
-                    onClick={() => { setSelectedTheme(t.id); saveBoardTheme(t.id); }}
-                    className={`w-full rounded-xl p-3 text-left transition-all cursor-pointer ${
-                      isSelected ? 'ring-2 ring-amber-400' : 'hover:brightness-110'
+                    onClick={() => {
+                      if (owned) {
+                        setSelectedTheme(t.id);
+                        saveBoardTheme(t.id);
+                      }
+                    }}
+                    className={`w-full rounded-xl p-3 text-left transition-all ${owned ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${
+                      isSelected ? 'ring-2 ring-amber-400' : owned ? 'hover:brightness-110' : ''
                     }`}
                     style={{ background: t.boardGradient, borderColor: t.borderColor, border: `2px solid ${t.borderColor}` }}>
                     <div className="flex items-center justify-between">
