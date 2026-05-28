@@ -864,8 +864,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
 
       {/* Board theme picker */}
       {showThemePicker && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowThemePicker(false)}>
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto overscroll-contain" onClick={e => e.stopPropagation()} style={{ touchAction: 'pan-y' }}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-amber-400 font-heading text-lg">Board Themes</h2>
               <div className="flex items-center gap-1 text-amber-400 text-sm font-heading">
