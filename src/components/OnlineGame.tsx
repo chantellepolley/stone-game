@@ -464,6 +464,12 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       {/* Room code + friend status */}
       <div className="flex items-center gap-2 shrink-0 text-[9px]">
         <span className="text-white/40">Room: <span className="text-amber-400/60 font-heading tracking-wider">{roomCode}</span></span>
+        {boardTheme.id !== 'classic' && (
+          <>
+            <span className="text-white/20">|</span>
+            <span className="text-white/30">Board: <span className="text-amber-400/50">{boardTheme.name}</span></span>
+          </>
+        )}
         {opponentName && (
           <>
             <span className="text-white/50">|</span>
