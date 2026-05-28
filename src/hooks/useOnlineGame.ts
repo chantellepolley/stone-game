@@ -141,9 +141,14 @@ export function useOnlineGame() {
         .single();
 
       if (data?.state) {
+        const rawState = data.state as GameState;
         const loadedState = validateState(data.state);
         setState(loadedState);
         stateRef.current = loadedState;
+        // If validateState fixed a stuck state (e.g. no_moves), save the fix to DB
+        if (rawState.phase !== loadedState.phase && gameDbId.current) {
+          supabase.from('games').update({ state: loadedState, updated_at: new Date().toISOString() }).eq('id', gameDbId.current);
+        }
         // Ensure we're in playing phase if we have valid state
         if (loadedState.phase !== 'not_started') {
           stateReceivedRef.current = true;
@@ -565,9 +570,13 @@ export function useOnlineGame() {
         if (game.p2_color) { setOpponentColor(game.p2_color); opponentColorRef.current = game.p2_color; }
         if (game.p1_color) setMyGameColor(game.p1_color);
         if (game.state) {
+          const rawState = game.state as GameState;
           const loadedState = validateState(game.state);
           setState(loadedState);
           stateRef.current = loadedState;
+          if (rawState.phase !== loadedState.phase) {
+            supabase.from('games').update({ state: loadedState, updated_at: new Date().toISOString() }).eq('id', game.id);
+          }
           stateReceivedRef.current = true;
           setOnlinePhase('playing');
         }
@@ -622,9 +631,13 @@ export function useOnlineGame() {
 
       // Load saved state from DB so we have it ready
       if (game.state) {
+        const rawState = game.state as GameState;
         const loadedState = validateState(game.state);
         setState(loadedState);
         stateRef.current = loadedState;
+        if (rawState.phase !== loadedState.phase) {
+          supabase.from('games').update({ state: loadedState, updated_at: new Date().toISOString() }).eq('id', game.id);
+        }
         // Mark state as received so the channel retry won't error out
         stateReceivedRef.current = true;
         // Go straight to playing — we have valid state from DB
@@ -724,9 +737,13 @@ export function useOnlineGame() {
     }
 
     if (game?.state) {
+      const rawState = game.state as GameState;
       const loadedState = validateState(game.state);
       setState(loadedState);
       stateRef.current = loadedState;
+      if (rawState.phase !== loadedState.phase && gameId) {
+        supabase.from('games').update({ state: loadedState, updated_at: new Date().toISOString() }).eq('id', gameId);
+      }
       stateReceivedRef.current = true;
       setOnlinePhase('playing');
     } else {
