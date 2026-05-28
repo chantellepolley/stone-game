@@ -40,7 +40,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     chatMessages, sendChat, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
     myProposalStatus,
-    sendNudge, lastNudge, myGameColor, currentGameId, sawTurnLive,
+    sendNudge, lastNudge, myGameColor, currentGameId, sawTurnLive, gameBoardTheme,
   } = useOnlineGame();
   const { coins, spend, earn } = useCoins();
 
@@ -393,7 +393,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
   const colorCtx = { p1ColorId: resolvedP1Color, p2ColorId: resolvedP2Color, p1BorderOverride, p2BorderOverride };
 
-  const boardTheme = getBoardTheme(loadBoardTheme());
+  // Use the game creator's theme (stored in DB), fall back to local theme
+  const boardTheme = getBoardTheme(gameBoardTheme || loadBoardTheme());
 
   return (
     <BoardThemeContext.Provider value={boardTheme}>

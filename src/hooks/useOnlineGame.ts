@@ -56,6 +56,7 @@ export function useOnlineGame() {
   const [opponentColor, setOpponentColor] = useState<string | null>(null);
   const opponentColorRef = useRef<string | null>(null);
   const [myGameColor, setMyGameColor] = useState<string | null>(null);
+  const [gameBoardTheme, setGameBoardTheme] = useState<string | null>(null);
   const [pendingOpponentMove, setPendingOpponentMove] = useState<Move | null>(null);
   const currentTurnMoves = useRef<Move[]>([]);
   const currentTurnDice = useRef<[number, number]>([0, 0]);
@@ -506,6 +507,7 @@ export function useOnlineGame() {
       status: 'waiting',
       wager,
       p1_color: loadPlayerColor(),
+      board_theme: localStorage.getItem('stone_board_theme') || 'classic',
     }).select('id').single();
 
     if (data) gameDbId.current = data.id;
@@ -529,7 +531,7 @@ export function useOnlineGame() {
 
     const { data: game } = await supabase
       .from('games')
-      .select('id, state, player1_id, player2_id, wager, p1_color, p2_color, pending_wager_proposal')
+      .select('id, state, player1_id, player2_id, wager, p1_color, p2_color, board_theme, pending_wager_proposal')
       .eq('room_code', upperCode)
       .in('status', ['waiting', 'active'])
       .maybeSingle();
@@ -569,6 +571,7 @@ export function useOnlineGame() {
         // Load colors before rendering
         if (game.p2_color) { setOpponentColor(game.p2_color); opponentColorRef.current = game.p2_color; }
         if (game.p1_color) setMyGameColor(game.p1_color);
+        if ((game as any).board_theme) setGameBoardTheme((game as any).board_theme);
         if (game.state) {
           const rawState = game.state as GameState;
           const loadedState = validateState(game.state);
@@ -628,6 +631,7 @@ export function useOnlineGame() {
       // Load colors from DB BEFORE rendering the board
       if (game.p1_color) { setOpponentColor(game.p1_color); opponentColorRef.current = game.p1_color; }
       if (game.p2_color) setMyGameColor(game.p2_color);
+      if ((game as any).board_theme) setGameBoardTheme((game as any).board_theme);
 
       // Load saved state from DB so we have it ready
       if (game.state) {
@@ -684,7 +688,7 @@ export function useOnlineGame() {
 
     const { data: game, error: gameErr } = await supabase
       .from('games')
-      .select('state, status, player1_id, player2_id, wager, p1_color, p2_color, pending_wager_proposal')
+      .select('state, status, player1_id, player2_id, wager, p1_color, p2_color, board_theme, pending_wager_proposal')
       .eq('id', gameId)
       .single();
 
@@ -734,6 +738,7 @@ export function useOnlineGame() {
       const myColor = player === 1 ? game.p1_color : game.p2_color;
       if (oppColor) { setOpponentColor(oppColor); opponentColorRef.current = oppColor; }
       if (myColor) setMyGameColor(myColor);
+      if ((game as any).board_theme) setGameBoardTheme((game as any).board_theme);
     }
 
     if (game?.state) {
@@ -1228,6 +1233,6 @@ export function useOnlineGame() {
     chatMessages, sendChat, sendInvite, gameWager, forfeit,
     wagerProposal, proposeWager, acceptWager, declineWager,
     myProposalStatus,
-    sendNudge, lastNudge, sawTurnLive,
+    sendNudge, lastNudge, sawTurnLive, gameBoardTheme,
   };
 }
