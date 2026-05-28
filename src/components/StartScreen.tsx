@@ -239,7 +239,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-2">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-2 relative">
+      {(() => { const t = BOARD_THEMES.find(th => th.id === selectedTheme); return t?.pageOverlay ? <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, height: '100dvh', backgroundColor: t.pageOverlay, zIndex: -1 }} /> : null; })()}
       {/* Install banner for first-time visitors */}
       {!isInstalled && !bannerDismissed && (canInstall || showIOSInstructions) && (
         <div className="fixed top-0 left-0 right-0 bg-amber-600 text-white px-4 py-2 flex items-center justify-center gap-3 z-50 shadow-lg">
