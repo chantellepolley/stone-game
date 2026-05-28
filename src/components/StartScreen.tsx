@@ -7,7 +7,7 @@ import { AI_WAGER } from '../lib/coins';
 
 import { supabase } from '../lib/supabase';
 import { isPromoActive as checkPromo } from '../lib/referralPromo';
-import { BOARD_THEMES, getBoardTheme, loadBoardTheme, saveBoardTheme } from '../utils/boardThemes';
+import { BOARD_THEMES, loadBoardTheme, saveBoardTheme } from '../utils/boardThemes';
 import JesterCoin from './JesterCoin';
 import AvatarEditor from './AvatarEditor';
 
