@@ -10,7 +10,7 @@ export const AI_WAGER: Record<AIDifficulty, number> = {
 };
 
 /** Online wager tiers */
-export const ONLINE_WAGER_TIERS = [0, 5, 10, 25, 50] as const;
+export const ONLINE_WAGER_TIERS = [0, 5, 10, 25, 50, 100, 200, 500] as const;
 
 /** Daily login bonus base amount */
 export const DAILY_BONUS = 20;

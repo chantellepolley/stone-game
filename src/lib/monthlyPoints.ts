@@ -151,6 +151,8 @@ export function calculateWinPoints(mode: string, aiDifficulty?: string, wager?: 
       if (wager >= 25) { points += 1; breakdown.push('Wager 25+: +1'); }
       if (wager >= 50) { points += 1; breakdown.push('Wager 50+: +1'); }
       if (wager >= 100) { points += 2; breakdown.push('Wager 100+: +2'); }
+      if (wager >= 200) { points += 2; breakdown.push('Wager 200+: +2'); }
+      if (wager >= 500) { points += 3; breakdown.push('Wager 500+: +3'); }
     }
 
     return { points, field: 'wins_online', breakdown };
