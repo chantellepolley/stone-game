@@ -571,7 +571,15 @@ export function useOnlineGame() {
         // Load colors before rendering
         if (game.p2_color) { setOpponentColor(game.p2_color); opponentColorRef.current = game.p2_color; }
         if (game.p1_color) setMyGameColor(game.p1_color);
-        if ((game as any).board_theme) setGameBoardTheme((game as any).board_theme);
+        // Backfill host's board theme on existing games
+        const dbTheme = (game as any).board_theme || 'classic';
+        const myTheme = localStorage.getItem('stone_board_theme') || 'classic';
+        if (dbTheme === 'classic' && myTheme !== 'classic') {
+          setGameBoardTheme(myTheme);
+          supabase.from('games').update({ board_theme: myTheme }).eq('id', game.id);
+        } else {
+          setGameBoardTheme(dbTheme);
+        }
         if (game.state) {
           const rawState = game.state as GameState;
           const loadedState = validateState(game.state);
@@ -738,7 +746,19 @@ export function useOnlineGame() {
       const myColor = player === 1 ? game.p1_color : game.p2_color;
       if (oppColor) { setOpponentColor(oppColor); opponentColorRef.current = oppColor; }
       if (myColor) setMyGameColor(myColor);
-      if ((game as any).board_theme) setGameBoardTheme((game as any).board_theme);
+      // Backfill host's board theme on existing games
+      const dbTheme = (game as any).board_theme || 'classic';
+      if (player === 1) {
+        const myTheme = localStorage.getItem('stone_board_theme') || 'classic';
+        if (dbTheme === 'classic' && myTheme !== 'classic') {
+          setGameBoardTheme(myTheme);
+          supabase.from('games').update({ board_theme: myTheme }).eq('id', gameId);
+        } else {
+          setGameBoardTheme(dbTheme);
+        }
+      } else {
+        setGameBoardTheme(dbTheme);
+      }
     }
 
     if (game?.state) {
