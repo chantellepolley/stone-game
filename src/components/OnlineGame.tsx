@@ -3,6 +3,7 @@ import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
+import { ONLINE_WAGER_TIERS } from '../lib/coins';
 import type { GameState, Move } from '../types/game';
 import { playYourTurnSound, playHomeSound, playJailedSound, playCrownedSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
 import { executeMove as execMove, canPlayerMove } from '../engine';
@@ -831,17 +832,17 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm mx-4 text-center">
             <h2 className="text-white font-heading text-lg mb-1">{gameWager > 0 ? 'Raise Wager' : 'Propose Wager'}</h2>
             <p className="text-white/50 text-xs mb-3">Your opponent must agree</p>
-            <div className="flex gap-2 justify-center mb-3 flex-wrap">
-              {[5, 10, 25, 50, 100].filter(v => v > gameWager).map(v => (
+            <div className="flex flex-wrap justify-center gap-1.5 mb-3">
+              {ONLINE_WAGER_TIERS.filter(v => v > gameWager).map(v => (
                 <button key={v} onClick={() => setProposedAmount(v)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-heading transition-all cursor-pointer
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-heading transition-all cursor-pointer
                     ${proposedAmount === v
                       ? 'bg-amber-600 text-white border-2 border-amber-400'
                       : 'bg-black/30 text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
                     ${(coins !== null && coins < v - gameWager) ? 'opacity-30 cursor-not-allowed' : ''}`}
                   disabled={coins !== null && coins < v - gameWager}
                 >
-                  {v} <JesterCoin size={10} />
+                  {v} <JesterCoin size={11} />
                 </button>
               ))}
             </div>
