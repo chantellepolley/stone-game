@@ -233,7 +233,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     <BoardThemeContext.Provider value={boardTheme}>
     <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
       {boardTheme.pageOverlay && (
-        <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundColor: boardTheme.pageOverlay }} />
+        <div className="fixed inset-0" style={{ backgroundColor: boardTheme.pageOverlay, zIndex: -1 }} />
       )}
       {/* Logo + Home button */}
       <header className="shrink-0 flex items-center gap-2">
