@@ -36,7 +36,7 @@ interface StartScreenProps {
 
 export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, onShowChallenges, pushPermission, onRequestPush, pushMuted, onTogglePushMute }: StartScreenProps) {
   const { player, updateUsername, updateAvatar, logout, updatePassword } = usePlayerContext();
-  const { coins, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
+  const { coins, spend, dailyBonusClaimed, dailyBonusAmount, dailyStreak, dismissDailyBonus } = useCoins();
   const [showDifficulty, setShowDifficulty] = useState(false);
   const [aiWagerEnabled, setAiWagerEnabled] = useState(true);
   const [showCoinRules, setShowCoinRules] = useState(false);
@@ -56,6 +56,11 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [showReferralPanel, setShowReferralPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(loadBoardTheme);
+  const [ownedThemes, setOwnedThemes] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('stone_owned_themes') || '["classic"]')); }
+    catch { return new Set(['classic']); }
+  });
+  const [confirmTheme, setConfirmTheme] = useState<string | null>(null);
   const [showPromoAnnouncement, setShowPromoAnnouncement] = useState(false);
   const [promoCountdown, setPromoCountdown] = useState('');
   const [referrerPrompt, setReferrerPrompt] = useState<{ id: string; username: string; coins?: number } | null>(() => {
@@ -456,6 +461,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                            hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                 Challenges
               </button>
+              <button onClick={() => setMenuView('shop')}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-amber-400 border-2 border-amber-600/40
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                Shop
+              </button>
               <button onClick={() => setMenuView('settings')}
                 className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
                            bg-[#504840] text-white border-2 border-[#6b5f55]
@@ -553,12 +564,6 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                   My Stats
                 </button>
               )}
-              <button onClick={() => setMenuView('shop')}
-                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                           bg-[#504840] text-amber-400 border-2 border-amber-600/40
-                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
-                Shop
-              </button>
               {onShowTutorial && (
                 <button onClick={onShowTutorial}
                   className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
@@ -643,7 +648,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                            hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
                 Board Themes
               </button>
-              <button onClick={() => setMenuView('settings')}
+              <button onClick={() => setMenuView('main')}
                 className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-1">
                 Back
               </button>
@@ -857,43 +862,50 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
-      {/* Board theme picker (admin preview) */}
+      {/* Board theme picker */}
       {showThemePicker && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-amber-400 font-heading text-lg mb-3 text-center">Board Theme</h2>
-            <p className="text-white/40 text-[10px] text-center mb-3">Select a theme then play a game to see it</p>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-amber-400 font-heading text-lg">Board Themes</h2>
+              <div className="flex items-center gap-1 text-amber-400 text-sm font-heading">
+                <JesterCoin size={16} /> {coins}
+              </div>
+            </div>
             <div className="space-y-2">
               {BOARD_THEMES.map(t => {
                 const isSelected = selectedTheme === t.id;
-                const isAdmin = player?.username?.toLowerCase() === 'cpolley';
-                const owned = t.price === 0 || isAdmin; // admin gets all free for preview
+                const owned = ownedThemes.has(t.id);
+                const canAfford = (coins ?? 0) >= t.price;
                 return (
                   <button key={t.id}
                     onClick={() => {
                       if (owned) {
                         setSelectedTheme(t.id);
                         saveBoardTheme(t.id);
+                      } else if (canAfford) {
+                        setConfirmTheme(t.id);
                       }
                     }}
-                    className={`w-full rounded-xl p-3 text-left transition-all ${owned ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${
-                      isSelected ? 'ring-2 ring-amber-400' : owned ? 'hover:brightness-110' : ''
-                    }`}
-                    style={{ background: t.boardGradient, borderColor: t.borderColor, border: `2px solid ${t.borderColor}` }}>
+                    className={`w-full rounded-xl p-3 text-left transition-all cursor-pointer ${
+                      isSelected ? 'ring-2 ring-amber-400' : 'hover:brightness-110'
+                    } ${!owned && !canAfford ? 'opacity-50' : ''}`}
+                    style={{ background: t.boardGradient, border: `2px solid ${t.borderColor}` }}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-heading text-sm" style={{ color: t.id === 'marble' ? '#5a5047' : '#fff' }}>{t.name}</span>
-                        {t.price > 0 && (
-                          <span className="ml-2 text-[10px] text-amber-400 font-heading">{t.price} coins</span>
-                        )}
-                        {t.price === 0 && (
-                          <span className="ml-2 text-[10px] text-green-400 font-heading">Free</span>
+                        <span className="font-heading text-sm text-white">{t.name}</span>
+                      </div>
+                      <div>
+                        {owned && isSelected && <span className="text-amber-400 text-sm">&#10003;</span>}
+                        {owned && !isSelected && <span className="text-green-400/60 text-[9px] font-heading">Owned</span>}
+                        {!owned && (
+                          <span className="flex items-center gap-0.5 text-[10px] text-amber-400 font-heading">
+                            {t.price} <JesterCoin size={10} />
+                          </span>
                         )}
                       </div>
-                      {isSelected && <span className="text-amber-400">&#10003;</span>}
                     </div>
-                    <p className="text-[9px] mt-0.5" style={{ color: t.id === 'marble' ? '#7a7068' : 'rgba(255,255,255,0.5)' }}>{t.description}</p>
-                    {/* Mini preview: 3 sample spaces */}
+                    <p className="text-[9px] mt-0.5 text-white/50">{t.description}</p>
                     <div className="flex gap-1 mt-2">
                       {[0, 1, 2].map(i => (
                         <div key={i} className="w-8 h-8 rounded-md relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
@@ -919,6 +931,61 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           </div>
         </div>
       )}
+
+      {/* Confirm theme purchase */}
+      {confirmTheme && (() => {
+        const t = BOARD_THEMES.find(th => th.id === confirmTheme);
+        if (!t) return null;
+        return (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
+            <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+              <h2 className="text-white font-heading text-lg mb-1">Unlock {t.name}?</h2>
+              <div className="rounded-xl p-3 my-3" style={{ background: t.boardGradient, border: `2px solid ${t.borderColor}` }}>
+                <div className="flex gap-1 justify-center">
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-md relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                      <div className="absolute inset-0" style={{
+                        backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '50px',
+                        filter: t.spaceFilter,
+                      }} />
+                      <div className="absolute inset-0" style={{
+                        background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark,
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-amber-400 font-heading text-lg mb-3 flex items-center justify-center gap-1">
+                {t.price} <JesterCoin size={18} />
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button onClick={async () => {
+                  if (!player) return;
+                  const ok = await spend(t.price, `Unlocked board theme: ${t.name}`);
+                  if (ok) {
+                    const newOwned = new Set(ownedThemes);
+                    newOwned.add(t.id);
+                    setOwnedThemes(newOwned);
+                    localStorage.setItem('stone_owned_themes', JSON.stringify([...newOwned]));
+                    setSelectedTheme(t.id);
+                    saveBoardTheme(t.id);
+                    setConfirmTheme(null);
+                  }
+                }}
+                  className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                             bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+                  Buy
+                </button>
+                <button onClick={() => setConfirmTheme(null)}
+                  className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                             bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Avatar editor */}
       {avatarEditFile && (
