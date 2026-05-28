@@ -24,6 +24,7 @@ import { PlayerContext } from './contexts/PlayerContext';
 import { CoinsProvider } from './contexts/CoinsContext';
 import { supabase } from './lib/supabase';
 import { createInitialState } from './engine';
+import { getBoardTheme, loadBoardTheme } from './utils/boardThemes';
 
 type AppScreen = 'game' | 'online' | 'stats' | 'leaderboard' | 'my-games' | 'colors' | 'friends' | 'terms' | 'privacy' | 'feedback' | 'tutorial' | 'admin-feedback' | 'admin-players' | 'monthly-standings' | 'hall-of-fame' | 'challenges';
 
@@ -259,6 +260,9 @@ export default function App() {
     <ErrorBoundary>
     <PlayerContext.Provider value={playerHook}>
     <CoinsProvider>
+      {/* Global theme overlay */}
+      {(() => { const overlay = getBoardTheme(loadBoardTheme()).pageOverlay; return overlay ? <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, height: '100dvh', backgroundColor: overlay, zIndex: -1, pointerEvents: 'none' }} /> : null; })()}
+
       {/* Username prompt for first-time visitors */}
       {!player && <UsernamePrompt />}
 

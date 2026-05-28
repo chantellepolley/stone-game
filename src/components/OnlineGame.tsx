@@ -400,9 +400,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     <BoardThemeContext.Provider value={boardTheme}>
     <StoneColorContext.Provider value={colorCtx}>
     <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
-      {boardTheme.pageOverlay && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, height: '100dvh', backgroundColor: boardTheme.pageOverlay, zIndex: -1 }} />
-      )}
       {/* Header + Home button */}
       <header className="shrink-0 flex items-center gap-2">
         <img src="/logo.png" alt="STONE" className="h-12 sm:h-16 lg:h-28 object-contain cursor-pointer" onClick={() => { leave(); onBack(); }} />
