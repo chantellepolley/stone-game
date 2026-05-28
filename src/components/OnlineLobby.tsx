@@ -204,7 +204,7 @@ export default function OnlineLobby({
         {/* Wager selection */}
         <div className="w-full flex flex-col items-center gap-2">
           <p className="text-white/60 text-xs font-heading">Wager</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-xs">
             {ONLINE_WAGER_TIERS.map(tier => {
               const canAfford = tier === 0 || (coins !== null && coins >= tier);
               return (
@@ -212,13 +212,13 @@ export default function OnlineLobby({
                   key={tier}
                   onClick={() => canAfford && setSelectedWager(tier)}
                   disabled={!canAfford}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-heading transition-all cursor-pointer
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-heading transition-all cursor-pointer
                     ${selectedWager === tier
                       ? 'bg-amber-600 text-white border-2 border-amber-400'
                       : 'bg-[#504840] text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
                     disabled:opacity-30 disabled:cursor-not-allowed`}
                 >
-                  {tier === 0 ? 'Free' : <span className="flex items-center gap-1">{tier} <JesterCoin size={12} /></span>}
+                  {tier === 0 ? 'Free' : <span className="flex items-center gap-0.5">{tier} <JesterCoin size={11} /></span>}
                 </button>
               );
             })}
@@ -323,7 +323,7 @@ export default function OnlineLobby({
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm mx-4 text-center">
             <h2 className="text-white font-heading text-lg mb-1">Invite {invitingFriend.username}</h2>
             <p className="text-white/50 text-[10px] font-heading mb-2 mt-3">Set wager</p>
-            <div className="flex gap-2 justify-center mb-4">
+            <div className="flex flex-wrap justify-center gap-1.5 mb-4">
               {ONLINE_WAGER_TIERS.map(tier => {
                 const canAfford = tier === 0 || (coins !== null && coins >= tier);
                 return (
@@ -331,13 +331,13 @@ export default function OnlineLobby({
                     key={tier}
                     onClick={() => canAfford && setFriendInviteWager(tier)}
                     disabled={!canAfford}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-heading transition-all cursor-pointer
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-heading transition-all cursor-pointer
                       ${friendInviteWager === tier
                         ? 'bg-amber-600 text-white border-2 border-amber-400'
                         : 'bg-black/30 text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
                       disabled:opacity-30 disabled:cursor-not-allowed`}
                   >
-                    {tier === 0 ? 'Free' : <span className="flex items-center gap-1">{tier} <JesterCoin size={12} /></span>}
+                    {tier === 0 ? 'Free' : <span className="flex items-center gap-0.5">{tier} <JesterCoin size={11} /></span>}
                   </button>
                 );
               })}

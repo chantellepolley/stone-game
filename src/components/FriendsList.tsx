@@ -237,7 +237,7 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
               {friends.find(f => f.playerId === invitingId)?.username || 'Friend'}
             </p>
             <p className="text-white/50 text-[10px] font-heading mb-2">Set wager</p>
-            <div className="flex gap-2 justify-center mb-4">
+            <div className="flex flex-wrap justify-center gap-1.5 mb-4">
               {ONLINE_WAGER_TIERS.map(tier => {
                 const canAfford = tier === 0 || (coins !== null && coins >= tier);
                 return (
@@ -245,13 +245,13 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
                     key={tier}
                     onClick={() => canAfford && setInviteWager(tier)}
                     disabled={!canAfford}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-heading transition-all cursor-pointer
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-heading transition-all cursor-pointer
                       ${inviteWager === tier
                         ? 'bg-amber-600 text-white border-2 border-amber-400'
                         : 'bg-black/30 text-white/60 border-2 border-[#6b5f55] hover:border-amber-600/40'}
                       disabled:opacity-30 disabled:cursor-not-allowed`}
                   >
-                    {tier === 0 ? 'Free' : <span className="flex items-center gap-1">{tier} <JesterCoin size={12} /></span>}
+                    {tier === 0 ? 'Free' : <span className="flex items-center gap-0.5">{tier} <JesterCoin size={11} /></span>}
                   </button>
                 );
               })}
