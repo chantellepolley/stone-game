@@ -1,4 +1,5 @@
 import type { Piece as PieceType, PlayerId } from '../types/game';
+import { useBoardTheme } from '../contexts/BoardThemeContext';
 import Piece from './Piece';
 
 interface StoneBoxProps {
@@ -15,6 +16,7 @@ interface StoneBoxProps {
 }
 
 export default function StoneBox({ pieces, label, interactive, hinting, hintsEnabled = true, currentPlayer, onClick, isSelected, onDragStart }: StoneBoxProps) {
+  const theme = useBoardTheme();
   const isP1Turn = (currentPlayer ?? 1) === 1;
   const ringColor = isP1Turn ? 'ring-amber-400' : 'ring-sky-400';
   const pulseClass = isP1Turn ? 'pulse-gold' : 'pulse-blue';
@@ -25,7 +27,7 @@ export default function StoneBox({ pieces, label, interactive, hinting, hintsEna
       className={`
         flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-xl
         border-2 min-w-[40px] w-[50px] sm:min-w-[60px] sm:w-[70px] lg:min-w-[80px] lg:w-[90px] h-full transition-all
-        border-[#5e5549] bg-[#3d3632] shadow-md
+        shadow-md
         ${isSelected
           ? `ring-3 ${ringColor} brightness-125 ${pulseClass}`
           : interactive && hintsEnabled
@@ -37,6 +39,7 @@ export default function StoneBox({ pieces, label, interactive, hinting, hintsEna
           : ''
         }
       `}
+      style={{ backgroundColor: theme.boxBg, borderColor: theme.borderColor }}
     >
       <div className="text-[8px] font-heading uppercase tracking-wider text-white/70 leading-tight text-center">
         {label}

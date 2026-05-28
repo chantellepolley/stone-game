@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Piece as PieceType, Move, PlayerId } from '../types/game';
+import { useBoardTheme } from '../contexts/BoardThemeContext';
 import Piece from './Piece';
 
 interface BoardSpaceProps {
@@ -66,6 +67,7 @@ export default function BoardSpace({
   const hiddenCount = Math.max(0, sorted.length - maxVisible);
 
   const [showPiecePopup, setShowPiecePopup] = useState(false);
+  const theme = useBoardTheme();
 
   return (
     <div
@@ -81,7 +83,7 @@ export default function BoardSpace({
         boxShadow: variant === 'light'
           ? '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
           : '0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
-        border: '1px solid rgba(120,110,95,0.4)',
+        border: `1px solid ${theme.spaceBorder}`,
       }}
     >
       {/* Stone texture background — isolated so filter doesn't affect pieces */}
@@ -89,14 +91,12 @@ export default function BoardSpace({
         backgroundImage: "url('/stone-bg.jpg')",
         backgroundSize: `${140 + (_index * 17) % 80}px`,
         backgroundPosition: `${(_index * 67 + 11) % 100}% ${(_index * 89 + 23) % 100}%`,
-        filter: 'brightness(1.3) contrast(0.85) saturate(0.5)',
+        filter: theme.spaceFilter,
         contain: 'strict',
       }} />
-      {/* Warm tint overlay */}
+      {/* Tint overlay */}
       <div className="absolute inset-0 rounded-lg" style={{
-        background: variant === 'light'
-          ? 'rgba(170,140,90,0.35)'
-          : 'rgba(120,95,60,0.35)',
+        background: variant === 'light' ? theme.spaceTintLight : theme.spaceTintDark,
       }} />
       {/* Piece popup — rendered via portal to escape board's stacking context */}
       {showPiecePopup && createPortal(

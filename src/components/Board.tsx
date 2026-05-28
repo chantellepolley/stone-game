@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { GameState, Move, PlayerId, Piece as PieceType } from '../types/game';
 import { getSpaceVariant } from '../utils/boardLayout';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { useBoardTheme } from '../contexts/BoardThemeContext';
 import BoardSpace from './BoardSpace';
 import StoneBox from './StoneBox';
 import Jail from './Jail';
@@ -41,6 +42,7 @@ const ANIM_MS = 350;
 
 export default function Board({ state, validMoves, onSelectMove, pendingAIMove, hintsEnabled = true, myPlayer }: BoardProps) {
   const isMobile = useIsMobile();
+  const theme = useBoardTheme();
   const [selected, setSelected] = useState<SelectedSource>(null);
   const [anim, setAnim] = useState<AnimState | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -357,13 +359,13 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
   return (
     <div
       ref={boardRef}
-      className="relative flex flex-col gap-0 rounded-xl lg:rounded-2xl border-2 lg:border-4 border-stone-border bg-board-bg px-1.5 sm:px-2 lg:px-3 pt-4 sm:pt-5 lg:pt-6 pb-5 sm:pb-6 lg:pb-8 shadow-2xl select-none h-full max-h-full"
+      className="relative flex flex-col gap-0 rounded-xl lg:rounded-2xl border-2 lg:border-4 bg-board-bg px-1.5 sm:px-2 lg:px-3 pt-4 sm:pt-5 lg:pt-6 pb-5 sm:pb-6 lg:pb-8 shadow-2xl select-none h-full max-h-full"
       style={{
-        background: isMobile
-          ? 'linear-gradient(135deg, #4a4440 0%, #3d3835 50%, #4a4440 100%)'
-          : 'linear-gradient(135deg, #3d3632 0%, #322d28 50%, #3d3632 100%)',
+        background: isMobile ? theme.boardGradientMobile : theme.boardGradient,
+        borderColor: theme.borderColor,
         boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
         touchAction: isMobile ? 'auto' : 'none',
+        filter: theme.boardFilter || undefined,
       }}
       onPointerMove={isMobile ? undefined : handleDragMove}
       onPointerUp={isMobile ? undefined : handleDragEnd}
@@ -383,7 +385,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
           {topIndices.map((idx, i) =>
             i === 5
-              ? [<div key="div-top" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx, i, true)]
+              ? [<div key="div-top" className="w-1 rounded-full self-stretch" style={{ backgroundColor: theme.dividerColor }} />, renderSpace(idx, i, true)]
               : renderSpace(idx, i, true)
           )}
         </div>
@@ -420,7 +422,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
         <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
           {bottomIndices.map((idx, i) =>
             i === 5
-              ? [<div key="div-bot" className="w-1 bg-stone-accent/40 rounded-full self-stretch" />, renderSpace(idx, i, false)]
+              ? [<div key="div-bot" className="w-1 rounded-full self-stretch" style={{ backgroundColor: theme.dividerColor }} />, renderSpace(idx, i, false)]
               : renderSpace(idx, i, false)
           )}
         </div>

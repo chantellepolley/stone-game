@@ -7,6 +7,7 @@ import { AI_WAGER } from '../lib/coins';
 
 import { supabase } from '../lib/supabase';
 import { isPromoActive as checkPromo } from '../lib/referralPromo';
+import { BOARD_THEMES, getBoardTheme, loadBoardTheme, saveBoardTheme } from '../utils/boardThemes';
 import JesterCoin from './JesterCoin';
 import AvatarEditor from './AvatarEditor';
 
@@ -53,6 +54,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     return true;
   });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState(loadBoardTheme);
   const [showPromoAnnouncement, setShowPromoAnnouncement] = useState(false);
   const [promoCountdown, setPromoCountdown] = useState('');
   const [referrerPrompt, setReferrerPrompt] = useState<{ id: string; username: string; coins?: number } | null>(() => {
@@ -558,6 +561,14 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                   Stone Color
                 </button>
               )}
+              {player?.username?.toLowerCase() === 'cpolley' && (
+                <button onClick={() => setShowThemePicker(true)}
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-amber-400 border-2 border-amber-600/40
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                  Board Theme
+                </button>
+              )}
               {onShowTutorial && (
                 <button onClick={onShowTutorial}
                   className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
@@ -829,6 +840,61 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 Got it
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Board theme picker (admin preview) */}
+      {showThemePicker && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-sm w-full max-h-[80vh] overflow-y-auto">
+            <h2 className="text-amber-400 font-heading text-lg mb-3 text-center">Board Theme</h2>
+            <div className="space-y-2">
+              {BOARD_THEMES.map(t => {
+                const isSelected = selectedTheme === t.id;
+                return (
+                  <button key={t.id}
+                    onClick={() => { setSelectedTheme(t.id); saveBoardTheme(t.id); }}
+                    className={`w-full rounded-xl p-3 text-left transition-all cursor-pointer ${
+                      isSelected ? 'ring-2 ring-amber-400' : 'hover:brightness-110'
+                    }`}
+                    style={{ background: t.boardGradient, borderColor: t.borderColor, border: `2px solid ${t.borderColor}` }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="font-heading text-sm" style={{ color: t.id === 'marble' ? '#5a5047' : '#fff' }}>{t.name}</span>
+                        {t.price > 0 && (
+                          <span className="ml-2 text-[10px] text-amber-400 font-heading">{t.price} coins</span>
+                        )}
+                        {t.price === 0 && (
+                          <span className="ml-2 text-[10px] text-green-400 font-heading">Free</span>
+                        )}
+                      </div>
+                      {isSelected && <span className="text-amber-400">&#10003;</span>}
+                    </div>
+                    <p className="text-[9px] mt-0.5" style={{ color: t.id === 'marble' ? '#7a7068' : 'rgba(255,255,255,0.5)' }}>{t.description}</p>
+                    {/* Mini preview: 3 sample spaces */}
+                    <div className="flex gap-1 mt-2">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className="w-8 h-8 rounded-md relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                          <div className="absolute inset-0" style={{
+                            backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '50px',
+                            filter: t.spaceFilter,
+                          }} />
+                          <div className="absolute inset-0" style={{
+                            background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark,
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => setShowThemePicker(false)}
+              className="w-full mt-4 px-4 py-2 rounded-lg font-heading text-xs uppercase tracking-wider
+                         bg-black/20 text-white/50 hover:text-white cursor-pointer transition-colors">
+              Close
+            </button>
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import type { Piece as PieceType, PlayerId, Move } from '../types/game';
+import { useBoardTheme } from '../contexts/BoardThemeContext';
 import Piece from './Piece';
 
 interface JailProps {
@@ -9,6 +10,7 @@ interface JailProps {
 }
 
 export default function Jail({ jail, validMoves, onClickJailPiece, currentPlayer }: JailProps) {
+  const theme = useBoardTheme();
   const hasJailMoves = validMoves.some(m => m.from.type === 'jail');
 
   const renderPlayerJail = (player: PlayerId) => {
@@ -51,8 +53,9 @@ export default function Jail({ jail, validMoves, onClickJailPiece, currentPlayer
 
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 lg:gap-2 px-3 lg:px-4 py-2 lg:py-3 rounded-xl
-                    bg-[#3d3632] border-2 border-[#5e5549] min-w-[80px] lg:min-w-[100px] max-w-[200px] shadow-md
-                    max-h-[80px] lg:max-h-[100px] overflow-y-auto">
+                    border-2 min-w-[80px] lg:min-w-[100px] max-w-[200px] shadow-md
+                    max-h-[80px] lg:max-h-[100px] overflow-y-auto"
+      style={{ backgroundColor: theme.boxBg, borderColor: theme.borderColor }}>
       <div className="text-[9px] lg:text-xs font-heading uppercase tracking-wider text-white/70">
         Stoned Dungeon
       </div>

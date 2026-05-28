@@ -16,6 +16,8 @@ import RulesPanel from './RulesPanel';
 import GameControls from './GameControls';
 import StartScreen from './StartScreen';
 import JesterCoin from './JesterCoin';
+import { getBoardTheme, loadBoardTheme } from '../utils/boardThemes';
+import { BoardThemeContext } from '../contexts/BoardThemeContext';
 
 interface GameProps {
   onPlayOnline?: () => void;
@@ -225,7 +227,10 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     return <StartScreen onStart={handleStart} onPlayOnline={onPlayOnline} onShowStats={onShowStats} onShowLeaderboard={onShowLeaderboard} onShowMyGames={onShowMyGames} onShowColors={onShowColors} onShowFriends={onShowFriends} pendingNotifications={pendingNotifications} onShowTerms={onShowTerms} onShowPrivacy={onShowPrivacy} onShowFeedback={onShowFeedback} onShowTutorial={onShowTutorial} onShowAdminFeedback={onShowAdminFeedback} onShowAdminPlayers={onShowAdminPlayers} onShowMonthlyStandings={onShowMonthlyStandings} onShowChallenges={onShowChallenges} pushPermission={pushPermission} onRequestPush={onRequestPush} pushMuted={pushMuted} onTogglePushMute={onTogglePushMute} />;
   }
 
+  const boardTheme = getBoardTheme(loadBoardTheme());
+
   return (
+    <BoardThemeContext.Provider value={boardTheme}>
     <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
       {/* Logo + Home button */}
       <header className="shrink-0 flex items-center gap-2">
@@ -580,5 +585,6 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
         </div>
       )}
     </div>
+    </BoardThemeContext.Provider>
   );
 }

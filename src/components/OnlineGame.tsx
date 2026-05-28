@@ -4,6 +4,8 @@ import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { ONLINE_WAGER_TIERS } from '../lib/coins';
+import { getBoardTheme, loadBoardTheme } from '../utils/boardThemes';
+import { BoardThemeContext } from '../contexts/BoardThemeContext';
 import type { GameState, Move } from '../types/game';
 import { playYourTurnSound, playHomeSound, playJailedSound, playCrownedSound, setSoundEnabled, isSoundEnabled } from '../utils/sounds';
 import { executeMove as execMove, canPlayerMove } from '../engine';
@@ -391,7 +393,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
   const colorCtx = { p1ColorId: resolvedP1Color, p2ColorId: resolvedP2Color, p1BorderOverride, p2BorderOverride };
 
+  const boardTheme = getBoardTheme(loadBoardTheme());
+
   return (
+    <BoardThemeContext.Provider value={boardTheme}>
     <StoneColorContext.Provider value={colorCtx}>
     <div className="fixed inset-0 flex flex-col items-center px-2 lg:px-4 py-1 lg:py-2 gap-0.5 lg:gap-1 overflow-y-auto overflow-x-hidden">
       {/* Header + Home button */}
@@ -957,5 +962,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       )}
     </div>
     </StoneColorContext.Provider>
+    </BoardThemeContext.Provider>
   );
 }
