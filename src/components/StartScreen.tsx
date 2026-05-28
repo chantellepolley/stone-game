@@ -906,18 +906,58 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                       </div>
                     </div>
                     <p className="text-[9px] mt-0.5 text-white/50">{t.description}</p>
-                    <div className="flex gap-1 mt-2">
-                      {[0, 1, 2].map(i => (
-                        <div key={i} className="w-8 h-8 rounded-md relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
-                          <div className="absolute inset-0" style={{
-                            backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '50px',
-                            filter: t.spaceFilter,
-                          }} />
-                          <div className="absolute inset-0" style={{
-                            background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark,
-                          }} />
+                    {/* Mini board preview */}
+                    <div className="mt-2 rounded-lg p-1.5" style={{ background: t.boardGradient, border: `1px solid ${t.borderColor}` }}>
+                      {/* Top row: start box + 5 spaces + home box */}
+                      <div className="flex gap-0.5 items-center">
+                        <div className="w-5 h-7 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                          <span className="text-[4px] text-white/40 font-heading">S</span>
                         </div>
-                      ))}
+                        {[0,1,2,3,4].map(i => (
+                          <div key={i} className="flex-1 h-7 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                            <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                            <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark }} />
+                          </div>
+                        ))}
+                        <div className="w-0.5 h-5 rounded-full" style={{ backgroundColor: t.dividerColor }} />
+                        {[5,6,7,8,9].map(i => (
+                          <div key={i} className="flex-1 h-7 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                            <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                            <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark }} />
+                          </div>
+                        ))}
+                        <div className="w-5 h-7 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                          <span className="text-[4px] text-white/40 font-heading">H</span>
+                        </div>
+                      </div>
+                      {/* Jail */}
+                      <div className="flex justify-center my-0.5">
+                        <div className="px-2 py-0.5 rounded-sm" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                          <span className="text-[4px] text-white/30 font-heading">JAIL</span>
+                        </div>
+                      </div>
+                      {/* Bottom row */}
+                      <div className="flex gap-0.5 items-center">
+                        <div className="w-5 h-7 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                          <span className="text-[4px] text-white/40 font-heading">S</span>
+                        </div>
+                        {[0,1,2,3,4].map(i => (
+                          <div key={i} className="flex-1 h-7 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                            <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                            <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintDark : t.spaceTintLight }} />
+                          </div>
+                        ))}
+                        <div className="w-0.5 h-5 rounded-full" style={{ backgroundColor: t.dividerColor }} />
+                        {[5,6,7,8,9].map(i => (
+                          <div key={i} className="flex-1 h-7 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                            <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                            <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintDark : t.spaceTintLight }} />
+                          </div>
+                        ))}
+                        <div className="w-5 h-7 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                          <span className="text-[4px] text-white/40 font-heading">H</span>
+                        </div>
+                      </div>
                     </div>
                   </button>
                 );
@@ -940,19 +980,54 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
             <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
               <h2 className="text-white font-heading text-lg mb-1">Unlock {t.name}?</h2>
-              <div className="rounded-xl p-3 my-3" style={{ background: t.boardGradient, border: `2px solid ${t.borderColor}` }}>
-                <div className="flex gap-1 justify-center">
-                  {[0, 1, 2, 3, 4].map(i => (
-                    <div key={i} className="w-10 h-10 rounded-md relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
-                      <div className="absolute inset-0" style={{
-                        backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '50px',
-                        filter: t.spaceFilter,
-                      }} />
-                      <div className="absolute inset-0" style={{
-                        background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark,
-                      }} />
+              {/* Mini board preview */}
+              <div className="rounded-lg p-2 my-3" style={{ background: t.boardGradient, border: `2px solid ${t.borderColor}` }}>
+                <div className="flex gap-0.5 items-center">
+                  <div className="w-6 h-8 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                    <span className="text-[5px] text-white/40 font-heading">S</span>
+                  </div>
+                  {[0,1,2,3,4].map(i => (
+                    <div key={i} className="flex-1 h-8 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                      <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                      <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark }} />
                     </div>
                   ))}
+                  <div className="w-0.5 h-6 rounded-full" style={{ backgroundColor: t.dividerColor }} />
+                  {[5,6,7,8,9].map(i => (
+                    <div key={i} className="flex-1 h-8 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                      <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                      <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintLight : t.spaceTintDark }} />
+                    </div>
+                  ))}
+                  <div className="w-6 h-8 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                    <span className="text-[5px] text-white/40 font-heading">H</span>
+                  </div>
+                </div>
+                <div className="flex justify-center my-0.5">
+                  <div className="px-2 py-0.5 rounded-sm" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                    <span className="text-[5px] text-white/30 font-heading">JAIL</span>
+                  </div>
+                </div>
+                <div className="flex gap-0.5 items-center">
+                  <div className="w-6 h-8 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                    <span className="text-[5px] text-white/40 font-heading">S</span>
+                  </div>
+                  {[0,1,2,3,4].map(i => (
+                    <div key={i} className="flex-1 h-8 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                      <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                      <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintDark : t.spaceTintLight }} />
+                    </div>
+                  ))}
+                  <div className="w-0.5 h-6 rounded-full" style={{ backgroundColor: t.dividerColor }} />
+                  {[5,6,7,8,9].map(i => (
+                    <div key={i} className="flex-1 h-8 rounded-sm relative overflow-hidden" style={{ border: `1px solid ${t.spaceBorder}` }}>
+                      <div className="absolute inset-0" style={{ backgroundImage: "url('/stone-bg.jpg')", backgroundSize: '40px', filter: t.spaceFilter }} />
+                      <div className="absolute inset-0" style={{ background: i % 2 === 0 ? t.spaceTintDark : t.spaceTintLight }} />
+                    </div>
+                  ))}
+                  <div className="w-6 h-8 rounded-sm flex items-center justify-center" style={{ backgroundColor: t.boxBg, border: `1px solid ${t.borderColor}` }}>
+                    <span className="text-[5px] text-white/40 font-heading">H</span>
+                  </div>
                 </div>
               </div>
               <p className="text-amber-400 font-heading text-lg mb-3 flex items-center justify-center gap-1">
