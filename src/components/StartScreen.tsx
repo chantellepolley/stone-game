@@ -68,9 +68,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     } catch {}
     return null;
   });
-  const [menuView, setMenuView] = useState<'main' | 'newgame' | 'challenges' | 'settings'>(() => {
+  const [menuView, setMenuView] = useState<'main' | 'newgame' | 'challenges' | 'settings' | 'shop'>(() => {
     const saved = localStorage.getItem('stone_menu_view');
-    if (saved === 'newgame' || saved === 'challenges' || saved === 'settings') {
+    if (saved === 'newgame' || saved === 'challenges' || saved === 'settings' || saved === 'shop') {
       localStorage.removeItem('stone_menu_view');
       return saved;
     }
@@ -553,22 +553,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                   My Stats
                 </button>
               )}
-              {onShowColors && (
-                <button onClick={onShowColors}
-                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                             bg-[#504840] text-white border-2 border-[#6b5f55]
-                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
-                  Stone Color
-                </button>
-              )}
-              {player?.username?.toLowerCase() === 'cpolley' && (
-                <button onClick={() => setShowThemePicker(true)}
-                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
-                             bg-[#504840] text-amber-400 border-2 border-amber-600/40
-                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
-                  Board Theme
-                </button>
-              )}
+              <button onClick={() => setMenuView('shop')}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-amber-400 border-2 border-amber-600/40
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                Shop
+              </button>
               {onShowTutorial && (
                 <button onClick={onShowTutorial}
                   className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
@@ -631,6 +621,29 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 Logout
               </button>
               <button onClick={() => setMenuView('main')}
+                className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-1">
+                Back
+              </button>
+            </>
+          )}
+
+          {menuView === 'shop' && (
+            <>
+              {onShowColors && (
+                <button onClick={onShowColors}
+                  className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                             bg-[#504840] text-white border-2 border-[#6b5f55]
+                             hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                  Stone Colors
+                </button>
+              )}
+              <button onClick={() => setShowThemePicker(true)}
+                className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
+                           bg-[#504840] text-white border-2 border-[#6b5f55]
+                           hover:bg-[#5e5549] transition-all cursor-pointer shadow-lg">
+                Board Themes
+              </button>
+              <button onClick={() => setMenuView('settings')}
                 className="text-white/40 text-xs hover:text-white/70 transition-colors cursor-pointer mt-1">
                 Back
               </button>
