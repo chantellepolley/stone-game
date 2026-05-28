@@ -20,6 +20,10 @@ export interface BoardTheme {
   spaceFilter: string;
   /** Optional CSS filter on the entire board for mood */
   boardFilter?: string;
+  /** Page background — solid color or 'none' to keep default */
+  pageBg: string;
+  /** Semi-transparent overlay tint on the page background */
+  pageOverlay?: string;
   /** Description shown in the shop */
   description: string;
 }
@@ -38,22 +42,26 @@ export const BOARD_THEMES: BoardTheme[] = [
     boxBg: '#3d3632',
     dividerColor: 'rgba(107,95,85,0.4)',
     spaceFilter: 'brightness(1.3) contrast(0.85) saturate(0.5)',
+    pageBg: '#302b26',
+    pageOverlay: undefined,
     description: 'The original stone board',
   },
   {
     id: 'marble',
     name: 'Marble Palace',
     price: 75,
-    boardGradient: 'linear-gradient(135deg, #e8e0d8 0%, #d4ccc4 50%, #e8e0d8 100%)',
-    boardGradientMobile: 'linear-gradient(135deg, #f0e8e0 0%, #ddd5cd 50%, #f0e8e0 100%)',
-    spaceTintLight: 'rgba(220,210,200,0.5)',
-    spaceTintDark: 'rgba(200,190,180,0.5)',
-    spaceBorder: 'rgba(180,170,160,0.5)',
-    borderColor: '#c4b8ac',
-    boxBg: '#ddd5cd',
-    dividerColor: 'rgba(180,170,160,0.4)',
-    spaceFilter: 'brightness(1.8) contrast(0.7) saturate(0.2)',
-    description: 'Polished white marble with elegant veins',
+    boardGradient: 'linear-gradient(135deg, #b8b0a8 0%, #a09890 50%, #b8b0a8 100%)',
+    boardGradientMobile: 'linear-gradient(135deg, #c4bab2 0%, #aca49c 50%, #c4bab2 100%)',
+    spaceTintLight: 'rgba(180,170,160,0.4)',
+    spaceTintDark: 'rgba(160,150,140,0.4)',
+    spaceBorder: 'rgba(140,130,120,0.5)',
+    borderColor: '#9a8e82',
+    boxBg: '#a89e94',
+    dividerColor: 'rgba(140,130,120,0.4)',
+    spaceFilter: 'brightness(1.5) contrast(0.75) saturate(0.25)',
+    pageBg: '#302b26',
+    pageOverlay: 'rgba(180,170,160,0.25)',
+    description: 'Polished marble with elegant veins',
   },
   {
     id: 'obsidian',
@@ -69,6 +77,8 @@ export const BOARD_THEMES: BoardTheme[] = [
     dividerColor: 'rgba(80,80,120,0.4)',
     spaceFilter: 'brightness(1.1) contrast(1.1) saturate(0.3)',
     boardFilter: 'saturate(0.8)',
+    pageBg: '#302b26',
+    pageOverlay: 'rgba(10,10,30,0.5)',
     description: 'Glossy black volcanic glass, sharp and sleek',
   },
   {
@@ -84,6 +94,8 @@ export const BOARD_THEMES: BoardTheme[] = [
     boxBg: '#2d1810',
     dividerColor: 'rgba(200,80,20,0.3)',
     spaceFilter: 'brightness(1.1) contrast(1.0) saturate(0.6)',
+    pageBg: '#302b26',
+    pageOverlay: 'rgba(80,20,0,0.3)',
     description: 'Dark stone with glowing red-orange cracks',
   },
   {
@@ -99,6 +111,8 @@ export const BOARD_THEMES: BoardTheme[] = [
     boxBg: '#3d3520',
     dividerColor: 'rgba(200,170,60,0.3)',
     spaceFilter: 'brightness(1.2) contrast(0.9) saturate(0.7)',
+    pageBg: '#302b26',
+    pageOverlay: 'rgba(100,80,20,0.25)',
     description: 'Dark stone with rich gold veins running through',
   },
 ];
