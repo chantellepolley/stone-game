@@ -58,6 +58,11 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     if (seen) return false;
     return true;
   });
+  const [showPromoCountdownCard, setShowPromoCountdownCard] = useState(() => {
+    const seen = localStorage.getItem('stone_seen_promo_countdown');
+    if (seen) return false;
+    return true;
+  });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(loadBoardTheme);
@@ -824,6 +829,43 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 className="px-5 py-2 rounded-lg font-heading text-sm uppercase tracking-wider
                            bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
                 Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Referral promo countdown - last chance */}
+      {showPromoCountdownCard && player && promoCountdown && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-red-500/50 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-4xl mb-2">&#9200;</p>
+            <h2 className="text-red-400 font-heading text-xl mb-1">Last Chance!</h2>
+            <p className="text-amber-400 font-heading text-2xl mb-2">{promoCountdown} left</p>
+            <p className="text-white/70 text-sm mb-3">
+              Referral Boost Challenge ends tonight! For every friend you invite:
+            </p>
+            <div className="bg-black/20 rounded-lg p-3 mb-4 space-y-1">
+              <p className="text-amber-400 font-heading text-lg">+200 coins</p>
+              <p className="text-green-400 font-heading text-sm">+25 Player of the Month points</p>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_promo_countdown', '1');
+                setShowPromoCountdownCard(false);
+                setShowReferralPanel(true);
+              }}
+                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+                Invite Now
+              </button>
+              <button onClick={() => {
+                localStorage.setItem('stone_seen_promo_countdown', '1');
+                setShowPromoCountdownCard(false);
+              }}
+                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors">
+                Later
               </button>
             </div>
           </div>
