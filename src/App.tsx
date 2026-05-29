@@ -19,6 +19,7 @@ import HallOfFame from './components/HallOfFame';
 import Challenges from './components/Challenges';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { loadPlayerColor, savePlayerColor, syncColorFromDb } from './utils/stoneColors';
+import { syncThemeFromDb } from './utils/boardThemes';
 import { usePlayer } from './hooks/usePlayer';
 import { PlayerContext } from './contexts/PlayerContext';
 import { CoinsProvider } from './contexts/CoinsContext';
@@ -79,6 +80,7 @@ export default function App() {
       syncColorFromDb(player.id).then(() => {
         setStoneColor(loadPlayerColor());
       });
+      syncThemeFromDb(player.id);
       // Check if previous month's POTM winner needs to be crowned
       import('./lib/monthlyPoints').then(({ checkAndCrownWinner }) => {
         checkAndCrownWinner().catch(() => {});

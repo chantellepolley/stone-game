@@ -179,4 +179,31 @@ export function loadBoardTheme(): string {
 
 export function saveBoardTheme(id: string) {
   localStorage.setItem('stone_board_theme', id);
+  // Sync to DB for cross-device + game creation
+  syncThemeToDb(id);
+}
+
+async function syncThemeToDb(themeId: string) {
+  try {
+    const { supabase } = await import('../lib/supabase');
+    const token = localStorage.getItem('stone_device_token');
+    if (!token) return;
+    const { data: player } = await supabase.from('players').select('id').eq('device_token', token).single();
+    if (!player) return;
+    await supabase.from('player_stats').update({ selected_theme: themeId }).eq('player_id', player.id);
+    // Also update all active games where this player is host
+    await supabase.from('games').update({ board_theme: themeId }).eq('player1_id', player.id).eq('status', 'active');
+    await supabase.from('games').update({ board_theme: themeId }).eq('player1_id', player.id).eq('status', 'waiting');
+  } catch { /* silent */ }
+}
+
+/** Load selected theme from DB and sync to localStorage (call on login) */
+export async function syncThemeFromDb(playerId: string) {
+  try {
+    const { supabase } = await import('../lib/supabase');
+    const { data } = await supabase.from('player_stats').select('selected_theme').eq('player_id', playerId).single();
+    if (data?.selected_theme) {
+      localStorage.setItem('stone_board_theme', data.selected_theme);
+    }
+  } catch { /* silent */ }
 }
