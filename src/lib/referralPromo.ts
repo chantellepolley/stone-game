@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 const REFERRAL_PROMO = {
   id: 'referral-boost-may2026',
   startUtc: Date.UTC(2026, 4, 27, 0, 0, 0),  // May 27, 2026 midnight UTC
-  endUtc:   Date.UTC(2026, 4, 29, 0, 0, 0),  // May 29, 2026 midnight UTC (48h)
+  endUtc:   Date.UTC(2026, 4, 30, 4, 0, 0),  // May 30, 2026 4am UTC (end of May 29 midnight EDT)
   referrerCoins: 200,
   newPlayerCoins: 200,
   referrerPotmPoints: 25,
