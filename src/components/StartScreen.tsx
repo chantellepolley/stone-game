@@ -1094,6 +1094,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                     newOwned.add(t.id);
                     setOwnedThemes(newOwned);
                     localStorage.setItem('stone_owned_themes', JSON.stringify([...newOwned]));
+                    // Save to DB so it survives cache clears / device switches
+                    import('../utils/boardThemes').then(({ saveOwnedThemeToDb }) => saveOwnedThemeToDb(t.id));
                     setSelectedTheme(t.id);
                     saveBoardTheme(t.id);
                     setConfirmTheme(null);

@@ -8,6 +8,8 @@ import { useCoins } from '../contexts/CoinsContext';
 import { addCoins } from '../lib/coins';
 import Board from './Board';
 import DiceArea from './DiceArea';
+import { getBoardTheme, loadBoardTheme } from '../utils/boardThemes';
+import { BoardThemeContext } from '../contexts/BoardThemeContext';
 import JesterCoin from './JesterCoin';
 
 interface ChallengesProps {
@@ -304,9 +306,12 @@ export default function Challenges({ onBack }: ChallengesProps) {
     setRewardClaimed(true);
   }, [player, activePuzzle, rewardClaimed, completed, refreshCoins]);
 
+  const boardTheme = getBoardTheme(loadBoardTheme());
+
   // ─── Puzzle gameplay view ───────────────────────────────────────
   if (activePuzzle && state) {
     return (
+      <BoardThemeContext.Provider value={boardTheme}>
       <div className="h-screen flex flex-col" style={{ background: '#302b26' }}>
         {/* Header */}
         <div className="shrink-0 px-4 pt-3 pb-2">
@@ -448,6 +453,7 @@ export default function Challenges({ onBack }: ChallengesProps) {
           </div>
         )}
       </div>
+      </BoardThemeContext.Provider>
     );
   }
 

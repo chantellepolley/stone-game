@@ -197,15 +197,40 @@ async function syncThemeToDb(themeId: string) {
   } catch { /* silent */ }
 }
 
-/** Sync theme between localStorage and DB on login.
- *  If localStorage has a non-classic theme but DB doesn't, push to DB + update games.
- *  If DB has a theme, pull to localStorage. */
+/** Save a purchased theme to DB */
+export async function saveOwnedThemeToDb(themeId: string) {
+  try {
+    const { supabase } = await import('../lib/supabase');
+    const token = localStorage.getItem('stone_device_token');
+    if (!token) return;
+    const { data: player } = await supabase.from('players').select('id').eq('device_token', token).single();
+    if (!player) return;
+    // Append to owned_themes array in DB
+    const { data: stats } = await supabase.from('player_stats').select('owned_themes').eq('player_id', player.id).single();
+    const current: string[] = (stats?.owned_themes as string[]) || ['classic'];
+    if (!current.includes(themeId)) {
+      current.push(themeId);
+      await supabase.from('player_stats').update({ owned_themes: current }).eq('player_id', player.id);
+    }
+  } catch { /* silent */ }
+}
+
+/** Sync theme + owned themes between localStorage and DB on login. */
 export async function syncThemeFromDb(playerId: string) {
   try {
     const { supabase } = await import('../lib/supabase');
-    const { data } = await supabase.from('player_stats').select('selected_theme').eq('player_id', playerId).single();
+    const { data } = await supabase.from('player_stats').select('selected_theme, owned_themes').eq('player_id', playerId).single();
     const localTheme = localStorage.getItem('stone_board_theme') || 'classic';
     const dbTheme = data?.selected_theme || 'classic';
+
+    // Sync owned themes: merge localStorage + DB
+    const localOwned: string[] = JSON.parse(localStorage.getItem('stone_owned_themes') || '["classic"]');
+    const dbOwned: string[] = (data?.owned_themes as string[]) || ['classic'];
+    const merged = [...new Set([...localOwned, ...dbOwned])];
+    localStorage.setItem('stone_owned_themes', JSON.stringify(merged));
+    if (merged.length > dbOwned.length) {
+      await supabase.from('player_stats').update({ owned_themes: merged }).eq('player_id', playerId);
+    }
 
     if (dbTheme !== 'classic') {
       // DB has a theme — use it (DB is source of truth)
