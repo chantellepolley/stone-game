@@ -180,7 +180,7 @@ export async function awardReferralBonus(
 
   // Award POTM points during promo
   if (amounts.referrerPoints > 0 && isPromoActive(referrerUsername)) {
-    await addMonthlyPoints(referrerId, amounts.referrerPoints, undefined, 'Referral Boost Challenge bonus (+25)', `referral-${newPlayerId}`);
+    await addMonthlyPoints(referrerId, amounts.referrerPoints, undefined, `Referral Boost Challenge bonus (+25)`);
   }
 
   return { referrerCoins: amounts.referrerCoins, newPlayerCoins: amounts.newPlayerCoins, isPromo: amounts.isPromo };
