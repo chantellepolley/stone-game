@@ -197,13 +197,24 @@ async function syncThemeToDb(themeId: string) {
   } catch { /* silent */ }
 }
 
-/** Load selected theme from DB and sync to localStorage (call on login) */
+/** Sync theme between localStorage and DB on login.
+ *  If localStorage has a non-classic theme but DB doesn't, push to DB + update games.
+ *  If DB has a theme, pull to localStorage. */
 export async function syncThemeFromDb(playerId: string) {
   try {
     const { supabase } = await import('../lib/supabase');
     const { data } = await supabase.from('player_stats').select('selected_theme').eq('player_id', playerId).single();
-    if (data?.selected_theme) {
-      localStorage.setItem('stone_board_theme', data.selected_theme);
+    const localTheme = localStorage.getItem('stone_board_theme') || 'classic';
+    const dbTheme = data?.selected_theme || 'classic';
+
+    if (dbTheme !== 'classic') {
+      // DB has a theme — use it (DB is source of truth)
+      localStorage.setItem('stone_board_theme', dbTheme);
+    } else if (localTheme !== 'classic') {
+      // localStorage has a theme but DB doesn't — push to DB and update games
+      await supabase.from('player_stats').update({ selected_theme: localTheme }).eq('player_id', playerId);
+      await supabase.from('games').update({ board_theme: localTheme }).eq('player1_id', playerId).eq('status', 'active');
+      await supabase.from('games').update({ board_theme: localTheme }).eq('player1_id', playerId).eq('status', 'waiting');
     }
   } catch { /* silent */ }
 }
