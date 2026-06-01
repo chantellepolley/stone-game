@@ -842,7 +842,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* POTM May 2026 Winner announcement */}
-      {showPotmWinnerCard && player && player.username?.toLowerCase() === 'cpolley' && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+      {showPotmWinnerCard && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-5xl mb-2">&#127942;</p>
