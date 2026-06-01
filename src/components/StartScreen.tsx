@@ -871,6 +871,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <button onClick={() => {
               localStorage.setItem('stone_seen_potm_may2026_v3', '1');
               setShowPotmWinnerCard(false);
+              if (onShowMonthlyStandings) onShowMonthlyStandings();
             }}
               className="px-6 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
                          bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
