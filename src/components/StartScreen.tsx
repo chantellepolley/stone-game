@@ -856,8 +856,14 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 <span>3rd: MOMKID (347)</span>
               </div>
             </div>
-            <p className="text-white/50 text-xs mb-4">
+            <p className="text-white/50 text-xs mb-3">
               Congratulations to Hoppys Gold for dominating May! An exclusive Champion Stone and 500 bonus coins have been awarded.
+            </p>
+            <div className="w-full h-px bg-white/10 my-3" />
+            <p className="text-3xl mb-1">&#128293;</p>
+            <h3 className="text-green-400 font-heading text-lg mb-1">June Competition is LIVE!</h3>
+            <p className="text-white/50 text-xs mb-4">
+              The race for June Player of the Month starts now. Play games, earn points, and claim the throne!
             </p>
             <button onClick={() => {
               localStorage.setItem('stone_seen_potm_may2026', '1');
@@ -865,7 +871,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             }}
               className="px-6 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
                          bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
-              Congrats!
+              Let's Go!
             </button>
           </div>
         </div>
