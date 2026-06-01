@@ -856,6 +856,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 <span>3rd: MOMKID (347)</span>
               </div>
             </div>
+            <div className="flex justify-center mb-3">
+              <img src="/champion-2026-05.png" alt="May Champion Stone" className="w-16 h-16 object-contain" />
+            </div>
             <p className="text-white/50 text-xs mb-3">
               Congratulations to Hoppys Gold for dominating May! An exclusive Champion Stone and 500 bonus coins have been awarded.
             </p>
