@@ -64,7 +64,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     return true;
   });
   const [showPotmWinnerCard, setShowPotmWinnerCard] = useState(() => {
-    const seen = localStorage.getItem('stone_seen_potm_may2026');
+    const seen = localStorage.getItem('stone_seen_potm_may2026_v2');
     if (seen) return false;
     // Admin-only for now
     return true;
@@ -866,7 +866,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               The race for June Player of the Month starts now. Play games, earn points, and claim the throne!
             </p>
             <button onClick={() => {
-              localStorage.setItem('stone_seen_potm_may2026', '1');
+              localStorage.setItem('stone_seen_potm_may2026_v2', '1');
               setShowPotmWinnerCard(false);
             }}
               className="px-6 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
