@@ -63,6 +63,12 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     if (seen) return false;
     return true;
   });
+  const [showPotmWinnerCard, setShowPotmWinnerCard] = useState(() => {
+    const seen = localStorage.getItem('stone_seen_potm_may2026');
+    if (seen) return false;
+    // Admin-only for now
+    return true;
+  });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(loadBoardTheme);
@@ -831,6 +837,36 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 Got it
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* POTM May 2026 Winner announcement */}
+      {showPotmWinnerCard && player && player.username?.toLowerCase() === 'cpolley' && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-5xl mb-2">&#127942;</p>
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Player of the Month</h2>
+            <p className="text-white/50 text-sm mb-3">May 2026</p>
+            <div className="bg-black/20 rounded-xl p-4 mb-4">
+              <p className="text-amber-400 font-heading text-2xl mb-1">Hoppys Gold</p>
+              <p className="text-white/60 text-sm">560 points</p>
+              <div className="flex justify-center gap-4 mt-2 text-[10px] text-white/40">
+                <span>2nd: Vet (521)</span>
+                <span>3rd: MOMKID (347)</span>
+              </div>
+            </div>
+            <p className="text-white/50 text-xs mb-4">
+              Congratulations to Hoppys Gold for dominating May! An exclusive Champion Stone and 500 bonus coins have been awarded.
+            </p>
+            <button onClick={() => {
+              localStorage.setItem('stone_seen_potm_may2026', '1');
+              setShowPotmWinnerCard(false);
+            }}
+              className="px-6 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                         bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+              Congrats!
+            </button>
           </div>
         </div>
       )}
