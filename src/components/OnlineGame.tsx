@@ -191,9 +191,10 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   useEffect(() => {
     if (onlinePhase === 'playing' && roomCode && lastSeenOpponentCount === null) {
       const saved = localStorage.getItem(`stone_chat_seen_${roomCode}`);
-      setLastSeenOpponentCount(saved ? parseInt(saved) : 0);
+      // If no saved count, assume all current messages are already seen
+      setLastSeenOpponentCount(saved ? parseInt(saved) : opponentMsgCount);
     }
-  }, [onlinePhase, roomCode, lastSeenOpponentCount]);
+  }, [onlinePhase, roomCode, lastSeenOpponentCount, opponentMsgCount]);
   // Save last seen count when chat is opened
   useEffect(() => {
     if (chatOpen && roomCode && opponentMsgCount > 0) {
