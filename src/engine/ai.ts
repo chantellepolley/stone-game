@@ -5,7 +5,40 @@ import { GAME_CONFIG } from '../config/gameConfig';
 const ROUTE_LENGTH = GAME_CONFIG.ROUTE_LENGTH;
 const NUM_SPACES = GAME_CONFIG.NUM_SPACES;
 
-/** Count how many of the opponent's pieces could reach a board space within dice range */
+// Dice probability: how many ways (out of 36) can you roll each total?
+// Includes jester combos (jester+X = doubles of X, so any single value is reachable)
+const DICE_COMBOS: Record<number, number> = {
+  1: 11, // 6 ways from jester+1 doubles, 2 from (1,J)(J,1), plus combos
+  2: 12, 3: 14, 4: 15, 5: 17, // most dangerous distance
+  // Can't roll exactly 6 (jester replaces 6), but combined moves can reach further
+  7: 6, 8: 5, 9: 4, 10: 3, 11: 2, 12: 1,
+};
+
+/** Count weighted threat score based on dice probability */
+function countThreatsWeighted(state: GameState, routePos: number, player: PlayerId): number {
+  const opponent: PlayerId = player === 1 ? 2 : 1;
+  const opponentRoute = GAME_CONFIG.PLAYER_ROUTE[opponent];
+  const targetSpace = GAME_CONFIG.PLAYER_ROUTE[player][routePos];
+  let threatScore = 0;
+
+  for (let i = 0; i < NUM_SPACES; i++) {
+    for (const p of state.board[i]) {
+      if (p.owner !== opponent || p.routePos < 0) continue;
+      for (let d = 1; d <= 12; d++) {
+        const destRoutePos = p.routePos + d;
+        if (destRoutePos >= ROUTE_LENGTH) break;
+        if (opponentRoute[destRoutePos] === targetSpace) {
+          // Weight by probability of rolling that distance
+          threatScore += (DICE_COMBOS[d] || 0);
+          break;
+        }
+      }
+    }
+  }
+  return threatScore;
+}
+
+/** Simple threat count (non-weighted, for backward compat) */
 function countThreats(state: GameState, routePos: number, player: PlayerId): number {
   const opponent: PlayerId = player === 1 ? 2 : 1;
   const opponentRoute = GAME_CONFIG.PLAYER_ROUTE[opponent];
@@ -26,6 +59,16 @@ function countThreats(state: GameState, routePos: number, player: PlayerId): num
     }
   }
   return threats;
+}
+
+/** Calculate game score advantage: positive = player is winning */
+function getScoreAdvantage(state: GameState, player: PlayerId): number {
+  const opponent: PlayerId = player === 1 ? 2 : 1;
+  const myHome = state.home[player].length;
+  const oppHome = state.home[opponent].length;
+  const myPips = pipCount(state, player);
+  const oppPips = pipCount(state, opponent);
+  return (myHome - oppHome) * 100 + (oppPips - myPips);
 }
 
 /** Count friendly pieces at a board space */
@@ -111,11 +154,12 @@ function evaluateBoardExpert(state: GameState, player: PlayerId): number {
   let score = evaluateBoard(state, player);
   const opponent: PlayerId = player === 1 ? 2 : 1;
   const phase = getGamePhase(state, player);
+  const advantage = getScoreAdvantage(state, player);
 
   // Blocking chain bonus
   const { chains, maxLen } = countBlockingChains(state, player);
   score += chains * 100;
-  if (maxLen >= 3) score += 200; // Prime bonus
+  if (maxLen >= 3) score += 200;
   if (maxLen >= 4) score += 300;
 
   // Opponent blocking chain penalty
@@ -126,24 +170,86 @@ function evaluateBoardExpert(state: GameState, player: PlayerId): number {
   // Pip count advantage
   const myPips = pipCount(state, player);
   const oppPips = pipCount(state, opponent);
-  score += (oppPips - myPips) * 2; // Bonus for being ahead in the race
+  score += (oppPips - myPips) * 2;
 
-  // Phase-specific bonuses
-  if (phase === 'opening') {
-    // Penalize having too many pieces on bench
-    score -= state.bench[player].length * 50;
-  } else if (phase === 'endgame') {
-    // Crowned pieces more valuable
-    for (let i = 0; i < NUM_SPACES; i++) {
-      for (const p of state.board[i]) {
-        if (p.owner === player && p.crowned) score += 120; // extra on top of base 80
-      }
+  // ── IMPROVEMENT #1: Danger awareness with probability weighting ──
+  // Penalize exposed pieces based on how likely they are to be captured
+  for (let i = 0; i < NUM_SPACES; i++) {
+    const friendly = state.board[i].filter(p => p.owner === player);
+    if (friendly.length === 1) {
+      const p = friendly[0];
+      const threatWeight = countThreatsWeighted(state, p.routePos, player);
+      // Scale penalty by probability (threatWeight out of ~36)
+      score -= threatWeight * 8;
+      // Crowned pieces even more important to protect
+      if (p.crowned) score -= threatWeight * 5;
     }
-    // Borne off pieces even more valuable in endgame
-    score += state.home[player].length * 200;
   }
 
-  // Opponent progress penalty — pieces in their home stretch are dangerous
+  // ── IMPROVEMENT #3: Adapt to game state ──
+  if (advantage > 300) {
+    // Winning big: play safe, penalize lone pieces extra
+    const lones = lonePieceCount(state, player);
+    score -= lones * 80;
+    // Bonus for safe stacks when ahead
+    for (let i = 0; i < NUM_SPACES; i++) {
+      if (state.board[i].filter(p => p.owner === player).length >= 2) score += 50;
+    }
+  } else if (advantage < -300) {
+    // Losing: reward aggression, captures, opponent jail
+    score += state.jail[opponent].length * 100;
+    // Less penalty for risky moves when behind
+    const lones = lonePieceCount(state, player);
+    score += lones * 20; // Spread out is OK when desperate
+  }
+
+  // ── IMPROVEMENT #5: Bearing-off strategy ──
+  if (phase === 'endgame') {
+    // Strongly reward borne-off pieces
+    score += state.home[player].length * 300;
+
+    // Reward pieces in last 5 (enables overshoot)
+    let inLastFive = 0;
+    let allInLastFive = true;
+    for (let i = 0; i < NUM_SPACES; i++) {
+      for (const p of state.board[i]) {
+        if (p.owner === player) {
+          if (p.routePos >= ROUTE_LENGTH - 5) {
+            inLastFive++;
+            score += 50; // Bonus for being in overshoot zone
+          } else {
+            allInLastFive = false;
+          }
+        }
+      }
+    }
+    if (allInLastFive && state.bench[player].length === 0 && state.jail[player].length === 0) {
+      score += 200; // Big bonus: overshoot now enabled
+    }
+
+    // Penalize farthest piece heavily — it's the bottleneck
+    let farthestDist = 0;
+    for (let i = 0; i < NUM_SPACES; i++) {
+      for (const p of state.board[i]) {
+        if (p.owner === player) {
+          const dist = ROUTE_LENGTH - p.routePos;
+          if (dist > farthestDist) farthestDist = dist;
+        }
+      }
+    }
+    score -= farthestDist * 5; // Penalize stragglers
+  } else if (phase === 'opening') {
+    score -= state.bench[player].length * 50;
+  } else {
+    // Midgame: crowned pieces valuable
+    for (let i = 0; i < NUM_SPACES; i++) {
+      for (const p of state.board[i]) {
+        if (p.owner === player && p.crowned) score += 80;
+      }
+    }
+  }
+
+  // Opponent progress penalty
   for (let i = 0; i < NUM_SPACES; i++) {
     for (const p of state.board[i]) {
       if (p.owner === opponent && p.crowned) score -= 60;
@@ -273,25 +379,32 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
       score += 250;
     } else if (destFriendly === 1) {
       // Landing alone
-      if (isHard) {
+      if (isExpert) {
+        // Use probability-weighted threats
+        const threatWeight = countThreatsWeighted(newState, destRoutePos, player);
+        if (threatWeight === 0) {
+          score += 40;
+        } else {
+          // Adapt risk tolerance to game state
+          const advantage = getScoreAdvantage(state, player);
+          const riskMult = advantage > 300 ? 1.5 : advantage < -300 ? 0.5 : 1.0;
+          score -= Math.round(threatWeight * 12 * riskMult);
+        }
+        const distFromHome = ROUTE_LENGTH - destRoutePos;
+        if (distFromHome > 15) score -= 250;
+        else if (distFromHome > 10) score -= 120;
+      } else if (isHard) {
         const threats = countThreats(newState, destRoutePos, player);
         if (threats === 0) {
-          score += 30; // No threats, acceptable
+          score += 30;
         } else {
-          score -= (isExpert ? 250 : 150) * threats;
+          score -= 150 * threats;
         }
-
-        // Extra penalty for lone pieces far from home
         const distFromHome = ROUTE_LENGTH - destRoutePos;
-        if (isExpert) {
-          if (distFromHome > 15) score -= 200;
-          else if (distFromHome > 10) score -= 100;
-        } else {
-          if (distFromHome > 15) score -= 100;
-          else if (distFromHome > 10) score -= 50;
-        }
+        if (distFromHome > 15) score -= 100;
+        else if (distFromHome > 10) score -= 50;
       } else {
-        score -= 50; // Medium: mild lone penalty
+        score -= 50;
       }
     }
   }
@@ -375,10 +488,45 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
   }
 
   // ═══════════════════════════════════════════
-  // EXPERT: Endgame crowned advancement
+  // EXPERT: Endgame bearing-off strategy
   // ═══════════════════════════════════════════
-  if (isExpert && phase === 'endgame' && movingPiece?.crowned) {
-    score += 150; // Strong push to bear off crowned pieces
+  if (isExpert && phase === 'endgame') {
+    if (movingPiece?.crowned) {
+      score += 150; // Push crowned pieces toward home
+    }
+    // Prioritize moving the farthest piece (it's the bottleneck)
+    if (movingPiece) {
+      let farthestPos = ROUTE_LENGTH;
+      for (let i = 0; i < NUM_SPACES; i++) {
+        for (const p of state.board[i]) {
+          if (p.owner === player && p.routePos < farthestPos) farthestPos = p.routePos;
+        }
+      }
+      if (movingPiece.routePos === farthestPos) {
+        score += 200; // Big bonus for advancing the straggler
+      }
+    }
+    // Bonus for moves that get pieces into the last-5 overshoot zone
+    if (movingPiece && move.to.type === 'board') {
+      const destPos = movingPiece.routePos + move.diceValue;
+      if (destPos >= ROUTE_LENGTH - 5 && movingPiece.routePos < ROUTE_LENGTH - 5) {
+        score += 100; // Entering overshoot zone
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════
+  // EXPERT: Adapt risk to game state
+  // ═══════════════════════════════════════════
+  if (isExpert) {
+    const advantage = getScoreAdvantage(state, player);
+    if (advantage > 300 && move.captures) {
+      // Winning big: don't take unnecessary risks for captures
+      score -= 100;
+    } else if (advantage < -300 && move.captures) {
+      // Losing: be aggressive, captures are more valuable
+      score += 150;
+    }
   }
 
   // Small random factor to avoid predictability
