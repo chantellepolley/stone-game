@@ -599,33 +599,29 @@ export function chooseBestJesterValue(state: GameState, difficulty: AIDifficulty
     if (moves.length === 0) continue;
 
     if (difficulty === 'expert') {
-      // Expert: simulate best 2-move sequence for each value
-      let bestSeqScore = -Infinity;
-      const singleMoves = moves.filter(m => m.diceCount === 1);
-      for (const m1 of singleMoves) {
-        const s1 = executeMove(simState, m1);
-        if (s1.currentPlayer !== player) {
-          const bs = evaluateBoardExpert(s1, player);
-          if (bs > bestSeqScore) bestSeqScore = bs;
-          continue;
+      // Expert: greedily simulate all 4 moves for each value
+      // Pick the best move at each step, then evaluate the final board
+      let simS = simState;
+      for (let step = 0; step < 4; step++) {
+        if (simS.currentPlayer !== player) break; // turn ended
+        const available = [
+          ...getValidMoves(simS, v).filter(m => m.diceCount === 1),
+          ...getMultiStepMoves(simS),
+        ];
+        if (available.length === 0) break;
+        // Pick the best move at this step
+        let bestMove = available[0];
+        let bestMoveScore = -Infinity;
+        for (const m of available) {
+          const after = executeMove(simS, m);
+          const s = evaluateBoardExpert(after, player);
+          if (s > bestMoveScore) { bestMoveScore = s; bestMove = m; }
         }
-        // Try second move
-        for (const dv of s1.dice.remaining) {
-          for (const m2 of getValidMoves(s1, dv)) {
-            const s2 = executeMove(s1, m2);
-            const bs = evaluateBoardExpert(s2, player);
-            if (bs > bestSeqScore) bestSeqScore = bs;
-          }
-        }
+        simS = executeMove(simS, bestMove);
       }
-      // Also try combined moves
-      for (const mc of moves.filter(m => m.diceCount >= 2)) {
-        const sc = executeMove(simState, mc);
-        const bs = evaluateBoardExpert(sc, player);
-        if (bs > bestSeqScore) bestSeqScore = bs;
-      }
-      if (bestSeqScore > bestScore) {
-        bestScore = bestSeqScore;
+      const finalScore = evaluateBoardExpert(simS, player);
+      if (finalScore > bestScore) {
+        bestScore = finalScore;
         bestValue = v;
       }
     } else {
