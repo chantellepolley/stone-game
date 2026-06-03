@@ -186,22 +186,26 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const prevIsMyTurn = useRef(isMyTurn);
   // Only count unread messages from opponent (not your own)
   const opponentMsgCount = chatMessages.filter(m => !m.isMine).length;
-  const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState<number | null>(null);
-  // Load last seen count from localStorage for this game
+  const chatLoaded = useRef(false);
+  const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState<number>(0);
+  // Track when chat messages first load from DB
   useEffect(() => {
-    if (onlinePhase === 'playing' && roomCode && lastSeenOpponentCount === null) {
-      const saved = localStorage.getItem(`stone_chat_seen_${roomCode}`);
-      // If no saved count, assume all current messages are already seen
+    if (chatMessages.length > 0 && !chatLoaded.current) {
+      chatLoaded.current = true;
+      const saved = roomCode ? localStorage.getItem(`stone_chat_seen_${roomCode}`) : null;
       setLastSeenOpponentCount(saved ? parseInt(saved) : opponentMsgCount);
     }
-  }, [onlinePhase, roomCode, lastSeenOpponentCount, opponentMsgCount]);
+  }, [chatMessages.length, roomCode, opponentMsgCount]);
+  // Reset on game switch
+  useEffect(() => { chatLoaded.current = false; setLastSeenOpponentCount(0); }, [currentGameId]);
   // Save last seen count when chat is opened
   useEffect(() => {
-    if (chatOpen && roomCode && opponentMsgCount > 0) {
+    if (chatOpen && roomCode) {
+      setLastSeenOpponentCount(opponentMsgCount);
       localStorage.setItem(`stone_chat_seen_${roomCode}`, String(opponentMsgCount));
     }
   }, [chatOpen, roomCode, opponentMsgCount]);
-  const chatUnread = lastSeenOpponentCount === null ? 0 : chatOpen ? 0 : Math.max(0, opponentMsgCount - lastSeenOpponentCount);
+  const chatUnread = chatOpen ? 0 : Math.max(0, opponentMsgCount - lastSeenOpponentCount);
 
   // Replay opponent's turn when entering a game they already moved in
   const recapShown = useRef(false);
