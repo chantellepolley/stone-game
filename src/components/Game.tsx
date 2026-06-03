@@ -138,7 +138,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [showMobileRules, setShowMobileRules] = useState(false);
-  const [activeGames, setActiveGames] = useState<Array<{ id: string; room_code: string; opponent_name: string; my_player: 1 | 2; mode: string }>>([]);
+  const [activeGames, setActiveGames] = useState<Array<{ id: string; room_code: string; opponent_name: string; my_player: 1 | 2; mode: string; is_my_turn: boolean }>>([]);
 
   // Load active games for tabs bar
   useEffect(() => {
@@ -168,12 +168,17 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
         const oppId = myP === 1 ? g.player2_id : g.player1_id;
         const aiDiff = (g.state as any)?.aiDifficulty || 'medium';
         const isAI = g.mode === 'ai';
+        const gameState = g.state as any;
+        const currentPlayer = gameState?.currentPlayer;
+        const phase = gameState?.phase;
+        const isMyTurn = currentPlayer === myP && phase !== 'game_over' && phase !== 'not_started';
         return {
           id: g.id,
           room_code: g.room_code,
           opponent_name: isAI ? `AI (${aiDiff.charAt(0).toUpperCase() + aiDiff.slice(1)})` : (oppId ? (nameMap[oppId] || 'Unknown') : 'Waiting'),
           my_player: myP as 1 | 2,
           mode: g.mode,
+          is_my_turn: isMyTurn,
         };
       }));
     };
@@ -353,9 +358,12 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
                 className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-heading shrink-0 transition-all
                   ${isCurrent
                     ? 'bg-amber-600/30 border border-amber-400/50 text-white'
+                    : g.is_my_turn
+                    ? 'bg-amber-900/30 border border-amber-600/40 text-amber-400 cursor-pointer'
                     : 'bg-black/20 border border-[#6b5f55]/30 text-white/50 hover:text-white/80 cursor-pointer'
                   }`}
               >
+                {g.is_my_turn && !isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />}
                 <span className="truncate max-w-[60px]">{g.opponent_name}</span>
               </button>
             );
