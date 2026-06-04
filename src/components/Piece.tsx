@@ -55,7 +55,7 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
   return (
     <div
       className={`
-        ${s.box} ${isChampion ? '' : 'rounded-full'} relative overflow-hidden
+        ${s.box} ${isChampion ? 'scale-110' : 'rounded-full'} relative overflow-hidden
         ${isChampion ? '' : crownedStyle} ${isChampion ? '' : selectedStyle} ${highlightStyle} ${clickable}
         flex items-center justify-center
         transition-transform duration-150
