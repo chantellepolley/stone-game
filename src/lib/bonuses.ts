@@ -136,10 +136,17 @@ export async function awardGameBonuses(
       bonuses.some(b => b.type === 'jesters'),
     );
     // Log each point source separately for the itemized view
-    for (const item of [...winPoints.breakdown, ...bonusPoints.breakdown]) {
+    // Only increment the win counter field for the actual win entry, not bonuses
+    for (const item of winPoints.breakdown) {
       const pts = parseInt(item.match(/\+(\d+)/)?.[1] || '0');
       if (pts > 0) {
         await addMonthlyPoints(playerId, pts, winPoints.field, item, gameId);
+      }
+    }
+    for (const item of bonusPoints.breakdown) {
+      const pts = parseInt(item.match(/\+(\d+)/)?.[1] || '0');
+      if (pts > 0) {
+        await addMonthlyPoints(playerId, pts, undefined, item, gameId);
       }
     }
 
