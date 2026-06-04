@@ -7,8 +7,6 @@ interface CrownedAvatarProps {
 }
 
 export default function CrownedAvatar({ avatarUrl, username, isChampion, size = 32, className = '' }: CrownedAvatarProps) {
-  const sizeClass = `w-[${size}px] h-[${size}px]`;
-
   return (
     <div className={`relative shrink-0 ${className}`} style={{ width: size, height: size }}>
       {avatarUrl ? (

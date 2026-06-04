@@ -496,7 +496,7 @@ function scoreMove(state: GameState, move: Move, difficulty: AIDifficulty): numb
     }
     // Prioritize moving the farthest piece (it's the bottleneck)
     if (movingPiece) {
-      let farthestPos = ROUTE_LENGTH;
+      let farthestPos: number = ROUTE_LENGTH;
       for (let i = 0; i < NUM_SPACES; i++) {
         for (const p of state.board[i]) {
           if (p.owner === player && p.routePos < farthestPos) farthestPos = p.routePos;
