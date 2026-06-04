@@ -4,6 +4,8 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { useFriends } from '../hooks/useFriends';
 import JesterCoin from './JesterCoin';
 import PlayerProfile from './PlayerProfile';
+import CrownedAvatar from './CrownedAvatar';
+import { useChampions } from '../hooks/useChampions';
 
 interface LeaderEntry {
   player_id: string;
@@ -27,6 +29,7 @@ export default function Leaderboard({ onBack, onInviteToPlay }: { onBack: () => 
   const [friendAdded, setFriendAdded] = useState<Set<string>>(new Set());
   const [friendStatusMap, setFriendStatusMap] = useState<Map<string, string>>(new Map());
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
+  const championIds = useChampions();
 
   useEffect(() => {
     const load = async () => {
@@ -99,13 +102,7 @@ export default function Leaderboard({ onBack, onInviteToPlay }: { onBack: () => 
         <td className="py-1.5 px-1 font-heading">{i + 1}</td>
         <td className="py-1.5 px-1 truncate max-w-[120px]">
           <div className="flex items-center gap-1.5">
-            {e.avatar_url ? (
-              <img src={e.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-5 h-5 rounded-full bg-[#3d3632] flex items-center justify-center shrink-0">
-                <span className="text-[8px] font-heading text-white/40">{(e.username || '?')[0].toUpperCase()}</span>
-              </div>
-            )}
+            <CrownedAvatar avatarUrl={e.avatar_url || null} username={e.username || '?'} isChampion={championIds.has(e.player_id)} size={20} />
             <span className="truncate">{e.username}{isMe ? ' (you)' : ''}</span>
           </div>
         </td>

@@ -4,6 +4,8 @@ import { GAME_CONFIG } from '../config/gameConfig';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { useCoins } from '../contexts/CoinsContext';
 import { ONLINE_WAGER_TIERS } from '../lib/coins';
+import CrownedAvatar from './CrownedAvatar';
+import { useChampions } from '../hooks/useChampions';
 import { getBoardTheme, loadBoardTheme } from '../utils/boardThemes';
 import { BoardThemeContext } from '../contexts/BoardThemeContext';
 import type { GameState, Move } from '../types/game';
@@ -58,7 +60,8 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [showMobileLog, setShowMobileLog] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [activeGames, setActiveGames] = useState<Array<{ id: string; room_code: string; opponent_name: string; opponent_avatar: string | null; my_player: 1 | 2; is_my_turn: boolean; mode: string }>>([]);
+  const [activeGames, setActiveGames] = useState<Array<{ id: string; room_code: string; opponent_name: string; opponent_avatar: string | null; opponent_id: string | null; my_player: 1 | 2; is_my_turn: boolean; mode: string }>>([]);
+  const championIds = useChampions();
   const { player } = usePlayerContext();
   const { addFriendById, getFriendStatus } = useFriends();
   const [friendStatus, setFriendStatus] = useState<'none' | 'pending' | 'accepted' | 'sent'>('none');
@@ -125,6 +128,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
           room_code: g.room_code,
           opponent_name: isAI ? `AI (${aiDiff.charAt(0).toUpperCase() + aiDiff.slice(1)})` : (oppId ? (nameMap[oppId] || 'Unknown') : 'Waiting'),
           opponent_avatar: isAI ? null : (oppId ? (avatarMap[oppId] || null) : null),
+          opponent_id: oppId || null,
           my_player: myP as 1 | 2,
           is_my_turn: isAI ? true : currentPlayer === myP,
           mode: g.mode,
@@ -420,13 +424,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
       <div className="flex items-center justify-center gap-3 shrink-0 w-full max-w-md">
         {/* Me */}
         <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${isMyTurn ? 'bg-amber-600/20 ring-1 ring-amber-400/50' : ''}`}>
-          {player?.avatarUrl ? (
-            <img src={player.avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-[#6b5f55]" />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
-              <span className="text-[9px] font-heading text-white/50">{myName?.[0]?.toUpperCase() || '?'}</span>
-            </div>
-          )}
+          <CrownedAvatar avatarUrl={player?.avatarUrl || null} username={myName || 'You'} isChampion={!!player && championIds.has(player.id)} size={28} />
           <div className="flex flex-col">
             <span className="text-[10px] font-heading text-white truncate max-w-[70px]">{myName || 'You'}</span>
             {isMyTurn && <span className="text-[8px] text-amber-400 font-heading">Your turn</span>}
@@ -453,13 +451,11 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
               <span className={`w-1.5 h-1.5 rounded-full ${opponentConnected ? 'bg-green-400' : 'bg-white/30'}`} />
             </div>
           </div>
-          {opponentAvatar ? (
-            <img src={opponentAvatar} alt="" className="w-7 h-7 rounded-full object-cover border border-[#6b5f55]" />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-[#3d3632] flex items-center justify-center border border-[#6b5f55]">
-              <span className="text-[9px] font-heading text-white/50">{opponentName?.[0]?.toUpperCase() || '?'}</span>
-            </div>
-          )}
+          {(() => {
+            const currentGame = activeGames.find(g => g.room_code === roomCode);
+            const oppId = currentGame?.opponent_id;
+            return <CrownedAvatar avatarUrl={opponentAvatar} username={opponentName || 'Opponent'} isChampion={!!oppId && championIds.has(oppId)} size={28} />;
+          })()}
         </div>
       </div>
 
