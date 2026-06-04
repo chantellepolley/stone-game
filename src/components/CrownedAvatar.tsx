@@ -18,8 +18,8 @@ export default function CrownedAvatar({ avatarUrl, username, isChampion, size = 
       )}
       {isChampion && (
         <svg
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{ top: -(size * 0.28), width: size * 0.75, height: size * 0.5, transform: `translateX(-50%) rotate(-15deg)` }}
+          className="absolute"
+          style={{ top: -(size * 0.28), left: -(size * 0.1), width: size * 0.75, height: size * 0.5, transform: `rotate(-15deg)` }}
           viewBox="0 0 40 28"
           fill="none"
         >
