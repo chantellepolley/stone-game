@@ -201,7 +201,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
     }
   }, [chatMessages.length, roomCode, opponentMsgCount]);
   // Reset on game switch
-  useEffect(() => { chatLoaded.current = false; setLastSeenOpponentCount(0); }, [currentGameId]);
+  useEffect(() => { chatLoaded.current = false; setLastSeenOpponentCount(0); coinsHandled.current = false; }, [currentGameId]);
   // Save last seen count when chat is opened
   useEffect(() => {
     if (chatOpen && roomCode) {
