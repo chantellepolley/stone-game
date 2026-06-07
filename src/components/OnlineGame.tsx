@@ -68,18 +68,28 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
 
   // Joiner wager is now deducted in useOnlineGame.joinRoom (DB-side, once only)
 
-  // Award coins + bonuses on game end
+  // Show bonuses on game end (actual awarding happens in useOnlineGame hook)
   useEffect(() => {
     if (state.phase === 'game_over' && state.winner && !coinsHandled.current) {
       coinsHandled.current = true;
       const isWin = state.winner === myPlayer;
+      // Refresh coin display
       if (isWin && gameWager > 0) {
-        earn(gameWager * 2, 'Online game win');
+        earn(0, ''); // trigger refresh without adding coins (hook already added them)
       }
+      // Get bonus list for display only (bonuses already awarded by hook)
       if (player) {
         const stateWithWager = { ...state, wager: gameWager };
-        awardGameBonuses(player.id, stateWithWager, state.winner, isWin, currentGameId || undefined).then(bonuses => {
-          setGameBonuses(bonuses);
+        // evaluateBonuses returns the list without awarding
+        import('../lib/bonuses').then(({ evaluateBonuses }) => {
+          import('../lib/supabase').then(({ supabase: sb }) => {
+            sb.from('player_stats').select('win_streak, best_win_streak, wins').eq('player_id', player.id).single().then(({ data: stats }) => {
+              if (stats && isWin) {
+                const bonuses = evaluateBonuses(stateWithWager, state.winner!, stats.win_streak || 0, stats.wins || 0);
+                setGameBonuses(bonuses);
+              }
+            });
+          });
         });
       }
       // Mark this game result as seen so the notification banner doesn't show it

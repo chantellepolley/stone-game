@@ -211,6 +211,22 @@ export function useOnlineGame() {
             // Record stats for both players
             recordGameResult(state, state.winner!, game.player1_id, game.player2_id);
 
+            // Award game bonuses + POTM points for both players
+            // This runs in the hook (not just the UI component) so it works
+            // even when the winner isn't viewing this specific game (e.g. forfeit)
+            const { awardGameBonuses } = await import('../lib/bonuses');
+            const gameWager = (await supabase.from('games').select('wager').eq('id', gameDbId.current!).single()).data?.wager || 0;
+            const stateWithWager = { ...state, wager: gameWager };
+            const loserDbId = state.winner === 1 ? game.player2_id : game.player1_id;
+            await awardGameBonuses(winnerDbId!, stateWithWager, state.winner!, true, gameDbId.current!);
+            if (loserDbId) await awardGameBonuses(loserDbId, stateWithWager, state.winner!, false, gameDbId.current!);
+
+            // Award wager coins to winner
+            if (gameWager > 0 && winnerDbId) {
+              const { addCoins } = await import('../lib/coins');
+              await addCoins(winnerDbId, gameWager * 2, 'Online game win');
+            }
+
             // Check if this was a tiebreaker game
             const { recordTiebreakerResult } = await import('../lib/monthlyPoints');
             const capturesP1 = state.captureCount?.[1] || 0;
