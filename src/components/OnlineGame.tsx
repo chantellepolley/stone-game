@@ -15,7 +15,7 @@ import { loadPlayerColor } from '../utils/stoneColors';
 import { StoneColorContext } from '../contexts/StoneColorContext';
 import { useFriends } from '../hooks/useFriends';
 import { showNotification } from '../hooks/usePushNotifications';
-import { awardGameBonuses, type BonusResult } from '../lib/bonuses';
+import type { BonusResult } from '../lib/bonuses';
 import JesterCoin from './JesterCoin';
 import Board from './Board';
 import DiceArea from './DiceArea';
