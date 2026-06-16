@@ -545,7 +545,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             onSend={(text) => sendChat(text, myName || 'Player', player?.avatarUrl)}
             isOpen={true}
           />
-          <GameControls onRestart={() => { leave(); onBack(); }} />
         </div>
 
         <div className="flex-1 max-w-[1050px] w-full min-h-0">
@@ -572,34 +571,61 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
             player2Name={p2Name}
           />
           {canUndo && <GameControls onUndo={undo} canUndo={canUndo} />}
-          <button onClick={() => setHintsEnabled(h => !h)}
-            className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer">
-            Hints: {hintsEnabled ? 'ON' : 'OFF'}
-          </button>
-          <button onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); }}
-            className="text-[10px] text-white/50 hover:text-white/80 transition-colors cursor-pointer">
-            Sound: {soundOn ? 'ON' : 'OFF'}
-          </button>
-          {state.phase !== 'game_over' && (
-            <>
-              {!isMyTurn && (
-                <button onClick={sendNudge}
-                  disabled={Date.now() - lastNudge < 60000}
-                  className="text-[10px] text-amber-400/60 hover:text-amber-400 transition-colors cursor-pointer mt-2
-                             disabled:opacity-30 disabled:cursor-not-allowed">
-                  Nudge
-                </button>
+          <div className="grid grid-cols-2 gap-1.5 w-full">
+            <button onClick={() => { leave(); onBack(); }}
+              className="px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+              Home
+            </button>
+            <button onClick={() => setShowMobileLog(v => !v)}
+              className="px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+              {showMobileLog ? 'Hide Log' : 'Move Log'}
+            </button>
+            <button onClick={() => setHintsEnabled(h => !h)}
+              className="px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+              Hints {hintsEnabled ? 'ON' : 'OFF'}
+            </button>
+            <button onClick={() => { const v = !soundOn; setSoundOn(v); setSoundEnabled(v); }}
+              className="px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors">
+              Sound {soundOn ? 'ON' : 'OFF'}
+            </button>
+            <button onClick={() => { setChatOpen(v => !v); }}
+              className="relative px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                         bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors">
+              Chat
+              {chatUnread > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[7px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {chatUnread > 9 ? '9+' : chatUnread}
+                </span>
               )}
+            </button>
+            {state.phase !== 'game_over' && !isMyTurn && (
+              <button onClick={sendNudge}
+                disabled={Date.now() - lastNudge < 60000}
+                className="px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                           bg-[#5e5549] text-amber-400 hover:bg-[#6b5f55] cursor-pointer transition-colors
+                           disabled:opacity-30 disabled:cursor-not-allowed">
+                Nudge
+              </button>
+            )}
+            {state.phase !== 'game_over' && (
               <button onClick={() => { setProposedAmount(gameWager > 0 ? gameWager * 2 : 5); setShowWagerPicker(true); }}
-                className="text-[10px] text-amber-400/60 hover:text-amber-400 transition-colors cursor-pointer">
+                className="px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                           bg-[#5e5549] text-amber-400 hover:bg-[#6b5f55] cursor-pointer transition-colors">
                 {gameWager > 0 ? 'Raise Wager' : 'Add Wager'}
               </button>
+            )}
+            {state.phase !== 'game_over' && (
               <button onClick={() => setShowForfeitConfirm(true)}
-                className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors cursor-pointer">
-                Forfeit {gameWager > 0 && `(-${gameWager} coins)`}
+                className="px-2 py-1.5 rounded-lg text-[10px] font-heading uppercase tracking-wider
+                           bg-red-900/30 text-red-400/70 hover:text-red-400 hover:bg-red-900/50 cursor-pointer transition-colors">
+                Forfeit {gameWager > 0 && `(-${gameWager})`}
               </button>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
