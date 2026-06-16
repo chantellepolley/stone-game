@@ -371,7 +371,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       onPointerUp={isMobile ? undefined : handleDragEnd}
     >
       {/* Top row (opponent's row) */}
-      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
+      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 160px)' }}>
         <div ref={el => setRef(`bench-${topPlayer}`, el)} className="h-full" style={{ transform: 'translateY(20px)' }}>
           <StoneBox player={topPlayer} pieces={state.bench[topPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === topPlayer}
@@ -382,7 +382,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           />
         </div>
 
-        <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
+        <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)', gridTemplateRows: '1fr' }}>
           {topIndices.map((idx, i) =>
             i === 5
               ? [<div key="div-top" className="w-1 rounded-full self-stretch" style={{ backgroundColor: theme.dividerColor }} />, renderSpace(idx, i, true)]
@@ -400,7 +400,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       </div>
 
       {/* Jail */}
-      <div className="flex items-center justify-center py-0.5 lg:py-1 px-1 relative max-h-[80px] lg:max-h-[110px]">
+      <div className="flex items-center justify-center py-0.5 px-1 relative z-10 max-h-[70px] lg:max-h-[80px]">
         <div ref={el => setRef('jail', el)}>
           <Jail jail={state.jail} validMoves={busy ? [] : validMoves}
             onClickJailPiece={handleClickJailPiece} currentPlayer={state.currentPlayer} />
@@ -408,7 +408,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
       </div>
 
       {/* Bottom row (current player's row — always moves left to right here) */}
-      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 220px)' }}>
+      <div className="flex gap-0.5 lg:gap-1 items-stretch" style={{ height: 'clamp(80px, 18dvh, 160px)' }}>
         <div ref={el => setRef(`bench-${botPlayer}`, el)} className="h-full" style={{ transform: 'translateY(-20px)' }}>
           <StoneBox player={botPlayer} pieces={state.bench[botPlayer]} label="Start"
             interactive={!selected && !busy && hasBenchMoves && state.currentPlayer === botPlayer}
@@ -419,7 +419,7 @@ export default function Board({ state, validMoves, onSelectMove, pendingAIMove, 
           />
         </div>
 
-        <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)' }}>
+        <div className="grid gap-0.5 lg:gap-1 flex-1 h-full" style={{ gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)', gridTemplateRows: '1fr' }}>
           {bottomIndices.map((idx, i) =>
             i === 5
               ? [<div key="div-bot" className="w-1 rounded-full self-stretch" style={{ backgroundColor: theme.dividerColor }} />, renderSpace(idx, i, false)]
