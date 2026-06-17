@@ -1,9 +1,16 @@
 {
   "rewrites": [
     { "source": "/join/:code", "destination": "/index.html" },
+    { "source": "/.well-known/:path*", "destination": "/.well-known/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ]
+    },
     {
       "source": "/sw.js",
       "headers": [
