@@ -5,6 +5,7 @@ import { useCoins } from '../contexts/CoinsContext';
 import { ONLINE_WAGER_TIERS } from '../lib/coins';
 import JesterCoin from './JesterCoin';
 import PlayerProfile from './PlayerProfile';
+import { SkeletonRow } from './Skeleton';
 
 interface FriendsListProps {
   onBack: () => void;
@@ -146,7 +147,7 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
         </div>
 
         {loading ? (
-          <p className="text-white/40 text-sm">Loading...</p>
+          <SkeletonRow count={3} />
         ) : tab === 'friends' ? (
           <div className="w-full overflow-y-auto space-y-1.5 max-h-[40vh]">
             {friends.length === 0 ? (

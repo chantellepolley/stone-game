@@ -217,6 +217,7 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
                 <button
                   key={v}
                   onClick={() => !disabled && onChooseJesterDoubles(v)}
+                  aria-label={disabled ? `${v} - no valid moves` : `Choose doubles of ${v}`}
                   className={`w-10 h-10 rounded-lg border-2 font-bold text-lg transition-all shadow-md
                     ${disabled
                       ? 'bg-[#3d3632] border-[#6b5f55]/30 text-white/20 cursor-not-allowed'
@@ -243,6 +244,7 @@ export default function DiceArea({ dice, phase, currentPlayer, onRoll, awaitingJ
       {canRoll && !rolling && (
         <button
           onClick={handleRoll}
+          aria-label={`Roll dice for ${playerName}`}
           className={`
             px-6 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
             transition-all duration-200 cursor-pointer

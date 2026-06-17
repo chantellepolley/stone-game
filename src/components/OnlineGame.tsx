@@ -511,6 +511,16 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         )}
       </div>
 
+      {/* Offline indicator */}
+      {onlinePhase === 'playing' && !opponentConnected && state.phase !== 'game_over' && (
+        <div className="shrink-0 text-center py-1">
+          <span className="text-red-400/80 text-[10px] font-heading uppercase tracking-wider flex items-center justify-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            Opponent disconnected
+          </span>
+        </div>
+      )}
+
       {/* Replay banner */}
       {replayingTurn && (
         <div className="shrink-0 text-center py-1">

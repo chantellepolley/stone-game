@@ -4,6 +4,7 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { useFriends } from '../hooks/useFriends';
 import JesterCoin from './JesterCoin';
 import PlayerProfile from './PlayerProfile';
+import { SkeletonRow } from './Skeleton';
 import CrownedAvatar from './CrownedAvatar';
 import { useChampions } from '../hooks/useChampions';
 
@@ -170,7 +171,7 @@ export default function Leaderboard({ onBack, onInviteToPlay }: { onBack: () => 
         </div>
 
         {loading ? (
-          <p className="text-white/40 text-sm">Loading...</p>
+          <SkeletonRow count={5} />
         ) : entries.length === 0 ? (
           <p className="text-white/40 text-sm">No games played yet!</p>
         ) : (

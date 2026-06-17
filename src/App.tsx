@@ -1,5 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { showToast } from './utils/toast';
+
+function OfflineBanner() {
+  const [offline, setOffline] = useState(!navigator.onLine);
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+  if (!offline) return null;
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-red-900/90 text-white text-center py-1.5 text-xs font-heading uppercase tracking-wider">
+      No internet connection
+    </div>
+  );
+}
 import Game from './components/Game';
 import OnlineGame from './components/OnlineGame';
 import UsernamePrompt from './components/UsernamePrompt';
@@ -265,6 +282,9 @@ export default function App() {
     <CoinsProvider>
       {/* Global theme overlay */}
       {(() => { const overlay = getBoardTheme(loadBoardTheme()).pageOverlay; return overlay ? <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, height: '100dvh', backgroundColor: overlay, zIndex: -1, pointerEvents: 'none' }} /> : null; })()}
+
+      {/* Offline banner */}
+      <OfflineBanner />
 
       {/* Username prompt for first-time visitors */}
       {!player && <UsernamePrompt />}

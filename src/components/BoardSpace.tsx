@@ -79,6 +79,8 @@ export default function BoardSpace({
         transition-all duration-200
       `}
       onClick={onClickSpace}
+      aria-label={`Space ${_index}${pieces.length > 0 ? `, ${pieces.length} piece${pieces.length > 1 ? 's' : ''}` : ''}`}
+      role="button"
       style={{
         boxShadow: variant === 'light'
           ? '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)'

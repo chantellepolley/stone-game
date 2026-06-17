@@ -4,6 +4,7 @@ import { usePlayerContext } from '../contexts/PlayerContext';
 import { getCoinHistory, AI_WAGER } from '../lib/coins';
 import JesterCoin from './JesterCoin';
 import PlayerProfile from './PlayerProfile';
+import { SkeletonRow } from './Skeleton';
 import type { AIDifficulty } from '../types/game';
 
 interface Stats {
@@ -197,7 +198,7 @@ export default function PlayerStats({ onBack, onInviteToPlay }: { onBack: () => 
         </div>
 
         {loading ? (
-          <p className="text-white/40 text-sm">Loading...</p>
+          <SkeletonRow count={4} />
         ) : tab === 'overview' ? (
           /* ── Overview tab ── */
           stats ? (

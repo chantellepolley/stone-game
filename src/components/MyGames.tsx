@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { AI_WAGER } from '../lib/coins';
 import type { AIDifficulty } from '../types/game';
+import { SkeletonRow } from './Skeleton';
 import { useFriends } from '../hooks/useFriends';
 import JesterCoin from './JesterCoin';
 
@@ -305,7 +306,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         </div>
 
         {loading ? (
-          <p className="text-white/40 text-sm">Loading...</p>
+          <SkeletonRow count={4} />
         ) : tab === 'invites' ? (
           /* Invites tab — game invites + friend requests */
           invites.length === 0 && pendingRequests.length === 0 && sentInvites.length === 0 ? (
