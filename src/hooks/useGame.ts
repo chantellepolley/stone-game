@@ -207,7 +207,6 @@ export function useGame() {
   const dbCreatePending = useRef(false);
 
   const startGame = useCallback((mode: GameMode, difficulty: AIDifficulty) => {
-    console.log('[STONE] startGame called:', mode, difficulty);
     const newState: GameState = { ...createInitialState(), phase: 'rolling', gameMode: mode, aiDifficulty: difficulty };
     setState(newState);
     statsRecorded.current = false;
@@ -216,7 +215,6 @@ export function useGame() {
 
     // Save game to DB in background
     const token = localStorage.getItem('stone_device_token');
-    console.log('[STONE] device token:', token ? 'exists' : 'MISSING');
 
     if (!token) {
       console.warn('[STONE] Cannot save game: no device token');
@@ -232,7 +230,6 @@ export function useGame() {
           return;
         }
         const playerId = playerData.id;
-        console.log('[STONE] Player ID:', playerId);
 
         const dbMode = mode === 'ai' ? 'ai' : 'local';
         const code = `${dbMode.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
@@ -248,7 +245,6 @@ export function useGame() {
             if (gameErr) {
               console.error('[STONE] DB insert failed:', gameErr.message, gameErr.details, gameErr.hint);
             } else if (gameData) {
-              console.log('[STONE] Game saved to DB:', gameData.id);
               gameDbId.current = gameData.id;
             }
             dbCreatePending.current = false;

@@ -227,7 +227,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return; }
+    if (file.size > 5 * 1024 * 1024) { import('../utils/toast').then(({ showToast }) => showToast('Image must be under 5MB', 'error')); return; }
     setAvatarEditFile(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };

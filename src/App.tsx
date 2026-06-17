@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { showToast } from './utils/toast';
 import Game from './components/Game';
 import OnlineGame from './components/OnlineGame';
 import UsernamePrompt from './components/UsernamePrompt';
@@ -205,7 +206,7 @@ export default function App() {
     }).select('id').single();
 
     if (gameErr || !game) {
-      alert(gameErr?.message || 'Failed to create game');
+      showToast(gameErr?.message || 'Failed to create game', 'error');
       return;
     }
 
@@ -219,9 +220,9 @@ export default function App() {
     });
 
     if (inviteErr) {
-      alert(inviteErr.message);
+      showToast(inviteErr.message, 'error');
     } else {
-      alert(wager > 0 ? `Game invite sent! (${wager} coin wager)` : 'Game invite sent! They will roll first.');
+      showToast(wager > 0 ? `Game invite sent! (${wager} coin wager)` : 'Game invite sent! They will roll first.', 'success');
     }
   }, [player]);
 
