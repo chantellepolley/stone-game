@@ -69,6 +69,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     // Admin-only for now
     return true;
   });
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return !localStorage.getItem('stone_has_played');
+  });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(loadBoardTheme);
@@ -776,6 +779,38 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           )}
           <div className="text-[8px] text-white">
             &copy; 2026 Stone The Game. All rights reserved.
+          </div>
+        </div>
+      )}
+
+      {/* Welcome prompt for new players */}
+      {showWelcome && player && !referrerPrompt && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <p className="text-5xl mb-3">&#127922;</p>
+            <h2 className="text-amber-400 font-heading text-xl mb-2">Welcome to STONE!</h2>
+            <p className="text-white/70 text-sm mb-4">
+              STONE is a strategy board game where you roll dice, capture opponents, and race to bear off all your pieces first.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => {
+                localStorage.setItem('stone_has_played', '1');
+                setShowWelcome(false);
+                if (onShowTutorial) onShowTutorial();
+              }}
+                className="w-full px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
+                How to Play
+              </button>
+              <button onClick={() => {
+                localStorage.setItem('stone_has_played', '1');
+                setShowWelcome(false);
+              }}
+                className="w-full px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors">
+                I'll Figure It Out
+              </button>
+            </div>
           </div>
         </div>
       )}
