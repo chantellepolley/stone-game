@@ -1,28 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
-function OpponentDisconnected({ show }: { show: boolean }) {
-  const [visible, setVisible] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (show) {
-      timer.current = setTimeout(() => setVisible(true), 30000);
-    } else {
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = null;
-      setVisible(false);
-    }
-    return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [show]);
-  if (!visible) return null;
-  return (
-    <div className="shrink-0 text-center py-1">
-      <span className="text-red-400/80 text-[10px] font-heading uppercase tracking-wider flex items-center justify-center gap-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-        Opponent disconnected
-      </span>
-    </div>
-  );
-}
 
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import { GAME_CONFIG } from '../config/gameConfig';
@@ -536,8 +513,6 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
         )}
       </div>
 
-      {/* Offline indicator — only shows after 30s of disconnect to avoid flicker */}
-      <OpponentDisconnected show={onlinePhase === 'playing' && !opponentConnected && state.phase !== 'game_over'} />
 
       {/* Replay banner */}
       {replayingTurn && (
