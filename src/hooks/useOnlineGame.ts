@@ -670,16 +670,15 @@ export function useOnlineGame() {
         .select('chat')
         .eq('id', game.id)
         .single();
-      if (chatData?.chat && Array.isArray(chatData.chat)) {
-        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>).map((m, i) => ({
+      if (chatData?.chat && Array.isArray(chatData.chat) && chatData.chat.length > 0) {
+        setChatMessages((chatData.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>).map((m, i) => ({
           id: `db-${i}-${m.timestamp}`,
           sender: m.sender,
           text: m.text,
           timestamp: m.timestamp,
           isMine: m.sender === myUsernameRef.current,
           avatarUrl: m.avatarUrl || null,
-        }));
-        if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
+        })));
       }
     }
 
@@ -701,6 +700,7 @@ export function useOnlineGame() {
     setOnlinePhase('connecting');
     statsRecorded.current = false;
     gameDbId.current = gameId;
+    setChatMessages([]); // Clear immediately so stale messages from previous game don't show
 
     const { data: game, error: gameErr } = await supabase
       .from('games')
@@ -781,16 +781,15 @@ export function useOnlineGame() {
         .select('chat')
         .eq('id', gameId)
         .single();
-      if (chatData?.chat && Array.isArray(chatData.chat)) {
-        const loadedMsgs = (chatData.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>).map((m, i) => ({
+      if (chatData?.chat && Array.isArray(chatData.chat) && chatData.chat.length > 0) {
+        setChatMessages((chatData.chat as Array<{ sender: string; text: string; timestamp: number; avatarUrl?: string | null }>).map((m, i) => ({
           id: `db-${i}-${m.timestamp}`,
           sender: m.sender,
           text: m.text,
           timestamp: m.timestamp,
           isMine: m.sender === myUsernameRef.current,
           avatarUrl: m.avatarUrl || null,
-        }));
-        if (loadedMsgs.length > 0) setChatMessages(loadedMsgs);
+        })));
       }
     }
 
@@ -1001,7 +1000,6 @@ export function useOnlineGame() {
     setOpponentAvatar(null);
     setOpponentColor(null);
     opponentColorRef.current = null;
-    setChatMessages([]);
     setGameWager(0);
     setRoomCode('');
     stateReceivedRef.current = false;
