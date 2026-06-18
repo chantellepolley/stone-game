@@ -204,14 +204,22 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
   const opponentMsgCount = chatMessages.filter(m => !m.isMine).length;
   const chatLoaded = useRef(false);
   const [lastSeenOpponentCount, setLastSeenOpponentCount] = useState<number>(0);
-  // Track when chat messages first load from DB
+  // Load saved seen count once we're in a game
   useEffect(() => {
-    if (chatMessages.length > 0 && !chatLoaded.current) {
+    if (onlinePhase === 'playing' && roomCode && !chatLoaded.current) {
       chatLoaded.current = true;
-      const saved = roomCode ? localStorage.getItem(`stone_chat_seen_${roomCode}`) : null;
-      setLastSeenOpponentCount(saved ? parseInt(saved) : opponentMsgCount);
+      const saved = localStorage.getItem(`stone_chat_seen_${roomCode}`);
+      if (saved) {
+        setLastSeenOpponentCount(parseInt(saved));
+      } else {
+        // No saved count — default to current count after a brief delay
+        // to let DB messages load first
+        setTimeout(() => {
+          setLastSeenOpponentCount(prev => prev === 0 ? opponentMsgCount : prev);
+        }, 2000);
+      }
     }
-  }, [chatMessages.length, roomCode, opponentMsgCount]);
+  }, [onlinePhase, roomCode, opponentMsgCount]);
   // Reset on game switch
   useEffect(() => { chatLoaded.current = false; setLastSeenOpponentCount(0); coinsHandled.current = false; }, [currentGameId]);
   // Save last seen count when chat is opened
@@ -579,7 +587,7 @@ export default function OnlineGame({ onBack, autoJoinCode, resumeData, onInviteF
                        bg-[#504840] text-white border border-[#6b5f55] cursor-pointer shadow-md hover:bg-[#5e5549] transition-colors">
             Menu
           </button>
-          <button onClick={() => { setChatOpen(v => !v); setShowMobileLog(false); setShowMobileMenu(false); }}
+          <button onClick={() => { setChatOpen(v => !v); setShowMobileLog(false); setShowMobileMenu(false); setLastSeenOpponentCount(opponentMsgCount); if (roomCode) localStorage.setItem(`stone_chat_seen_${roomCode}`, String(opponentMsgCount)); }}
             className="relative px-6 py-2.5 rounded-xl text-xs font-heading uppercase tracking-wider
                        bg-amber-600 text-white border border-amber-500 cursor-pointer shadow-md hover:bg-amber-500 transition-colors">
             Chat
