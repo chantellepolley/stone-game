@@ -688,7 +688,7 @@ export const CHAMPION_STONES: StoneColor[] = [
     champion: true,
     championMonth: '2026-05',
     shape: 'sunburst',
-    image: '/champion-2026-05.png',
+    image: '/champion-2026-05-sm.png',
   },
   {
     id: 'champion-2026-06',
@@ -703,7 +703,7 @@ export const CHAMPION_STONES: StoneColor[] = [
     champion: true,
     championMonth: '2026-06',
     shape: 'sunburst',
-    image: '/champion-2026-06.png',
+    image: '/champion-2026-06-sm.png',
   },
   {
     id: 'champion-2026-07',
@@ -718,7 +718,7 @@ export const CHAMPION_STONES: StoneColor[] = [
     champion: true,
     championMonth: '2026-07',
     shape: 'sunburst',
-    image: '/champion-2026-07.png',
+    image: '/champion-2026-07-sm.png',
   },
 ];
 

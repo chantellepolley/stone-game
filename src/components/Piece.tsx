@@ -65,7 +65,14 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
       onClick={onClick}
       title={`${isP1 ? 'Sunstone' : 'Moonstone'}${piece.crowned ? ' (Crowned - Jester)' : ''}${color.champion ? ' [Champion]' : ''}`}
       style={hasImage ? {
+        backgroundImage: "url('/stone-bg.jpg')",
+        backgroundSize: '100px',
+        backgroundPosition: `${isP1 ? '0' : '50'}% ${isP1 ? '30' : '70'}%`,
+        boxShadow: '0 0 12px rgba(255,200,0,0.4), 0 4px 8px rgba(0,0,0,0.7)',
+        filter: 'brightness(1.5) contrast(1.05)',
+        clipPath: isChampion ? CHAMPION_CLIP : undefined,
         willChange: 'transform',
+        contain: 'layout style paint',
       } : {
         backgroundImage: "url('/stone-bg.jpg')",
         backgroundSize: '100px',
