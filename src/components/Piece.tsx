@@ -106,7 +106,11 @@ export default function Piece({ piece, size = 'md', onClick, highlighted, select
       {/* Crowned: jester face */}
       {piece.crowned && (
         <img src="/jester.png" alt="Crowned"
-          className={`absolute inset-0 w-full h-full ${isChampion ? '' : 'rounded-full'} object-cover z-10`} />
+          className={`absolute ${isChampion ? '' : 'rounded-full'} object-cover z-10`}
+          style={hasImage
+            ? { width: '60%', height: '60%', top: '20%', left: '20%', opacity: 0.85 }
+            : { inset: 0, width: '100%', height: '100%' }
+          } />
       )}
     </div>
   );
