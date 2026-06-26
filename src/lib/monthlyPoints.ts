@@ -226,21 +226,21 @@ export async function awardDailyLoginPoint(playerId: string): Promise<boolean> {
   const month = getCurrentMonth();
   await ensureRow(playerId, month);
 
-  const { data } = await supabase
-    .from('monthly_points')
-    .select('login_days, updated_at')
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Server-side check: look for an existing daily login log entry for today
+  const { data: existingLog } = await supabase
+    .from('monthly_point_log')
+    .select('id')
     .eq('player_id', playerId)
     .eq('month', month)
-    .single();
+    .eq('reason', 'Daily login')
+    .gte('created_at', today + 'T00:00:00Z')
+    .lte('created_at', today + 'T23:59:59Z')
+    .limit(1);
 
-  if (!data) return false;
+  if (existingLog && existingLog.length > 0) return false;
 
-  // Check if already awarded today (UTC)
-  const today = new Date().toISOString().slice(0, 10);
-  const lastLoginKey = `stone_potm_login_${month}_${today}`;
-  if (localStorage.getItem(lastLoginKey)) return false;
-
-  localStorage.setItem(lastLoginKey, '1');
   await addMonthlyPoints(playerId, 1, 'login_days', 'Daily login');
   return true;
 }
