@@ -43,30 +43,33 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [refCopied, setRefCopied] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(() => {
-    // Only show for cpolley for now (admin preview)
+    if (!localStorage.getItem('stone_has_played')) return false; // New players skip old announcements
     const seen = localStorage.getItem('stone_seen_announcement_potm');
     if (seen) return false;
     return true;
   });
   const [showReferralAnnouncement, setShowReferralAnnouncement] = useState(() => {
+    if (!localStorage.getItem('stone_has_played')) return false;
     const seen = localStorage.getItem('stone_seen_announcement_referral');
     if (seen) return false;
     return true;
   });
   const [showThemeAnnouncement, setShowThemeAnnouncement] = useState(() => {
+    if (!localStorage.getItem('stone_has_played')) return false;
     const seen = localStorage.getItem('stone_seen_announcement_themes');
     if (seen) return false;
     return true;
   });
   const [showPromoCountdownCard, setShowPromoCountdownCard] = useState(() => {
+    if (!localStorage.getItem('stone_has_played')) return false;
     const seen = localStorage.getItem('stone_seen_promo_countdown');
     if (seen) return false;
     return true;
   });
   const [showPotmWinnerCard, setShowPotmWinnerCard] = useState(() => {
+    if (!localStorage.getItem('stone_has_played')) return false;
     const seen = localStorage.getItem('stone_seen_potm_may2026_v3');
     if (seen) return false;
-    // Admin-only for now
     return true;
   });
   const [showWelcome, setShowWelcome] = useState(() => {
@@ -185,7 +188,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       if (isPromoActive(player.username)) {
         const config = getPromoConfig();
         const seen = localStorage.getItem('stone_seen_announcement_referral_promo');
-        if (!seen) setShowPromoAnnouncement(true);
+        if (!seen && localStorage.getItem('stone_has_played')) setShowPromoAnnouncement(true);
 
         // Send one-time push notification for this promo
         const pushKey = `stone_promo_push_sent_${config.id}`;
