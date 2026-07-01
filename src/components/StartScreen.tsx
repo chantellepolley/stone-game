@@ -66,12 +66,11 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     if (seen) return false;
     return true;
   });
-  const [showPotmWinnerCard, setShowPotmWinnerCard] = useState(() => {
-    if (!localStorage.getItem('stone_has_played')) return false;
-    const seen = localStorage.getItem('stone_seen_potm_may2026_v3');
-    if (seen) return false;
-    return true;
-  });
+  const [showPotmWinnerCard, setShowPotmWinnerCard] = useState(false);
+  const [potmWinnerData, setPotmWinnerData] = useState<{
+    username: string; points: number; month: string; monthDisplay: string;
+    stoneId: string; runners?: { name: string; points: number }[];
+  } | null>(null);
   const [showWelcome, setShowWelcome] = useState(() => {
     return !localStorage.getItem('stone_has_played');
   });
@@ -180,6 +179,55 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   useEffect(() => {
     if (editingName && nameInputRef.current) nameInputRef.current.focus();
   }, [editingName]);
+
+  // Fetch latest POTM champion for dynamic winner card
+  useEffect(() => {
+    if (!player || !localStorage.getItem('stone_has_played')) return;
+    (async () => {
+      const { data: champ } = await supabase
+        .from('champions')
+        .select('player_id, month, points, stone_id')
+        .order('month', { ascending: false })
+        .limit(1)
+        .single();
+      if (!champ) return;
+
+      const seenKey = `stone_seen_potm_winner_${champ.month}`;
+      if (localStorage.getItem(seenKey)) return;
+
+      const { data: winner } = await supabase.from('players').select('username').eq('id', champ.player_id).single();
+
+      // Get runners up
+      const { data: standings } = await supabase
+        .from('monthly_points')
+        .select('player_id, points')
+        .eq('month', champ.month)
+        .eq('qualified', true)
+        .order('points', { ascending: false })
+        .limit(3);
+
+      const runners: { name: string; points: number }[] = [];
+      if (standings && standings.length > 1) {
+        for (let i = 1; i < standings.length; i++) {
+          const { data: p } = await supabase.from('players').select('username').eq('id', standings[i].player_id).single();
+          runners.push({ name: p?.username || 'Unknown', points: standings[i].points });
+        }
+      }
+
+      const [year, m] = champ.month.split('-');
+      const monthDisplay = new Date(Date.UTC(Number(year), Number(m) - 1, 15)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+      setPotmWinnerData({
+        username: winner?.username || 'Unknown',
+        points: champ.points,
+        month: champ.month,
+        monthDisplay,
+        stoneId: champ.stone_id,
+        runners,
+      });
+      setShowPotmWinnerCard(true);
+    })();
+  }, [player]);
 
   // Check referral promo
   useEffect(() => {
@@ -879,41 +927,38 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
-      {/* POTM May 2026 Winner announcement */}
-      {showPotmWinnerCard && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+      {/* POTM Winner announcement (dynamic) */}
+      {showPotmWinnerCard && potmWinnerData && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-5xl mb-2">&#127942;</p>
             <h2 className="text-amber-400 font-heading text-xl mb-1">Player of the Month</h2>
-            <p className="text-white/50 text-sm mb-3">May 2026</p>
+            <p className="text-white/50 text-sm mb-3">{potmWinnerData.monthDisplay}</p>
             <div className="bg-black/20 rounded-xl p-4 mb-4">
-              <p className="text-amber-400 font-heading text-2xl mb-1">Hoppys Gold</p>
-              <p className="text-white/60 text-sm">560 points</p>
-              <div className="flex justify-center gap-4 mt-2 text-[10px] text-white/40">
-                <span>2nd: Vet (521)</span>
-                <span>3rd: MOMKID (347)</span>
-              </div>
+              <p className="text-amber-400 font-heading text-2xl mb-1">{potmWinnerData.username}</p>
+              <p className="text-white/60 text-sm">{potmWinnerData.points} points</p>
+              {potmWinnerData.runners && potmWinnerData.runners.length > 0 && (
+                <div className="flex justify-center gap-4 mt-2 text-[10px] text-white/40">
+                  {potmWinnerData.runners.map((r, i) => (
+                    <span key={i}>{i === 0 ? '2nd' : '3rd'}: {r.name} ({r.points})</span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex justify-center mb-3">
-              <img src="/champion-2026-05.png" alt="May Champion Stone" className="w-16 h-16 object-contain" />
+              <img src={`/${potmWinnerData.stoneId}.png`} alt="Champion Stone" className="w-16 h-16 object-contain" />
             </div>
             <p className="text-white/50 text-xs mb-3">
-              Congratulations to Hoppys Gold for dominating May! An exclusive Champion Stone and 500 bonus coins have been awarded.
-            </p>
-            <div className="w-full h-px bg-white/10 my-3" />
-            <p className="text-3xl mb-1">&#128293;</p>
-            <h3 className="text-green-400 font-heading text-lg mb-1">June Competition is LIVE!</h3>
-            <p className="text-white/50 text-xs mb-4">
-              The race for June Player of the Month starts now. Play games, earn points, and claim the throne!
+              Congratulations to {potmWinnerData.username} for dominating {potmWinnerData.monthDisplay}! An exclusive Champion Stone and 500 bonus coins have been awarded.
             </p>
             <button onClick={() => {
-              localStorage.setItem('stone_seen_potm_may2026_v3', '1');
+              localStorage.setItem(`stone_seen_potm_winner_${potmWinnerData.month}`, '1');
               setShowPotmWinnerCard(false);
               if (onShowMonthlyStandings) onShowMonthlyStandings();
             }}
               className="px-6 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
                          bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
-              Let's Go!
+              View Standings
             </button>
           </div>
         </div>
