@@ -9,7 +9,7 @@ interface Champion {
   stone_id: string;
   username: string;
   avatar_url: string | null;
-  runners: { username: string; points: number }[];
+  runners: { username: string; points: number; avatar_url: string | null }[];
 }
 
 export default function HallOfFame({ onBack }: { onBack: () => void }) {
@@ -50,12 +50,13 @@ export default function HallOfFame({ onBack }: { onBack: () => void }) {
           const runnerIds = standings.slice(1).map(s => s.player_id);
           const { data: runnerPlayers } = await supabase
             .from('players')
-            .select('id, username')
+            .select('id, username, avatar_url')
             .in('id', runnerIds);
-          const runnerNameMap: Record<string, string> = {};
-          runnerPlayers?.forEach(p => { runnerNameMap[p.id] = p.username; });
+          const runnerMap: Record<string, { username: string; avatar_url: string | null }> = {};
+          runnerPlayers?.forEach(p => { runnerMap[p.id] = { username: p.username, avatar_url: p.avatar_url }; });
           for (let i = 1; i < standings.length; i++) {
-            runners.push({ username: runnerNameMap[standings[i].player_id] || 'Unknown', points: standings[i].points });
+            const r = runnerMap[standings[i].player_id];
+            runners.push({ username: r?.username || 'Unknown', points: standings[i].points, avatar_url: r?.avatar_url || null });
           }
         }
 
@@ -134,9 +135,18 @@ export default function HallOfFame({ onBack }: { onBack: () => void }) {
                     </div>
                     <div className="text-[9px] text-white/30 mt-0.5">{c.points} points | {stone?.name || 'Champion Stone'}</div>
                     {c.runners.length > 0 && (
-                      <div className="flex gap-3 mt-1 text-[9px] text-white/25">
+                      <div className="flex gap-3 mt-1.5">
                         {c.runners.map((r, i) => (
-                          <span key={i}>{i === 0 ? '2nd' : '3rd'}: {r.username} ({r.points})</span>
+                          <div key={i} className="flex items-center gap-1">
+                            {r.avatar_url ? (
+                              <img src={r.avatar_url} alt="" className="w-4 h-4 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-4 h-4 rounded-full bg-[#3d3632] flex items-center justify-center">
+                                <span className="text-[6px] font-heading text-white/40">{r.username[0]?.toUpperCase()}</span>
+                              </div>
+                            )}
+                            <span className="text-[9px] text-white/25">{i === 0 ? '2nd' : '3rd'}: {r.username} ({r.points})</span>
+                          </div>
                         ))}
                       </div>
                     )}
