@@ -9,6 +9,7 @@ interface Champion {
   stone_id: string;
   username: string;
   avatar_url: string | null;
+  runners: { username: string; points: number }[];
 }
 
 export default function HallOfFame({ onBack }: { onBack: () => void }) {
@@ -34,11 +35,39 @@ export default function HallOfFame({ onBack }: { onBack: () => void }) {
       const avatarMap: Record<string, string | null> = {};
       players?.forEach(p => { nameMap[p.id] = p.username; avatarMap[p.id] = p.avatar_url; });
 
-      setChampions(data.map(c => ({
-        ...c,
-        username: nameMap[c.player_id] || 'Unknown',
-        avatar_url: avatarMap[c.player_id] || null,
-      })));
+      // Fetch 2nd and 3rd place for each month
+      const championsWithRunners = await Promise.all(data.map(async (c) => {
+        const { data: standings } = await supabase
+          .from('monthly_points')
+          .select('player_id, points')
+          .eq('month', c.month)
+          .eq('qualified', true)
+          .order('points', { ascending: false })
+          .limit(3);
+
+        const runners: { username: string; points: number }[] = [];
+        if (standings && standings.length > 1) {
+          const runnerIds = standings.slice(1).map(s => s.player_id);
+          const { data: runnerPlayers } = await supabase
+            .from('players')
+            .select('id, username')
+            .in('id', runnerIds);
+          const runnerNameMap: Record<string, string> = {};
+          runnerPlayers?.forEach(p => { runnerNameMap[p.id] = p.username; });
+          for (let i = 1; i < standings.length; i++) {
+            runners.push({ username: runnerNameMap[standings[i].player_id] || 'Unknown', points: standings[i].points });
+          }
+        }
+
+        return {
+          ...c,
+          username: nameMap[c.player_id] || 'Unknown',
+          avatar_url: avatarMap[c.player_id] || null,
+          runners,
+        };
+      }));
+
+      setChampions(championsWithRunners);
       setLoading(false);
     };
     load();
@@ -104,6 +133,13 @@ export default function HallOfFame({ onBack }: { onBack: () => void }) {
                       <span className="text-white font-heading text-sm truncate">{c.username}</span>
                     </div>
                     <div className="text-[9px] text-white/30 mt-0.5">{c.points} points | {stone?.name || 'Champion Stone'}</div>
+                    {c.runners.length > 0 && (
+                      <div className="flex gap-3 mt-1 text-[9px] text-white/25">
+                        {c.runners.map((r, i) => (
+                          <span key={i}>{i === 0 ? '2nd' : '3rd'}: {r.username} ({r.points})</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
