@@ -45,7 +45,7 @@ export default function HallOfFame({ onBack }: { onBack: () => void }) {
           .order('points', { ascending: false })
           .limit(3);
 
-        const runners: { username: string; points: number }[] = [];
+        const runners: { username: string; points: number; avatar_url: string | null }[] = [];
         if (standings && standings.length > 1) {
           const runnerIds = standings.slice(1).map(s => s.player_id);
           const { data: runnerPlayers } = await supabase
