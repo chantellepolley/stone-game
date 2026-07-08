@@ -6,6 +6,15 @@ import type { AIDifficulty } from '../types/game';
 import { SkeletonRow } from './Skeleton';
 import { useFriends } from '../hooks/useFriends';
 import JesterCoin from './JesterCoin';
+import { msUntilForfeit, settleStaleGames } from '../lib/timeoutForfeit';
+
+/** Short "2w 3d" / "5d" / "6h" style label for a forfeit countdown. */
+function forfeitCountdown(ms: number): string {
+  const days = Math.floor(ms / 86400000);
+  if (days >= 1) return `${days}d`;
+  const hrs = Math.max(1, Math.floor(ms / 3600000));
+  return `${hrs}h`;
+}
 
 interface GameRow {
   id: string;
@@ -20,6 +29,8 @@ interface GameRow {
   is_my_turn: boolean;
   winner_label: string | null;
   wager: number;
+  /** ms until this game auto-forfeits, or null if not applicable (AI/local/finished). */
+  forfeit_ms: number | null;
 }
 
 interface InviteRow {
@@ -62,7 +73,6 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     const load = async () => {
       // Auto-forfeit any games the opponent abandoned (no move in 2 weeks)
       // before listing, so settled results show up in the correct tab.
-      const { settleStaleGames } = await import('../lib/timeoutForfeit');
       await settleStaleGames(player.id).catch(() => {});
 
       // Fetch games where this player is p1 or p2 (active + recent completed)
@@ -136,6 +146,9 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
           opponent_name: isAI ? `Computer (${(((g as any).state?.aiDifficulty) || 'medium').charAt(0).toUpperCase() + (((g as any).state?.aiDifficulty) || 'medium').slice(1)})` : isLocal ? 'Local 2P' : (opponentId ? (nameMap[opponentId] || 'Unknown') : 'Waiting...'),
           is_my_turn: g.status !== 'completed' && currentPlayer === myPlayer,
           winner_label: winnerLabel,
+          forfeit_ms: mode === 'online' && g.status === 'active' && opponentId
+            ? msUntilForfeit((g as any).state, g.updated_at)
+            : null,
           wager: isAI ? (AI_WAGER[((g as any).state?.aiDifficulty) as AIDifficulty] || 0) : (g.wager || 0),
         };
       });
@@ -453,6 +466,17 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                         )}
                         {' · '}{timeAgo(g.updated_at)}
                       </div>
+                      {g.forfeit_ms !== null && g.forfeit_ms > 0 && (
+                        <div className={`text-[10px] mt-0.5 ${
+                          g.forfeit_ms < 3 * 86400000
+                            ? (g.is_my_turn ? 'text-red-400 font-bold' : 'text-red-400/70')
+                            : 'text-white/30'
+                        }`}>
+                          {g.is_my_turn
+                            ? `⏳ Play within ${forfeitCountdown(g.forfeit_ms)} or you forfeit`
+                            : `⏳ Opponent forfeits in ${forfeitCountdown(g.forfeit_ms)}`}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
