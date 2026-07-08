@@ -1404,7 +1404,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Forfeit</p>
-                <p>You can forfeit a game at any time, but you lose your wager and your opponent wins.</p>
+                <p>You can forfeit a game at any time, but you lose your wager and your opponent wins. If you go 2 weeks without taking your turn in an online game, it is an automatic forfeit.</p>
               </div>
             </div>
             <button onClick={() => setShowCoinRules(false)}

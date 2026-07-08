@@ -60,6 +60,11 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
   useEffect(() => {
     if (!player) return;
     const load = async () => {
+      // Auto-forfeit any games the opponent abandoned (no move in 2 weeks)
+      // before listing, so settled results show up in the correct tab.
+      const { settleStaleGames } = await import('../lib/timeoutForfeit');
+      await settleStaleGames(player.id).catch(() => {});
+
       // Fetch games where this player is p1 or p2 (active + recent completed)
       // Fetch active and completed games separately — active needs state, completed doesn't
       const [{ data: activeData }, { data: completedData }] = await Promise.all([

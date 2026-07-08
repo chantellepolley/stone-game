@@ -103,6 +103,10 @@ export default function App() {
       import('./lib/monthlyPoints').then(({ checkAndCrownWinner }) => {
         checkAndCrownWinner().catch(() => {});
       });
+      // Auto-forfeit any online games abandoned for 2+ weeks
+      import('./lib/timeoutForfeit').then(({ settleStaleGames }) => {
+        settleStaleGames(player.id).catch(() => {});
+      });
     }
   }, [player]);
 
