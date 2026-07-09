@@ -41,42 +41,47 @@ export function evaluateBonuses(
   winnerPlayer: PlayerId,
   newWinStreak: number,
   totalWins: number,
+  isForfeit = false,
 ): BonusResult[] {
   const bonuses: BonusResult[] = [];
   const loser: PlayerId = winnerPlayer === 1 ? 2 : 1;
 
-  // 1. Win streak
+  // 1. Win streak — earned by winning, so it counts even on a forfeit win.
   const streakBonus = WIN_STREAK_BONUSES[newWinStreak];
   if (streakBonus) {
     bonuses.push({ type: 'win_streak', amount: streakBonus, label: `${newWinStreak} win streak!` });
   }
 
-  // 2. Perfect game — opponent captured 0 of your pieces
-  const opponentCaptures = state.captureCount?.[loser] || 0;
-  if (opponentCaptures === 0) {
-    bonuses.push({ type: 'perfect', amount: PERFECT_BONUS, label: 'Perfect game — no pieces lost!' });
+  // Skill-based bonuses (2–5) reward *how* the game was played. If the opponent
+  // forfeited or timed out, the game wasn't finished, so none were earned.
+  if (!isForfeit) {
+    // 2. Perfect game — opponent captured 0 of your pieces
+    const opponentCaptures = state.captureCount?.[loser] || 0;
+    if (opponentCaptures === 0) {
+      bonuses.push({ type: 'perfect', amount: PERFECT_BONUS, label: 'Perfect game — no pieces lost!' });
+    }
+
+    // 3. Speed bonus
+    if (state.turnCount < SPEED_THRESHOLD) {
+      bonuses.push({ type: 'speed', amount: SPEED_BONUS, label: `Speed win — under ${SPEED_THRESHOLD} turns!` });
+    }
+
+    // 4. More double jesters than opponent
+    const myJesters = state.jesterCount?.[winnerPlayer] || 0;
+    const oppJesters = state.jesterCount?.[loser] || 0;
+    if (myJesters > oppJesters && myJesters > 0) {
+      bonuses.push({ type: 'jesters', amount: JESTER_BONUS, label: `Jester master — ${myJesters} vs ${oppJesters} double jesters!` });
+    }
+
+    // 5. More regular doubles than opponent
+    const myDoubles = state.doublesCount?.[winnerPlayer] || 0;
+    const oppDoubles = state.doublesCount?.[loser] || 0;
+    if (myDoubles > oppDoubles && myDoubles > 0) {
+      bonuses.push({ type: 'doubles', amount: DOUBLES_BONUS, label: `Doubles luck — ${myDoubles} vs ${oppDoubles} doubles!` });
+    }
   }
 
-  // 3. Speed bonus
-  if (state.turnCount < SPEED_THRESHOLD) {
-    bonuses.push({ type: 'speed', amount: SPEED_BONUS, label: `Speed win — under ${SPEED_THRESHOLD} turns!` });
-  }
-
-  // 4. More double jesters than opponent
-  const myJesters = state.jesterCount?.[winnerPlayer] || 0;
-  const oppJesters = state.jesterCount?.[loser] || 0;
-  if (myJesters > oppJesters && myJesters > 0) {
-    bonuses.push({ type: 'jesters', amount: JESTER_BONUS, label: `Jester master — ${myJesters} vs ${oppJesters} double jesters!` });
-  }
-
-  // 5. More regular doubles than opponent
-  const myDoubles = state.doublesCount?.[winnerPlayer] || 0;
-  const oppDoubles = state.doublesCount?.[loser] || 0;
-  if (myDoubles > oppDoubles && myDoubles > 0) {
-    bonuses.push({ type: 'doubles', amount: DOUBLES_BONUS, label: `Doubles luck — ${myDoubles} vs ${oppDoubles} doubles!` });
-  }
-
-  // 6. Win milestones
+  // 6. Win milestones — based on total career wins, so counts on a forfeit win.
   const milestone = getMilestoneBonus(totalWins);
   if (milestone) {
     bonuses.push({ type: 'milestone', amount: milestone, label: `${totalWins} wins milestone!` });
@@ -96,6 +101,7 @@ export async function awardGameBonuses(
   winnerPlayer: PlayerId,
   isWinner: boolean,
   gameId?: string,
+  isForfeit = false,
 ): Promise<BonusResult[]> {
   // Get current stats
   const { data: stats } = await supabase
@@ -117,8 +123,8 @@ export async function awardGameBonuses(
       best_win_streak: newBest,
     }).eq('player_id', playerId);
 
-    // Evaluate bonuses
-    const bonuses = evaluateBonuses(state, winnerPlayer, newStreak, totalWins);
+    // Evaluate bonuses (skill bonuses suppressed on a forfeit/timeout win)
+    const bonuses = evaluateBonuses(state, winnerPlayer, newStreak, totalWins, isForfeit);
 
     // Award each bonus
     for (const bonus of bonuses) {

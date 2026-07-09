@@ -66,6 +66,7 @@ export async function settleIfTimedOut(game: GameRow): Promise<PlayerId | null> 
     ...state,
     winner,
     phase: 'game_over',
+    endReason: 'timeout',
     moveLog: [
       ...state.moveLog,
       {
@@ -102,9 +103,11 @@ export async function settleIfTimedOut(game: GameRow): Promise<PlayerId | null> 
   const { recordGameResult } = await import('./statsTracker');
   await recordGameResult(finalState, winner, game.player1_id, game.player2_id);
 
+  // isForfeit=true suppresses skill bonuses (speed/perfect/jester/doubles) —
+  // the opponent didn't play the game out, so those weren't earned.
   const { awardGameBonuses } = await import('./bonuses');
-  if (winnerDbId) await awardGameBonuses(winnerDbId, stateWithWager, winner, true, game.id);
-  if (loserDbId) await awardGameBonuses(loserDbId, stateWithWager, winner, false, game.id);
+  if (winnerDbId) await awardGameBonuses(winnerDbId, stateWithWager, winner, true, game.id, true);
+  if (loserDbId) await awardGameBonuses(loserDbId, stateWithWager, winner, false, game.id, true);
 
   // Winner collects the pot (both players' wagers).
   if (wager > 0 && winnerDbId) {

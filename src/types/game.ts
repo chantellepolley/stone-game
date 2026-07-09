@@ -38,6 +38,13 @@ export interface GameState {
   gameMode: GameMode;
   aiDifficulty: AIDifficulty;
   winner: PlayerId | null;
+  /**
+   * Why the game ended. Undefined for a normal played-out win. 'forfeit' =
+   * a player quit; 'timeout' = auto-forfeit after 2 weeks of inactivity.
+   * Used to suppress skill-based bonuses (speed/perfect/jester/doubles) that
+   * weren't actually earned when the opponent didn't finish the game.
+   */
+  endReason?: 'forfeit' | 'timeout';
   moveLog: MoveLogEntry[];
   turnCount: number;
   /** Cumulative count of pieces each player has captured from their opponent */

@@ -218,8 +218,10 @@ export function useOnlineGame() {
             const gameWager = (await supabase.from('games').select('wager').eq('id', gameDbId.current!).single()).data?.wager || 0;
             const stateWithWager = { ...state, wager: gameWager };
             const loserDbId = state.winner === 1 ? game.player2_id : game.player1_id;
-            await awardGameBonuses(winnerDbId!, stateWithWager, state.winner!, true, gameDbId.current!);
-            if (loserDbId) await awardGameBonuses(loserDbId, stateWithWager, state.winner!, false, gameDbId.current!);
+            // Forfeit/timeout wins skip skill bonuses (speed/perfect/jester/doubles).
+            const isForfeit = state.endReason === 'forfeit' || state.endReason === 'timeout';
+            await awardGameBonuses(winnerDbId!, stateWithWager, state.winner!, true, gameDbId.current!, isForfeit);
+            if (loserDbId) await awardGameBonuses(loserDbId, stateWithWager, state.winner!, false, gameDbId.current!, isForfeit);
 
             // Award wager coins to winner
             if (gameWager > 0 && winnerDbId) {
@@ -1093,6 +1095,7 @@ export function useOnlineGame() {
       ...state,
       winner: opponentPlayer,
       phase: 'game_over',
+      endReason: 'forfeit',
       moveLog: [
         ...state.moveLog,
         {
