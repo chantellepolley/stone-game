@@ -1,7 +1,7 @@
 // STONE Service Worker — push notifications + offline app shell cache
-// v6 — cache app shell for offline AI play
+// v7 — fetch handler can never resolve to null (fixes white-screen crash)
 
-const CACHE_NAME = 'stone-v6';
+const CACHE_NAME = 'stone-v7';
 const SHELL_URLS = [
   '/',
   '/stone-bg.jpg',
@@ -110,29 +110,47 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // For navigation (HTML) — network first, cache fallback
+  // For navigation (HTML) — network first, cache fallback.
+  // CRITICAL: this must ALWAYS resolve to a real Response. Returning
+  // undefined/null to respondWith crashes the page ("Returned response is
+  // null") and, because the worker keeps intercepting, bricks every reload.
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).then((response) => {
-        // Cache the latest HTML
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put('/', clone));
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request);
+        if (response && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('/', clone)).catch(() => {});
+        }
         return response;
-      }).catch(() => caches.match('/'))
-    );
+      } catch (err) {
+        const cached = await caches.match('/');
+        if (cached) return cached;
+        // Last resort — never return undefined.
+        return new Response(
+          '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+          '<title>STONE</title><body style="margin:0;background:#1a1510;color:#e8dcc0;font-family:-apple-system,sans-serif;' +
+          'display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center">' +
+          '<div><p>Reconnecting to STONE…</p><p><a href="/" style="color:#d9a441">Tap to retry</a></p></div>',
+          { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+        );
+      }
+    })());
     return;
   }
 
-  // For static assets (images, fonts) — cache first, network fallback
+  // For static assets (images, fonts) — cache first, network fallback.
   if (SHELL_URLS.includes(url.pathname)) {
     event.respondWith(
       caches.match(event.request).then((cached) =>
         cached || fetch(event.request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
+          }
           return response;
         })
-      )
+      ).catch(() => caches.match(event.request).then((c) => c || Response.error()))
     );
     return;
   }

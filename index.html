@@ -64,13 +64,10 @@
   <body style="background-color: #1a1510; margin: 0;">
     <div id="root"></div>
     <script>
-      // Nuke all old caches on every page load
-      if ('caches' in window) {
-        caches.keys().then(function(names) {
-          names.forEach(function(name) { caches.delete(name); });
-        });
-      }
-      // Force service worker update
+      // Nudge the service worker to check for updates. We do NOT delete caches
+      // here: wiping the worker's shell cache on every load removed its offline
+      // fallback and caused white-screen crashes. The worker cleans up old
+      // caches itself on activate (keyed by CACHE_NAME version).
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           regs.forEach(function(reg) {
