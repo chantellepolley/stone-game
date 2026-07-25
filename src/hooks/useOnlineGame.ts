@@ -147,8 +147,10 @@ export function useOnlineGame() {
         setState(loadedState);
         stateRef.current = loadedState;
         // If validateState fixed a stuck state (e.g. no_moves), save the fix to DB
+        // AND notify the opponent it's their turn (heals a frozen game on open).
         if (rawState.phase !== loadedState.phase && gameDbId.current) {
           supabase.from('games').update({ state: loadedState, updated_at: new Date().toISOString() }).eq('id', gameDbId.current);
+          if (loadedState.currentPlayer !== myPlayer) notifyOpponentTurn(loadedState);
         }
         // Ensure we're in playing phase if we have valid state
         if (loadedState.phase !== 'not_started') {
@@ -766,6 +768,7 @@ export function useOnlineGame() {
       stateRef.current = loadedState;
       if (rawState.phase !== loadedState.phase && gameId) {
         supabase.from('games').update({ state: loadedState, updated_at: new Date().toISOString() }).eq('id', gameId);
+        if (loadedState.currentPlayer !== player) notifyOpponentTurn(loadedState);
       }
       stateReceivedRef.current = true;
       setOnlinePhase('playing');
@@ -919,33 +922,47 @@ export function useOnlineGame() {
     broadcastState(newState, move);
   }, [isMyTurn, state]);
 
-  // ── Auto-advance after blocked mid-turn (no_moves from selectMove) ──
+  // ── Auto-advance after a no_moves turn ──
+  // The turn pass is COMMITTED IMMEDIATELY (saved to DB + opponent notified via
+  // broadcastState) the moment we hit no_moves — NOT inside the timeout. The old
+  // code only committed when the timer fired 2.5–3.5s later, so if the blocked
+  // player closed the app during the "No valid moves!" display the turn was
+  // never passed and the game froze. The timeout now only delays the local
+  // visual flip so the player still sees the message.
+  const noMovesCommitted = useRef<string | null>(null);
   useEffect(() => {
     if (state.phase !== 'no_moves') return;
+    if (!isMyTurn) return; // only the blocked player commits the pass
+
+    const switched: GameState = {
+      ...state,
+      currentPlayer: state.currentPlayer === 1 ? 2 : 1,
+      dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
+      phase: 'rolling',
+      turnCount: state.turnCount + 1,
+      lastTurnMoves: {
+        player: state.currentPlayer,
+        dice: [...currentTurnDice.current] as [number, number],
+        moves: [...currentTurnMoves.current],
+        snapshot: preTurnSnapshot.current || undefined,
+      },
+    };
+
+    // Commit now — runs synchronously with the render commit, so it cannot be
+    // lost by the player leaving. broadcastState saves to DB + pings opponent.
+    const sig = `${state.turnCount}:${state.currentPlayer}`;
+    if (noMovesCommitted.current !== sig) {
+      noMovesCommitted.current = sig;
+      broadcastState(switched);
+    }
+
+    // Delay only the local visual flip so the player still sees "No valid moves!".
     const blocked = state.dice.remaining.length > 0;
     const timer = setTimeout(() => {
-      setState(prev => {
-        if (prev.phase !== 'no_moves') return prev;
-        const switched: GameState = {
-          ...prev,
-          currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
-          dice: { values: [0, 0], remaining: [], hasRolled: false, pendingDoubleJester: false },
-          phase: 'rolling',
-          turnCount: prev.turnCount + 1,
-          lastTurnMoves: {
-            player: prev.currentPlayer,
-            dice: [...currentTurnDice.current] as [number, number],
-            moves: [...currentTurnMoves.current],
-            snapshot: preTurnSnapshot.current || undefined,
-          },
-        };
-        broadcastState(switched);
-        saveGameState(switched);
-        return switched;
-      });
+      setState(prev => (prev.phase === 'no_moves' ? switched : prev));
     }, blocked ? 2500 : 3500);
     return () => clearTimeout(timer);
-  }, [state.phase, state.dice.remaining.length]);
+  }, [state.phase, state.dice.remaining.length, isMyTurn, state.turnCount, state.currentPlayer]);
 
   const chooseJesterDoubles = useCallback((value: number) => {
     if (!isMyTurn) return;
