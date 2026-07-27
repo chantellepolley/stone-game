@@ -189,54 +189,64 @@ export function useOnlineGame() {
       localStorage.removeItem('stone_active_game');
       if (gameDbId.current) {
         (async () => {
-          // Fetch game to check if already completed and get both player IDs
+          // Fetch player IDs + wager (needed to set winner_id and award coins).
           const { data: game } = await supabase
             .from('games')
-            .select('player1_id, player2_id, status')
+            .select('player1_id, player2_id, wager')
             .eq('id', gameDbId.current!)
             .single();
 
           if (!game) return;
 
           const winnerDbId = state.winner === 1 ? game.player1_id : game.player2_id;
+          const loserDbId = state.winner === 1 ? game.player2_id : game.player1_id;
 
-          // Update game status + record stats only if not already completed
-          // This prevents double-recording when both clients are online
-          if (game.status !== 'completed') {
-            await supabase.from('games').update({
+          // ATOMIC claim: flip status active -> completed in ONE conditional
+          // update, and only award if this client actually won the row. The old
+          // code read status then updated separately, so when both players were
+          // online at game end both passed the check and both awarded every
+          // point/bonus (double-counting the whole game). A compare-and-swap
+          // lets exactly one client settle.
+          const { data: claimed } = await supabase
+            .from('games')
+            .update({
               status: 'completed',
               state,
               winner_id: winnerDbId,
               updated_at: new Date().toISOString(),
-            }).eq('id', gameDbId.current!);
+            })
+            .eq('id', gameDbId.current!)
+            .neq('status', 'completed')
+            .select('id')
+            .maybeSingle();
 
-            // Record stats for both players
-            recordGameResult(state, state.winner!, game.player1_id, game.player2_id);
+          if (!claimed) return; // another client already settled this game
 
-            // Award game bonuses + POTM points for both players
-            // This runs in the hook (not just the UI component) so it works
-            // even when the winner isn't viewing this specific game (e.g. forfeit)
-            const { awardGameBonuses } = await import('../lib/bonuses');
-            const gameWager = (await supabase.from('games').select('wager').eq('id', gameDbId.current!).single()).data?.wager || 0;
-            const stateWithWager = { ...state, wager: gameWager };
-            const loserDbId = state.winner === 1 ? game.player2_id : game.player1_id;
-            // Forfeit/timeout wins skip skill bonuses (speed/perfect/jester/doubles).
-            const isForfeit = state.endReason === 'forfeit' || state.endReason === 'timeout';
-            await awardGameBonuses(winnerDbId!, stateWithWager, state.winner!, true, gameDbId.current!, isForfeit);
-            if (loserDbId) await awardGameBonuses(loserDbId, stateWithWager, state.winner!, false, gameDbId.current!, isForfeit);
+          // Record stats for both players
+          recordGameResult(state, state.winner!, game.player1_id, game.player2_id);
 
-            // Award wager coins to winner
-            if (gameWager > 0 && winnerDbId) {
-              const { addCoins } = await import('../lib/coins');
-              await addCoins(winnerDbId, gameWager * 2, 'Online game win');
-            }
+          // Award game bonuses + POTM points for both players. This runs in the
+          // hook (not just the UI component) so it works even when the winner
+          // isn't viewing this specific game (e.g. forfeit).
+          const { awardGameBonuses } = await import('../lib/bonuses');
+          const gameWager = game.wager || 0;
+          const stateWithWager = { ...state, wager: gameWager };
+          // Forfeit/timeout wins skip skill bonuses (speed/perfect/jester/doubles).
+          const isForfeit = state.endReason === 'forfeit' || state.endReason === 'timeout';
+          await awardGameBonuses(winnerDbId!, stateWithWager, state.winner!, true, gameDbId.current!, isForfeit);
+          if (loserDbId) await awardGameBonuses(loserDbId, stateWithWager, state.winner!, false, gameDbId.current!, isForfeit);
 
-            // Check if this was a tiebreaker game
-            const { recordTiebreakerResult } = await import('../lib/monthlyPoints');
-            const capturesP1 = state.captureCount?.[1] || 0;
-            const capturesP2 = state.captureCount?.[2] || 0;
-            recordTiebreakerResult(gameDbId.current!, winnerDbId!, capturesP1, capturesP2).catch(() => {});
+          // Award wager coins to winner
+          if (gameWager > 0 && winnerDbId) {
+            const { addCoins } = await import('../lib/coins');
+            await addCoins(winnerDbId, gameWager * 2, 'Online game win');
           }
+
+          // Check if this was a tiebreaker game
+          const { recordTiebreakerResult } = await import('../lib/monthlyPoints');
+          const capturesP1 = state.captureCount?.[1] || 0;
+          const capturesP2 = state.captureCount?.[2] || 0;
+          recordTiebreakerResult(gameDbId.current!, winnerDbId!, capturesP1, capturesP2).catch(() => {});
         })();
       }
     }
