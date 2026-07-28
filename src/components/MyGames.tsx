@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
-import { AI_WAGER } from '../lib/coins';
+import { AI_WAGER, addCoins } from '../lib/coins';
+import { useCoins } from '../contexts/CoinsContext';
 import type { AIDifficulty } from '../types/game';
 import { SkeletonRow } from './Skeleton';
 import { useFriends } from '../hooks/useFriends';
@@ -61,6 +62,7 @@ interface MyGamesProps {
 
 export default function MyGames({ onResume, onBack }: MyGamesProps) {
   const { player } = usePlayerContext();
+  const { earn } = useCoins();
   const { getPendingRequests, pendingRequests, acceptFriend } = useFriends();
   const [games, setGames] = useState<GameRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
@@ -263,12 +265,16 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
     setGames(prev => prev.filter(g => g.id !== gameId));
   };
 
-  const handleDeclineInvite = async (inviteId: string) => {
+  const handleDeclineInvite = async (invite: InviteRow) => {
     await supabase
       .from('game_invites')
       .update({ status: 'declined' })
-      .eq('id', inviteId);
-    setInvites(prev => prev.filter(i => i.id !== inviteId));
+      .eq('id', invite.id);
+    // Refund the wager to the SENDER (they paid it when sending the invite).
+    if (invite.wager > 0 && invite.from_player_id) {
+      await addCoins(invite.from_player_id, invite.wager, 'Wager refund — invite declined');
+    }
+    setInvites(prev => prev.filter(i => i.id !== invite.id));
   };
 
   const timeAgo = (dateStr: string) => {
@@ -359,7 +365,7 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                       Play
                     </button>
                     <button
-                      onClick={() => handleDeclineInvite(inv.id)}
+                      onClick={() => handleDeclineInvite(inv)}
                       className="px-3 py-1.5 rounded-lg text-[9px] font-heading uppercase tracking-wider
                                  bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors"
                     >
@@ -424,6 +430,8 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
                   <button
                     onClick={async () => {
                       await supabase.from('game_invites').update({ status: 'declined' }).eq('id', si.id);
+                      // Refund my wager — I paid it when I sent this invite.
+                      if (si.wager > 0) await earn(si.wager, 'Wager refund — invite cancelled');
                       setSentInvites(prev => prev.filter(i => i.id !== si.id));
                     }}
                     className="px-3 py-1.5 rounded-lg text-[9px] font-heading uppercase tracking-wider
