@@ -449,8 +449,15 @@ export function useOnlineGame() {
         payload: { state: newState, move: move || null },
       });
     }
-    // Save to DB
-    saveGameState(newState);
+    // Save to DB — but NEVER persist a transient no_moves state. The auto-advance
+    // effect immediately saves the turn-passed state; persisting no_moves as well
+    // created a write race where the no_moves save could land last and re-freeze
+    // the game (My Games shows "your turn" but the game shows the opponent's).
+    // Broadcasting no_moves live is fine for the "No valid moves!" animation — we
+    // only skip the DB write.
+    if (newState.phase !== 'no_moves') {
+      saveGameState(newState);
+    }
 
     // Send push notification to opponent when turn changes
     if (gameDbId.current && newState.currentPlayer !== stateRef.current.currentPlayer && newState.phase !== 'game_over') {
