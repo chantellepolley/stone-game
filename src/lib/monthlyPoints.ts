@@ -174,6 +174,9 @@ export function calculateBonusPoints(
   if (winStreak === 3) { points += 2; breakdown.push('3 win streak: +2'); }
   if (winStreak === 5) { points += 5; breakdown.push('5 win streak: +5'); }
   if (winStreak === 10) { points += 10; breakdown.push('10 win streak: +10'); }
+  if (winStreak === 25) { points += 25; breakdown.push('25 win streak: +25'); }
+  if (winStreak === 50) { points += 50; breakdown.push('50 win streak: +50'); }
+  if (winStreak === 100) { points += 100; breakdown.push('100 win streak: +100'); }
   if (perfectGame) { points += 3; breakdown.push('Perfect game: +3'); }
   if (speedWin) { points += 2; breakdown.push('Speed win: +2'); }
   if (doubleJesterMaster) { points += 1; breakdown.push('Jester master: +1'); }

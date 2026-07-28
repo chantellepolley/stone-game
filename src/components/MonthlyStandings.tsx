@@ -130,7 +130,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame, onInviteToP
               <p className="pl-3 text-white/30">Wager bonus: +1 for any wager, +1 more at 25+, +1 more at 50+, +2 more at 100+</p>
               <p><span className="text-white/70">Expert AI win:</span> +2 pts. Beat the computer on Expert difficulty.</p>
               <p><span className="text-white/70">Hard AI win:</span> +1 pt. Beat the computer on Hard difficulty.</p>
-              <p><span className="text-white/70">Win streak:</span> Win multiple games in a row. 3 in a row = +2, 5 in a row = +5, 10 in a row = +10.</p>
+              <p><span className="text-white/70">Win streak:</span> Win multiple games in a row. 3 = +2, 5 = +5, 10 = +10, 25 = +25, 50 = +50, 100 = +100.</p>
               <p><span className="text-white/70">Perfect game:</span> +3 pts. Win without your opponent capturing any of your pieces.</p>
               <p><span className="text-white/70">Speed win:</span> +2 pts. Win in under 30 turns.</p>
               <p><span className="text-white/70">Jester master:</span> +1 pt. Roll more double Jesters than your opponent in a game.</p>
@@ -244,7 +244,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame, onInviteToP
             <p className="pl-3 text-white/30">Wager bonus: +1 for any wager, +1 more at 25+, +1 more at 50+, +2 more at 100+</p>
             <p><span className="text-white/70">Expert AI win:</span> +2 pts. Beat the computer on Expert difficulty.</p>
             <p><span className="text-white/70">Hard AI win:</span> +1 pt. Beat the computer on Hard difficulty.</p>
-            <p><span className="text-white/70">Win streak:</span> Win multiple games in a row. 3 in a row = +2, 5 in a row = +5, 10 in a row = +10.</p>
+            <p><span className="text-white/70">Win streak:</span> Win multiple games in a row. 3 = +2, 5 = +5, 10 = +10, 25 = +25, 50 = +50, 100 = +100.</p>
             <p><span className="text-white/70">Perfect game:</span> +3 pts. Win without your opponent capturing any of your pieces.</p>
             <p><span className="text-white/70">Speed win:</span> +2 pts. Win in under 30 turns.</p>
             <p><span className="text-white/70">Jester master:</span> +1 pt. Roll more double Jesters than your opponent in a game.</p>
