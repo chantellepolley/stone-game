@@ -172,7 +172,7 @@ export default function MonthlyStandings({ onBack, onShowHallOfFame, onInviteToP
 
         {/* Countdown */}
         <div className="bg-black/20 rounded-lg px-4 py-2 text-center w-full">
-          <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Competition ends (UTC midnight)</p>
+          <p className="text-[9px] text-white/40 uppercase tracking-wider font-heading">Competition ends (midnight Eastern)</p>
           <p className="text-white font-heading text-sm">{countdown}</p>
         </div>
 

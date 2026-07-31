@@ -2,17 +2,64 @@ import { supabase } from './supabase';
 
 const QUALIFY_THRESHOLD = 5;
 
-/** Get current month key in YYYY-MM format (UTC) */
-export function getCurrentMonth(): string {
-  const now = new Date();
-  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+/**
+ * Competition timezone. The monthly competition rolls over at midnight in this
+ * zone (DST-aware), NOT at UTC midnight. So it ends at midnight Eastern.
+ */
+const COMPETITION_TZ = 'America/New_York';
+
+/** Break a Date into its wall-clock parts in the competition timezone. */
+function tzParts(date: Date): { year: number; month: number; day: number; hour: number; minute: number; second: number } {
+  const f = new Intl.DateTimeFormat('en-US', {
+    timeZone: COMPETITION_TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  });
+  const o: Record<string, string> = {};
+  for (const p of f.formatToParts(date)) o[p.type] = p.value;
+  const hour = o.hour === '24' ? 0 : Number(o.hour); // some engines emit "24" for midnight
+  return { year: Number(o.year), month: Number(o.month), day: Number(o.day), hour, minute: Number(o.minute), second: Number(o.second) };
 }
 
-/** Get milliseconds until end of current month (UTC midnight on last day) */
+/** UTC instant of a given wall-clock time in the competition timezone (DST-aware). */
+function tzWallToUTC(year: number, month: number, day: number, hour: number, minute: number, second: number): number {
+  const target = Date.UTC(year, month - 1, day, hour, minute, second);
+  let guess = target;
+  // Converge by the shortfall between the produced wall time and the target.
+  for (let i = 0; i < 3; i++) {
+    const p = tzParts(new Date(guess));
+    const wall = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+    const diff = target - wall;
+    if (diff === 0) break;
+    guess += diff;
+  }
+  return guess;
+}
+
+/** Get current month key in YYYY-MM format (competition timezone / Eastern) */
+export function getCurrentMonth(): string {
+  const p = tzParts(new Date());
+  return `${p.year}-${String(p.month).padStart(2, '0')}`;
+}
+
+/** Get the month key for the month before `date` (competition timezone / Eastern) */
+function getPrevMonthKey(date: Date): string {
+  const p = tzParts(date);
+  let year = p.year;
+  let month = p.month - 1;
+  if (month < 1) { month = 12; year -= 1; }
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+/** Get milliseconds until end of current month (midnight Eastern on the 1st of next month) */
 export function getTimeUntilMonthEnd(): number {
   const now = new Date();
-  const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999));
-  return Math.max(0, endOfMonth.getTime() - now.getTime());
+  const p = tzParts(now);
+  let year = p.year;
+  let month = p.month + 1;
+  if (month > 12) { month = 1; year += 1; }
+  const endOfMonth = tzWallToUTC(year, month, 1, 0, 0, 0);
+  return Math.max(0, endOfMonth - now.getTime());
 }
 
 /** First competition starts May 1, 2026 UTC */
@@ -258,10 +305,9 @@ export async function checkAndCrownWinner(): Promise<{
   winner?: { username: string; points: number; month: string };
   tie?: boolean;
 } | null> {
-  // Figure out the previous month
-  const now = new Date();
-  const prevDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15));
-  const prevMonth = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, '0')}`;
+  // Figure out the previous month (competition timezone / Eastern). This keeps
+  // a month from being crowned until midnight Eastern, not midnight UTC.
+  const prevMonth = getPrevMonthKey(new Date());
 
   // Don't check months before the competition started (May 2026)
   if (prevMonth < '2026-05') return null;
