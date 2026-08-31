@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+
+# Xcode build artifacts & per-user state
+ios/STONE/build/
+ios/STONE/STONE.xcodeproj/xcuserdata/
+ios/STONE/STONE.xcodeproj/project.xcworkspace/
+
+# Supabase CLI temp
+supabase/.temp/
