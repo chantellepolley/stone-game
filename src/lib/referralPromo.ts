@@ -8,7 +8,7 @@ const REFERRAL_PROMO = {
   newPlayerCoins: 100,                       // unchanged from the standard welcome bonus
   referrerPotmPoints: 0,                      // no POTM points on this campaign
   maxReferralsDuringPromo: 10,               // 500 for the first 10 referrals, then standard 100 (anti-farming cap)
-  adminOnly: true,  // REVIEW MODE: only the admin sees the card + push and gets the boosted reward. Flip to false to launch for everyone.
+  adminOnly: false,  // LIVE for all players
   adminUsername: 'cpolley',
 };
 
