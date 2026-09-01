@@ -60,12 +60,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     if (seen) return false;
     return true;
   });
-  const [showPromoCountdownCard, setShowPromoCountdownCard] = useState(() => {
-    if (!localStorage.getItem('stone_has_played')) return false;
-    const seen = localStorage.getItem('stone_seen_promo_countdown');
-    if (seen) return false;
-    return true;
-  });
+  // Shown only in the final stretch of the promo (driven by the countdown effect below)
+  const [showPromoCountdownCard, setShowPromoCountdownCard] = useState(false);
   const [showPotmWinnerCard, setShowPotmWinnerCard] = useState(false);
   const [potmWinnerData, setPotmWinnerData] = useState<{
     username: string; points: number; month: string; monthDisplay: string;
@@ -245,19 +241,26 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
           import('../hooks/usePushNotifications').then(({ sendPushNotification }) => {
             sendPushNotification(
               player.id,
-              'STONE - Referral Boost Challenge!',
-              'For 48 hours: earn 200 coins + 25 POTM points for every friend you invite!',
+              'STONE - Earn 500 Coins!',
+              'Invite friends to STONE! Earn 500 coins for every friend who signs up with your code. Limited time!',
               'referral-promo',
             );
           });
         }
 
-        // Update countdown
-        setPromoCountdown(formatTimeRemaining(getPromoTimeRemaining()));
-        const interval = setInterval(() => {
+        // Update countdown, and surface the "Last Chance" card only in the final 48 hours
+        const ENDING_SOON_MS = 48 * 60 * 60 * 1000;
+        const refreshCountdown = () => {
           const remaining = getPromoTimeRemaining();
           setPromoCountdown(formatTimeRemaining(remaining));
-          if (remaining <= 0) clearInterval(interval);
+          if (remaining > 0 && remaining <= ENDING_SOON_MS && !localStorage.getItem('stone_seen_promo_countdown')) {
+            setShowPromoCountdownCard(true);
+          }
+          return remaining;
+        };
+        refreshCountdown();
+        const interval = setInterval(() => {
+          if (refreshCountdown() <= 0) clearInterval(interval);
         }, 60000);
         return () => clearInterval(interval);
       }
@@ -548,7 +551,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                   className="w-full px-5 py-2.5 rounded-xl font-heading text-sm uppercase tracking-wider
                              text-white hover:text-amber-200 transition-colors cursor-pointer
                              border-2 border-amber-500 bg-amber-600 shadow-lg">
-                  Refer a Friend <span className="text-[10px] normal-case text-amber-200">+{checkPromo(player?.username) ? '200' : '100'} coins each</span>
+                  Refer a Friend <span className="text-[10px] normal-case text-amber-200">+{checkPromo(player?.username) ? '500' : '100'} coins per friend</span>
                 </button>
               )}
             </>
@@ -875,7 +878,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <p className="text-white/70 text-sm mb-1">
               You were referred by <span className="text-amber-400 font-heading">{referrerPrompt.username}</span>
             </p>
-            <p className="text-green-400 text-sm font-heading mb-4">You both got +{referrerPrompt.coins || 100} coins!</p>
+            <p className="text-green-400 text-sm font-heading mb-4">You got +{referrerPrompt.coins || 100} coins to start!</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
                 setReferrerPrompt(null);
@@ -902,7 +905,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <p className="text-4xl mb-2">&#127873;</p>
             <h2 className="text-amber-400 font-heading text-xl mb-1">Invite Your Friends!</h2>
             <p className="text-white/70 text-sm mb-4">
-              You both get <span className="text-amber-400 font-heading">{checkPromo(player?.username) ? '200' : '100'} coins</span> when they join using your referral code. Share the love and grow the STONE community!
+              {checkPromo(player?.username)
+                ? <>Earn <span className="text-amber-400 font-heading">500 coins</span> for every friend who signs up with your referral code (they get 100 to start). Share the love and grow the STONE community!</>
+                : <>You both get <span className="text-amber-400 font-heading">100 coins</span> when they join using your referral code. Share the love and grow the STONE community!</>}
             </p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
@@ -972,11 +977,11 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <h2 className="text-red-400 font-heading text-xl mb-1">Last Chance!</h2>
             <p className="text-amber-400 font-heading text-2xl mb-2">{promoCountdown} left</p>
             <p className="text-white/70 text-sm mb-3">
-              Referral Boost Challenge ends tonight! For every friend you invite:
+              The 500-coin referral promo is ending soon! For every friend who signs up with your code:
             </p>
             <div className="bg-black/20 rounded-lg p-3 mb-4 space-y-1">
-              <p className="text-amber-400 font-heading text-lg">+200 coins</p>
-              <p className="text-green-400 font-heading text-sm">+25 Player of the Month points</p>
+              <p className="text-amber-400 font-heading text-lg">+500 coins</p>
+              <p className="text-white/50 text-xs">They get 100 coins to start too</p>
             </div>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
@@ -1052,15 +1057,15 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       {showPromoAnnouncement && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
-            <p className="text-4xl mb-2">&#128293;</p>
-            <h2 className="text-amber-400 font-heading text-xl mb-1">Referral Boost Challenge!</h2>
+            <p className="text-4xl mb-2">&#129689;</p>
+            <h2 className="text-amber-400 font-heading text-xl mb-1">Invite Friends, Earn 500 Coins!</h2>
             <p className="text-white/70 text-sm mb-2">
               For the next <span className="text-amber-400 font-heading">{promoCountdown}</span>, earn
             </p>
             <div className="bg-black/20 rounded-lg p-3 mb-3 space-y-1">
-              <p className="text-amber-400 font-heading text-lg">200 coins per referral</p>
-              <p className="text-green-400 font-heading text-sm">+25 Player of the Month points</p>
-              <p className="text-white/40 text-[10px]">Max 5 referrals during promo. Your friend gets 200 coins too!</p>
+              <p className="text-amber-400 font-heading text-lg">500 coins per friend who joins</p>
+              <p className="text-white/50 text-xs">Share your referral code &mdash; you earn 500 the moment they sign up.</p>
+              <p className="text-white/40 text-[10px]">First 10 referrals during the promo. Your friend gets 100 coins to start too!</p>
             </div>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
@@ -1299,9 +1304,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       {/* Referral panel modal */}
       {showReferralPanel && referralCode && (() => {
         const promoActive = checkPromo(player?.username);
-        const coinAmount = promoActive ? 200 : 100;
         const shareText = promoActive
-          ? `Join me on STONE! Use my referral code: ${referralCode}. We both get 200 coins (PROMO)!\nhttps://stonethegame.com?ref=${referralCode}`
+          ? `Join me on STONE! Use my referral code: ${referralCode} and get 100 coins to start.\nhttps://stonethegame.com?ref=${referralCode}`
           : `Join me on STONE! Use my referral code: ${referralCode}. We both get 100 coins!\nhttps://stonethegame.com?ref=${referralCode}`;
         return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
@@ -1310,11 +1314,15 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             {promoActive && (
               <div className="bg-amber-600/20 border border-amber-600/40 rounded-lg px-3 py-1.5 mb-2">
                 <p className="text-amber-400 font-heading text-xs">PROMO ACTIVE {promoCountdown && `(${promoCountdown} left)`}</p>
-                <p className="text-green-400 text-[10px]">+25 POTM points per referral</p>
+                <p className="text-green-400 text-[10px]">500 coins per friend who signs up</p>
               </div>
             )}
             <p className="text-white/70 text-sm mb-4">
-              You both get <span className="text-amber-400 font-heading">+{coinAmount} coins</span> when they join!
+              {promoActive ? (
+                <>You earn <span className="text-amber-400 font-heading">+500 coins</span> for every friend who joins. They get <span className="text-amber-400 font-heading">+100</span> to start!</>
+              ) : (
+                <>You both get <span className="text-amber-400 font-heading">+100 coins</span> when they join!</>
+              )}
             </p>
 
             {/* QR Code */}
@@ -1400,7 +1408,9 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Refer a Friend</p>
-                <p>Share your referral code! You both get <span className="text-amber-400">+{checkPromo(player?.username) ? '200' : '100'} coins</span> when they join!</p>
+                <p>{checkPromo(player?.username)
+                  ? <>Share your referral code! You earn <span className="text-amber-400">+500 coins</span> for every friend who joins, and they get <span className="text-amber-400">+100</span> to start.</>
+                  : <>Share your referral code! You both get <span className="text-amber-400">+100 coins</span> when they join!</>}</p>
               </div>
               <div>
                 <p className="text-amber-400 font-heading text-[11px] uppercase tracking-wider mb-1">Forfeit</p>

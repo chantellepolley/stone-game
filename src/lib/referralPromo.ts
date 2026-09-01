@@ -1,14 +1,14 @@
 import { supabase } from './supabase';
 
 const REFERRAL_PROMO = {
-  id: 'referral-boost-may2026',
-  startUtc: Date.UTC(2026, 4, 27, 0, 0, 0),  // May 27, 2026 midnight UTC
-  endUtc:   Date.UTC(2026, 4, 30, 4, 0, 0),  // May 30, 2026 4am UTC (end of May 29 midnight EDT)
-  referrerCoins: 200,
-  newPlayerCoins: 200,
-  referrerPotmPoints: 25,
-  maxReferralsDuringPromo: 5,
-  adminOnly: false, // LIVE
+  id: 'referral-500-sept2026',
+  startUtc: Date.UTC(2026, 8, 1, 4, 0, 0),   // Sept 1, 2026 midnight Eastern (EDT = UTC-4)
+  endUtc:   Date.UTC(2026, 9, 1, 4, 0, 0),   // Oct 1, 2026 midnight Eastern — limited-time promo
+  referrerCoins: 500,                        // the person doing the referring earns big
+  newPlayerCoins: 100,                       // unchanged from the standard welcome bonus
+  referrerPotmPoints: 0,                      // no POTM points on this campaign
+  maxReferralsDuringPromo: 10,               // 500 for the first 10 referrals, then standard 100 (anti-farming cap)
+  adminOnly: true,  // REVIEW MODE: only the admin sees the card + push and gets the boosted reward. Flip to false to launch for everyone.
   adminUsername: 'cpolley',
 };
 

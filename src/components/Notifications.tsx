@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { usePlayerContext } from '../contexts/PlayerContext';
 import { showNotification } from '../hooks/usePushNotifications';
+import { getReferralAmounts } from '../lib/referralPromo';
 
 interface GameInvite {
   id: string;
@@ -271,7 +272,7 @@ export default function Notifications({ onAcceptInvite, onInviteToPlay }: Notifi
           <p className="text-white text-sm font-heading mb-1">
             <span className="text-green-400">{ref.playerName}</span> joined using your referral!
           </p>
-          <p className="text-amber-400 text-xs mb-2">+100 coins</p>
+          <p className="text-amber-400 text-xs mb-2">+{getReferralAmounts(player?.username).referrerCoins} coins</p>
           <div className="flex gap-2">
             {onInviteToPlay && (
               <button

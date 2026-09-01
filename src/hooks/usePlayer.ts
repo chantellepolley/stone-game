@@ -132,12 +132,10 @@ export function usePlayer() {
           });
 
           // Send push notification to the referrer
-          const coinText = `You both got ${result.referrerCoins} coins!`;
-          const promoText = result.isPromo ? ' +25 POTM points!' : '';
           sendPushNotification(
             referrer.id,
-            result.isPromo ? 'STONE - Referral PROMO!' : 'STONE - Referral Success!',
-            `${username} joined using your referral! ${coinText}${promoText}`,
+            result.isPromo ? 'STONE - You earned 500 coins!' : 'STONE - Referral Success!',
+            `${username} joined using your referral! You earned ${result.referrerCoins} coins.`,
             'referral-success'
           );
 
