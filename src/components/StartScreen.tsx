@@ -233,9 +233,11 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       if (isPromoActive(player.username)) {
         const config = getPromoConfig();
         setPromoConfigId(config.id);
-        // Seen-keys are namespaced per campaign so each new promo shows fresh (a prior promo's dismissal won't suppress this one)
+        // While the promo is admin-only (review mode), always show the card to the admin so it's easy to review.
+        // Once launched to everyone, seen-keys (namespaced per campaign) give normal show-once behavior.
+        const isAdminReview = config.adminOnly && player.username?.toLowerCase() === config.adminUsername;
         const cardSeenKey = `stone_seen_promo_card_${config.id}`;
-        if (!localStorage.getItem(cardSeenKey) && localStorage.getItem('stone_has_played')) setShowPromoAnnouncement(true);
+        if (isAdminReview || (!localStorage.getItem(cardSeenKey) && localStorage.getItem('stone_has_played'))) setShowPromoAnnouncement(true);
 
         // Send one-time push notification for this promo
         const pushKey = `stone_promo_push_sent_${config.id}`;
