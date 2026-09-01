@@ -80,6 +80,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
   const [confirmTheme, setConfirmTheme] = useState<string | null>(null);
   const [showPromoAnnouncement, setShowPromoAnnouncement] = useState(false);
   const [promoCountdown, setPromoCountdown] = useState('');
+  const [promoConfigId, setPromoConfigId] = useState<string | null>(null);
   const [referrerPrompt, setReferrerPrompt] = useState<{ id: string; username: string; coins?: number } | null>(() => {
     try {
       const raw = localStorage.getItem('stone_referrer');
@@ -231,8 +232,10 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     import('../lib/referralPromo').then(({ isPromoActive, getPromoTimeRemaining, formatTimeRemaining, getPromoConfig }) => {
       if (isPromoActive(player.username)) {
         const config = getPromoConfig();
-        const seen = localStorage.getItem('stone_seen_announcement_referral_promo');
-        if (!seen && localStorage.getItem('stone_has_played')) setShowPromoAnnouncement(true);
+        setPromoConfigId(config.id);
+        // Seen-keys are namespaced per campaign so each new promo shows fresh (a prior promo's dismissal won't suppress this one)
+        const cardSeenKey = `stone_seen_promo_card_${config.id}`;
+        if (!localStorage.getItem(cardSeenKey) && localStorage.getItem('stone_has_played')) setShowPromoAnnouncement(true);
 
         // Send one-time push notification for this promo
         const pushKey = `stone_promo_push_sent_${config.id}`;
@@ -253,7 +256,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         const refreshCountdown = () => {
           const remaining = getPromoTimeRemaining();
           setPromoCountdown(formatTimeRemaining(remaining));
-          if (remaining > 0 && remaining <= ENDING_SOON_MS && !localStorage.getItem('stone_seen_promo_countdown')) {
+          if (remaining > 0 && remaining <= ENDING_SOON_MS && !localStorage.getItem(`stone_seen_promo_countdown_${config.id}`)) {
             setShowPromoCountdownCard(true);
           }
           return remaining;
@@ -985,7 +988,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
-                localStorage.setItem('stone_seen_promo_countdown', '1');
+                if (promoConfigId) localStorage.setItem(`stone_seen_promo_countdown_${promoConfigId}`, '1');
                 setShowPromoCountdownCard(false);
                 setShowReferralPanel(true);
               }}
@@ -994,7 +997,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 Invite Now
               </button>
               <button onClick={() => {
-                localStorage.setItem('stone_seen_promo_countdown', '1');
+                if (promoConfigId) localStorage.setItem(`stone_seen_promo_countdown_${promoConfigId}`, '1');
                 setShowPromoCountdownCard(false);
               }}
                 className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
@@ -1069,7 +1072,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </div>
             <div className="flex gap-3 justify-center">
               <button onClick={() => {
-                localStorage.setItem('stone_seen_announcement_referral_promo', '1');
+                if (promoConfigId) localStorage.setItem(`stone_seen_promo_card_${promoConfigId}`, '1');
                 setShowPromoAnnouncement(false);
                 setShowReferralPanel(true);
               }}
@@ -1078,7 +1081,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 Share Now
               </button>
               <button onClick={() => {
-                localStorage.setItem('stone_seen_announcement_referral_promo', '1');
+                if (promoConfigId) localStorage.setItem(`stone_seen_promo_card_${promoConfigId}`, '1');
                 setShowPromoAnnouncement(false);
               }}
                 className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
