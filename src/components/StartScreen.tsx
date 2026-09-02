@@ -876,8 +876,11 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
         </div>
       )}
 
-      {/* Post-signup: invite referrer to play */}
-      {referrerPrompt && player && onPlayOnline && (
+      {/* Post-signup welcome for referred players — acknowledges the referral, then guides into onboarding */}
+      {referrerPrompt && player && (() => {
+        // Referred users go through the same guided first-run; clear both this prompt and the generic welcome
+        const startOnboarding = () => { localStorage.setItem('stone_onboarded', '1'); setReferrerPrompt(null); setShowWelcome(false); };
+        return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-4xl mb-2">&#127881;</p>
@@ -885,25 +888,30 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             <p className="text-white/70 text-sm mb-1">
               You were referred by <span className="text-amber-400 font-heading">{referrerPrompt.username}</span>
             </p>
-            <p className="text-green-400 text-sm font-heading mb-4">You got +{referrerPrompt.coins || 100} coins to start!</p>
-            <div className="flex gap-3 justify-center">
-              <button onClick={() => {
-                setReferrerPrompt(null);
-                if (onPlayOnline) onPlayOnline();
-              }}
-                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+            <p className="text-green-400 text-sm font-heading mb-1">You got +{referrerPrompt.coins || 100} coins to start!</p>
+            <p className="text-white/50 text-xs mb-4">New to STONE? Learn the basics first, it only takes a minute.</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => { startOnboarding(); if (onShowTutorial) onShowTutorial(); }}
+                className="w-full px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
                            bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
-                Play {referrerPrompt.username}!
+                How to Play
               </button>
-              <button onClick={() => setReferrerPrompt(null)}
-                className="px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
-                           bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors">
-                Later
+              <button onClick={() => { startOnboarding(); onStart('ai', 'easy', 0); }}
+                className="w-full px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors shadow-lg">
+                Skip to a practice game
               </button>
+              {onPlayOnline && (
+                <button onClick={() => { startOnboarding(); onPlayOnline(); }}
+                  className="text-white/40 text-xs hover:text-white/70 cursor-pointer transition-colors mt-1">
+                  Or jump straight into a game with {referrerPrompt.username}
+                </button>
+              )}
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Referral announcement popup — admin preview only */}
       {showReferralAnnouncement && player && !showAnnouncement && (
