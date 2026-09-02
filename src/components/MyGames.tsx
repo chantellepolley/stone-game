@@ -334,7 +334,11 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         ) : tab === 'invites' ? (
           /* Invites tab — game invites + friend requests */
           invites.length === 0 && pendingRequests.length === 0 && sentInvites.length === 0 ? (
-            <p className="text-white/40 text-sm">No pending invites</p>
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <span className="text-3xl">&#9993;</span>
+              <p className="text-white/70 text-sm font-heading">No pending invites</p>
+              <p className="text-white/40 text-xs max-w-[230px] leading-relaxed">Game invites and friend requests will appear here.</p>
+            </div>
           ) : (
             <div className="w-full overflow-y-auto space-y-2 max-h-[45vh]">
               {/* Game invites */}
@@ -446,7 +450,16 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         ) : tab === 'active' ? (
           /* Active Games tab */
           activeGames.length === 0 ? (
-            <p className="text-white/40 text-sm">No active games</p>
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <span className="text-3xl">&#127922;</span>
+              <p className="text-white/70 text-sm font-heading">No games in progress</p>
+              <p className="text-white/40 text-xs max-w-[230px] leading-relaxed">Challenge a friend or play the computer to get a game going.</p>
+              <button onClick={onBack}
+                className="mt-1 px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow">
+                Start a game
+              </button>
+            </div>
           ) : (
             <div className="w-full overflow-y-auto space-y-2">
               {activeGames.map(g => (
@@ -508,7 +521,16 @@ export default function MyGames({ onResume, onBack }: MyGamesProps) {
         ) : (
           /* Past Games tab */
           pastGames.length === 0 ? (
-            <p className="text-white/40 text-sm">No completed games</p>
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <span className="text-3xl">&#128220;</span>
+              <p className="text-white/70 text-sm font-heading">No finished games yet</p>
+              <p className="text-white/40 text-xs max-w-[230px] leading-relaxed">Play your first game and your match history will show up here.</p>
+              <button onClick={onBack}
+                className="mt-1 px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                           bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow">
+                Start a game
+              </button>
+            </div>
           ) : (
             <div className="w-full overflow-y-auto space-y-2">
               {pastGames.map(g => (

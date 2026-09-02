@@ -151,7 +151,11 @@ export default function FriendsList({ onBack, onInviteToPlay }: FriendsListProps
         ) : tab === 'friends' ? (
           <div className="w-full overflow-y-auto space-y-1.5 max-h-[40vh]">
             {friends.length === 0 ? (
-              <p className="text-white/40 text-sm text-center py-4">No friends yet. Add someone above!</p>
+              <div className="flex flex-col items-center gap-2 py-6 text-center">
+                <span className="text-3xl">&#128075;</span>
+                <p className="text-white/70 text-sm font-heading">No friends yet</p>
+                <p className="text-white/40 text-xs max-w-[230px] leading-relaxed">Add someone by username above to challenge them to a game.</p>
+              </div>
             ) : (
               <>
                 {onlineFriends.length > 0 && (

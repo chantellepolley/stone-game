@@ -173,7 +173,16 @@ export default function Leaderboard({ onBack, onInviteToPlay }: { onBack: () => 
         {loading ? (
           <SkeletonRow count={5} />
         ) : entries.length === 0 ? (
-          <p className="text-white/40 text-sm">No games played yet!</p>
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <span className="text-3xl">&#127942;</span>
+            <p className="text-white/70 text-sm font-heading">No games played yet</p>
+            <p className="text-white/40 text-xs max-w-[230px] leading-relaxed">Be the first to climb the ranks. Play a game to get on the board!</p>
+            <button onClick={onBack}
+              className="mt-1 px-4 py-2 rounded-lg text-xs font-heading uppercase tracking-wider
+                         bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow">
+              Play a game
+            </button>
+          </div>
         ) : (
           <div className="w-full overflow-y-auto">
             <table className="w-full text-sm">
