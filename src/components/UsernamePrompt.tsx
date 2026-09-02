@@ -50,18 +50,21 @@ export default function UsernamePrompt() {
       <img src="/logo.png" alt="STONE" className="h-32 sm:h-40 lg:h-48 object-contain" />
 
       {mode === 'choose' ? (
-        /* ── Initial choice: two big buttons ── */
+        /* ── Initial choice: create is primary for new visitors ── */
         <div className="flex flex-col items-center gap-4 bg-[#504840] border-2 border-[#6b5f55] rounded-xl p-6 shadow-lg max-w-sm w-full">
-          <p className="text-white text-sm font-heading">Welcome to Stone</p>
+          <p className="text-white text-sm font-heading">Welcome to STONE</p>
+          <p className="text-white/50 text-xs text-center leading-relaxed -mt-2">
+            Roll, capture, and race your stones home. Easy to learn, hard to master.
+          </p>
 
           <button
-            onClick={() => { setMode('login'); setError(''); }}
+            onClick={() => { setMode('create'); setError(''); }}
             className="w-full px-6 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
                        bg-amber-600 text-white border-2 border-amber-500
                        hover:bg-amber-500 hover:scale-105 active:scale-95
                        transition-all cursor-pointer shadow-lg"
           >
-            Login
+            Create Account
           </button>
 
           <div className="flex items-center gap-3 w-full">
@@ -71,13 +74,13 @@ export default function UsernamePrompt() {
           </div>
 
           <button
-            onClick={() => { setMode('create'); setError(''); }}
-            className="w-full px-6 py-4 rounded-xl font-heading text-sm uppercase tracking-wider
+            onClick={() => { setMode('login'); setError(''); }}
+            className="w-full px-6 py-3 rounded-xl font-heading text-sm uppercase tracking-wider
                        bg-[#5e5549] text-white border-2 border-[#6b5f55]
                        hover:bg-[#6b5f55] hover:scale-105 active:scale-95
                        transition-all cursor-pointer shadow-lg"
           >
-            Create Account
+            Already playing? Log in
           </button>
         </div>
       ) : (

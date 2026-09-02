@@ -89,6 +89,7 @@ export default function App() {
   const [autoJoinCode, setAutoJoinCode] = useState<string | null>(null);
   const [resumeData, setResumeData] = useState<{ gameId: string; roomCode: string; player: 1 | 2; inviteId?: string } | null>(null);
   const [resumeLocalGameId, setResumeLocalGameId] = useState<string | null>(null);
+  const [autoStartPractice, setAutoStartPractice] = useState(false);
   const [stoneColor, setStoneColor] = useState(loadPlayerColor());
   const [pendingNotifications, setPendingNotifications] = useState(0);
 
@@ -296,7 +297,11 @@ export default function App() {
       {screen === 'terms' && <TermsPage onBack={() => setScreen('game')} />}
       {screen === 'privacy' && <PrivacyPage onBack={() => setScreen('game')} />}
       {screen === 'feedback' && <FeedbackPanel onBack={() => setScreen('game')} />}
-      {screen === 'tutorial' && <Tutorial onFinish={() => setScreen('game')} />}
+      {screen === 'tutorial' && <Tutorial onFinish={() => {
+        // Brand-new users are handed straight into a free Easy practice game
+        if (!localStorage.getItem('stone_has_played')) setAutoStartPractice(true);
+        setScreen('game');
+      }} />}
       {screen === 'admin-feedback' && <AdminFeedback onBack={() => setScreen('game')} />}
       {screen === 'admin-players' && <AdminPlayers onBack={() => setScreen('game')} onInviteToPlay={handleInviteToPlay} />}
       {screen === 'monthly-standings' && <MonthlyStandings onBack={() => setScreen('game')} onShowHallOfFame={() => setScreen('hall-of-fame')} onInviteToPlay={handleInviteToPlay} />}
@@ -364,6 +369,8 @@ export default function App() {
           onTogglePushMute={handleTogglePushMute}
           onResumeOnlineGame={(gameId, roomCode, p) => { setResumeData({ gameId, roomCode, player: p }); setScreen('online'); }}
           onClearResumeId={() => setResumeLocalGameId(null)}
+          autoStartPractice={autoStartPractice}
+          onClearAutoStartPractice={() => setAutoStartPractice(false)}
         />
       )}
 

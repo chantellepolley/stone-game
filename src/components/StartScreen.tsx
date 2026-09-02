@@ -68,7 +68,8 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     stoneId: string; runners?: { name: string; points: number }[];
   } | null>(null);
   const [showWelcome, setShowWelcome] = useState(() => {
-    return !localStorage.getItem('stone_has_played');
+    // Brand-new only: not yet onboarded and hasn't played a real game
+    return !localStorage.getItem('stone_onboarded') && !localStorage.getItem('stone_has_played');
   });
   const [showReferralPanel, setShowReferralPanel] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
@@ -853,7 +854,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
             </p>
             <div className="flex flex-col gap-2">
               <button onClick={() => {
-                localStorage.setItem('stone_has_played', '1');
+                localStorage.setItem('stone_onboarded', '1');
                 setShowWelcome(false);
                 if (onShowTutorial) onShowTutorial();
               }}
@@ -862,12 +863,13 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                 How to Play
               </button>
               <button onClick={() => {
-                localStorage.setItem('stone_has_played', '1');
+                localStorage.setItem('stone_onboarded', '1');
                 setShowWelcome(false);
+                onStart('ai', 'easy', 0);
               }}
                 className="w-full px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
-                           bg-black/30 text-white/60 hover:text-white cursor-pointer transition-colors">
-                I'll Figure It Out
+                           bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors shadow-lg">
+                Skip to a practice game
               </button>
             </div>
           </div>

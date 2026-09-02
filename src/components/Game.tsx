@@ -42,9 +42,11 @@ interface GameProps {
   onTogglePushMute?: () => void;
   onResumeOnlineGame?: (gameId: string, roomCode: string, player: 1 | 2) => void;
   onClearResumeId?: () => void;
+  autoStartPractice?: boolean;
+  onClearAutoStartPractice?: () => void;
 }
 
-export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, onShowChallenges, pushPermission, onRequestPush, pushMuted, onTogglePushMute, onResumeOnlineGame, onClearResumeId }: GameProps) {
+export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onShowMyGames, onShowColors, onShowFriends, pendingNotifications, resumeGameId, onShowTerms, onShowPrivacy, onShowFeedback, onShowTutorial, onShowAdminFeedback, onShowAdminPlayers, onShowMonthlyStandings, onShowChallenges, pushPermission, onRequestPush, pushMuted, onTogglePushMute, onResumeOnlineGame, onClearResumeId, autoStartPractice, onClearAutoStartPractice }: GameProps) {
   const { state, roll, selectMove, restart, validMoves, awaitingJesterChoice, chooseJesterDoubles, undo, canUndo, startGame, isAITurn, pendingAIMove, aiRolling, loadGame, currentGameId } = useGame();
   const { spend, earn } = useCoins();
 
@@ -71,6 +73,17 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       resumeConsumed.current = false;
     }
   }, [resumeGameId, loadGame, state.phase]);
+
+  // Guided first game: after the tutorial, auto-start a free Easy practice match
+  const practiceConsumed = useRef(false);
+  useEffect(() => {
+    if (autoStartPractice && !practiceConsumed.current && state.phase === 'not_started') {
+      practiceConsumed.current = true;
+      handleStart('ai', 'easy', 0);
+      onClearAutoStartPractice?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartPractice, state.phase]);
   const { player } = usePlayerContext();
 
   // Handle starting an AI game with coin deduction
@@ -207,7 +220,8 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
 
   // Show rules automatically on first ever game
   const [showFirstTimeRules, setShowFirstTimeRules] = useState(() => {
-    if (localStorage.getItem('stone_has_played')) return false;
+    // Fallback only: a brand-new user who reached a game without the welcome/tutorial flow
+    if (localStorage.getItem('stone_onboarded') || localStorage.getItem('stone_has_played')) return false;
     return true;
   });
   useEffect(() => {
@@ -434,8 +448,8 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
         </div>
       )}
 
-      {/* First-time tutorial prompt */}
-      {showFirstTimeRules && !state.winner && (
+      {/* First-time tutorial prompt (fallback only — suppressed once onboarded via the welcome flow) */}
+      {showFirstTimeRules && !state.winner && !localStorage.getItem('stone_onboarded') && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-[#6b5f55] rounded-2xl p-6 shadow-2xl max-w-md w-full text-center">
             <h2 className="text-white font-heading text-xl mb-2">New to STONE?</h2>

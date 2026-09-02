@@ -206,6 +206,8 @@ export default function Tutorial({ onFinish }: TutorialProps) {
   const step = steps[stepIdx];
   const isFirst = stepIdx === 0;
   const isLast = stepIdx === steps.length - 1;
+  // Brand-new users finish into a guided first game; replays (from Settings) just close
+  const brandNew = !localStorage.getItem('stone_has_played');
 
   const advance = useCallback(() => {
     const next = stepIdx + 1;
@@ -322,7 +324,7 @@ export default function Tutorial({ onFinish }: TutorialProps) {
                        bg-amber-600 text-white border-2 border-amber-500
                        hover:bg-amber-500 hover:scale-105 active:scale-95
                        transition-all cursor-pointer shadow-lg">
-            {isFirst ? "Let's Go!" : isLast ? "Start Playing!" : 'Next'}
+            {isFirst ? "Let's Go!" : isLast ? (brandNew ? 'Play Your First Game' : 'Done') : 'Next'}
           </button>
         )}
         <button onClick={handleSkip}
