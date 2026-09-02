@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { isPromoActive as checkPromo } from '../lib/referralPromo';
 import { BOARD_THEMES, loadBoardTheme, saveBoardTheme } from '../utils/boardThemes';
 import JesterCoin from './JesterCoin';
+import GettingStarted from './GettingStarted';
 import AvatarEditor from './AvatarEditor';
 
 interface StartScreenProps {
@@ -575,6 +576,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                   Refer a Friend <span className="text-[10px] normal-case text-amber-200">+{checkPromo(player?.username) ? '500' : '100'} coins per friend</span>
                 </button>
               )}
+              <GettingStarted />
             </>
           )}
 
