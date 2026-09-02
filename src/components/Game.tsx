@@ -20,6 +20,9 @@ import JesterCoin from './JesterCoin';
 import { getBoardTheme, loadBoardTheme } from '../utils/boardThemes';
 import { BoardThemeContext } from '../contexts/BoardThemeContext';
 
+/** One-time bonus coins for a new player's very first win */
+const FIRST_WIN_BONUS = 100;
+
 interface GameProps {
   onPlayOnline?: () => void;
   onShowStats?: () => void;
@@ -62,6 +65,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   const wagerRef = useRef(0);
   const coinsAwarded = useRef(false);
   const [gameBonuses, setGameBonuses] = useState<BonusResult[]>([]);
+  const [firstWinBonus, setFirstWinBonus] = useState(0);
 
   // Resume a saved game from My Games (only if resumeGameId is set and game is not_started)
   const resumeConsumed = useRef(false);
@@ -117,6 +121,12 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
       if (isWin && wager > 0) {
         earn(wager * 2, `AI game win (${state.aiDifficulty})`);
       }
+      // First-win celebration bonus — new (onboarded) players only, once ever
+      if (isWin && localStorage.getItem('stone_onboarded') && !localStorage.getItem('stone_first_win_done')) {
+        localStorage.setItem('stone_first_win_done', '1');
+        earn(FIRST_WIN_BONUS, 'First win bonus!');
+        setFirstWinBonus(FIRST_WIN_BONUS);
+      }
       // Award bonuses (win or loss, handles streak reset on loss)
       if (player) {
         const stateWithWager = { ...state, wager };
@@ -145,6 +155,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
     coinsAwarded.current = false;
     awardingInProgress.current = false;
     setGameBonuses([]);
+    setFirstWinBonus(0);
     if (onClearResumeId) onClearResumeId();
     localStorage.removeItem('stone_menu_view');
     restart();
@@ -556,6 +567,14 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
             <p className="text-white/60 mb-2 text-sm">
               All stones have been borne off. The temple is sealed.
             </p>
+            {firstWinBonus > 0 && (
+              <div className="bg-amber-600/20 border border-amber-500/50 rounded-lg px-4 py-2.5 mb-3">
+                <p className="text-amber-300 font-heading text-sm mb-0.5">&#127881; Your very first win!</p>
+                <p className="text-green-400 font-heading text-sm flex items-center justify-center gap-1.5">
+                  +{firstWinBonus} bonus coins <JesterCoin size={14} />
+                </p>
+              </div>
+            )}
             {state.gameMode === 'ai' && currentWager > 0 && (
               <p className={`text-sm font-heading mb-2 ${state.winner === 1 ? 'text-green-400' : 'text-red-400'}`}>
                 {state.winner === 1 ? `+${currentWager} coins won!` : `-${currentWager} coins lost`} <JesterCoin size={16} />
