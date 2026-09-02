@@ -13,6 +13,7 @@ import DiceArea from './DiceArea';
 import TurnIndicator from './TurnIndicator';
 import MoveLog from './MoveLog';
 import RulesPanel from './RulesPanel';
+import FirstGameCoach from './FirstGameCoach';
 import GameControls from './GameControls';
 import StartScreen from './StartScreen';
 import JesterCoin from './JesterCoin';
@@ -79,6 +80,7 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
   useEffect(() => {
     if (autoStartPractice && !practiceConsumed.current && state.phase === 'not_started') {
       practiceConsumed.current = true;
+      if (!localStorage.getItem('stone_coach_done')) localStorage.setItem('stone_coach_pending', '1');
       handleStart('ai', 'easy', 0);
       onClearAutoStartPractice?.();
     }
@@ -275,6 +277,9 @@ export default function Game({ onPlayOnline, onShowStats, onShowLeaderboard, onS
           <span className="text-[10px] lg:text-xs text-white/40 animate-pulse">AI thinking...</span>
         )}
       </div>
+
+      {/* First-game coaching (guided new-user practice game only) */}
+      <FirstGameCoach state={state} isAITurn={isAITurn} />
 
       {/* Mobile: dice above board */}
       <div className="lg:hidden flex items-center justify-center gap-2 shrink-0">

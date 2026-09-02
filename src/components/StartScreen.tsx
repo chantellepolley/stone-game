@@ -864,6 +864,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
               </button>
               <button onClick={() => {
                 localStorage.setItem('stone_onboarded', '1');
+                if (!localStorage.getItem('stone_coach_done')) localStorage.setItem('stone_coach_pending', '1');
                 setShowWelcome(false);
                 onStart('ai', 'easy', 0);
               }}
@@ -896,7 +897,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
                            bg-amber-600 text-white hover:bg-amber-500 cursor-pointer transition-colors shadow-lg">
                 How to Play
               </button>
-              <button onClick={() => { startOnboarding(); onStart('ai', 'easy', 0); }}
+              <button onClick={() => { startOnboarding(); if (!localStorage.getItem('stone_coach_done')) localStorage.setItem('stone_coach_pending', '1'); onStart('ai', 'easy', 0); }}
                 className="w-full px-5 py-2.5 rounded-lg font-heading text-sm uppercase tracking-wider
                            bg-[#5e5549] text-white hover:bg-[#6b5f55] cursor-pointer transition-colors shadow-lg">
                 Skip to a practice game
