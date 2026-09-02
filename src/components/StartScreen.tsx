@@ -317,6 +317,21 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
     if (ok) setEditingName(false);
   };
 
+  // Only one full-screen announcement/onboarding modal shows at a time (highest priority
+  // first). Dismissing the top one flips its flag, so the next pending card appears — the
+  // cards queue instead of stacking on first load.
+  let activeModal: 'referrer' | 'welcome' | 'potmWinner' | 'announcement' | 'promo' | 'promoCountdown' | 'referralAnnounce' | 'theme' | null = null;
+  if (player) {
+    if (referrerPrompt) activeModal = 'referrer';
+    else if (showWelcome) activeModal = 'welcome';
+    else if (showPotmWinnerCard && potmWinnerData) activeModal = 'potmWinner';
+    else if (showAnnouncement) activeModal = 'announcement';
+    else if (showPromoAnnouncement) activeModal = 'promo';
+    else if (showPromoCountdownCard && promoCountdown) activeModal = 'promoCountdown';
+    else if (showReferralAnnouncement) activeModal = 'referralAnnounce';
+    else if (showThemeAnnouncement) activeModal = 'theme';
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-2 relative">
       {/* Install banner for first-time visitors */}
@@ -365,7 +380,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* POTM Announcement */}
-      {showAnnouncement && player && (
+      {activeModal === 'announcement' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-3xl mb-2">&#127942;</p>
@@ -844,7 +859,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* Welcome prompt for new players */}
-      {showWelcome && player && !referrerPrompt && (
+      {activeModal === 'welcome' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-5xl mb-3">&#127922;</p>
@@ -878,7 +893,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* Post-signup welcome for referred players — acknowledges the referral, then guides into onboarding */}
-      {referrerPrompt && player && (() => {
+      {activeModal === 'referrer' && referrerPrompt && (() => {
         // Referred users go through the same guided first-run; clear both this prompt and the generic welcome
         const startOnboarding = () => { localStorage.setItem('stone_onboarded', '1'); setReferrerPrompt(null); setShowWelcome(false); };
         return (
@@ -915,7 +930,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       })()}
 
       {/* Referral announcement popup — admin preview only */}
-      {showReferralAnnouncement && player && !showAnnouncement && (
+      {activeModal === 'referralAnnounce' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-4xl mb-2">&#127873;</p>
@@ -949,7 +964,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* POTM Winner announcement (dynamic) */}
-      {showPotmWinnerCard && potmWinnerData && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+      {activeModal === 'potmWinner' && potmWinnerData && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-5xl mb-2">&#127942;</p>
@@ -986,7 +1001,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* Referral promo countdown - last chance */}
-      {showPromoCountdownCard && player && promoCountdown && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+      {activeModal === 'promoCountdown' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-red-500/50 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-4xl mb-2">&#9200;</p>
@@ -1023,7 +1038,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* Board themes announcement */}
-      {showThemeAnnouncement && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && !showPromoAnnouncement && (
+      {activeModal === 'theme' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <p className="text-4xl mb-2">&#127912;</p>
@@ -1070,7 +1085,7 @@ export default function StartScreen({ onStart, onPlayOnline, onShowStats, onShow
       )}
 
       {/* Referral promo announcement */}
-      {showPromoAnnouncement && player && !showAnnouncement && !showReferralAnnouncement && !referrerPrompt && (
+      {activeModal === 'promo' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-[#504840] border-2 border-amber-600/40 rounded-2xl p-6 shadow-2xl max-w-sm w-full text-center">
             <div className="mb-2 flex justify-center"><JesterCoin size={52} /></div>
