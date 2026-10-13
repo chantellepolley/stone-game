@@ -981,6 +981,37 @@ export function useOnlineGame() {
     return () => clearTimeout(timer);
   }, [state.phase, state.dice.remaining.length, isMyTurn, state.turnCount, state.currentPlayer]);
 
+  // ── Foreground re-sync safety net ──
+  // Realtime broadcasts are fire-and-forget; a dropped packet leaves the waiting
+  // player frozen — classically "the opponent had no moves and it took forever to
+  // pass back to me." The DB is always the source of truth (the blocked player
+  // commits the turn-pass to it synchronously), so while it is NOT our turn we
+  // periodically reconcile against the DB and pull forward if it is on a later
+  // turn. This automates the manual "go home → My Games to reboot" workaround.
+  // Safe by construction: it only ever advances to a strictly-newer authoritative
+  // turn and is disabled while it is our turn, so it can never clobber our own
+  // in-progress moves.
+  useEffect(() => {
+    if (onlinePhase !== 'playing') return;
+    if (myPlayer === null || !gameDbId.current) return;
+    if (isMyTurn) return; // only reconcile while waiting
+    const poll = async () => {
+      if (!gameDbId.current) return;
+      const { data } = await supabase.from('games').select('state').eq('id', gameDbId.current).single();
+      if (!data?.state) return;
+      const dbState = validateState(data.state);
+      const local = stateRef.current;
+      const dbAhead = dbState.turnCount > local.turnCount
+        || (dbState.phase === 'game_over' && local.phase !== 'game_over');
+      if (dbAhead) {
+        setState(dbState);
+        stateRef.current = dbState;
+      }
+    };
+    const id = setInterval(poll, 4000);
+    return () => clearInterval(id);
+  }, [onlinePhase, isMyTurn, myPlayer, gameDbId.current]);
+
   const chooseJesterDoubles = useCallback((value: number) => {
     if (!isMyTurn) return;
     if (!state.dice.pendingDoubleJester || state.dice.remaining.length > 0) return;
