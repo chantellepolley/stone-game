@@ -207,6 +207,8 @@ export function useGame() {
   const dbCreatePending = useRef(false);
 
   const startGame = useCallback((mode: GameMode, difficulty: AIDifficulty) => {
+    // Guard against rapid taps spawning duplicate game rows while a create is in flight
+    if (dbCreatePending.current) return;
     const newState: GameState = { ...createInitialState(), phase: 'rolling', gameMode: mode, aiDifficulty: difficulty };
     setState(newState);
     statsRecorded.current = false;
@@ -238,7 +240,7 @@ export function useGame() {
           room_code: code,
           player1_id: playerId,
           mode: dbMode,
-          state: stateRef.current,
+          state: newState,
           status: 'active',
         }).select('id').single()
           .then(({ data: gameData, error: gameErr }) => {
