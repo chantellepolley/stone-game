@@ -68,11 +68,37 @@
       // here: wiping the worker's shell cache on every load removed its offline
       // fallback and caused white-screen crashes. The worker cleans up old
       // caches itself on activate (keyed by CACHE_NAME version).
+      //
+      // Auto-update: when a newly deployed worker activates and takes control,
+      // reload once so the page runs the latest code. Without this, an installed
+      // app can keep running a stale bundle for days and never receive fixes.
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          regs.forEach(function(reg) {
-            reg.update();
+        // Was a worker already controlling this page at load? If not, the first
+        // controllerchange is just the initial claim on a fresh page — don't
+        // reload for that, only for a genuine version swap.
+        var hadController = !!navigator.serviceWorker.controller;
+        var reloading = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (reloading || !hadController) return;
+          reloading = true;
+          window.location.reload();
+        });
+
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) {
+            // Activate a worker that's already waiting from a prior visit.
             if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            // Activate a worker that finishes installing during this session.
+            reg.addEventListener('updatefound', function () {
+              var nw = reg.installing;
+              if (!nw) return;
+              nw.addEventListener('statechange', function () {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  nw.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            });
+            reg.update();
           });
         });
       }

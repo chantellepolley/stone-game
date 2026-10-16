@@ -1,7 +1,10 @@
 // STONE Service Worker — push notifications + offline app shell cache
-// v7 — fetch handler can never resolve to null (fixes white-screen crash)
+// v8 — bump triggers the auto-update flow in index.html: the page reloads once
+//      when this worker activates, so installed apps stop running stale code.
+// NOTE: bump this version on any deploy that must reach already-installed apps;
+//       the browser does not re-detect an unchanged worker.
 
-const CACHE_NAME = 'stone-v7';
+const CACHE_NAME = 'stone-v8';
 const SHELL_URLS = [
   '/',
   '/stone-bg.jpg',
