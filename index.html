@@ -84,23 +84,44 @@
           window.location.reload();
         });
 
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (reg) {
-            // Activate a worker that's already waiting from a prior visit.
-            if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-            // Activate a worker that finishes installing during this session.
-            reg.addEventListener('updatefound', function () {
-              var nw = reg.installing;
-              if (!nw) return;
-              nw.addEventListener('statechange', function () {
-                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                  nw.postMessage({ type: 'SKIP_WAITING' });
-                }
-              });
+        function wireReg(reg) {
+          // Activate a worker that's already waiting from a prior visit.
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          // Only attach the install listener once per registration, even though
+          // we re-check for updates repeatedly below.
+          if (reg.__stoneWired) return;
+          reg.__stoneWired = true;
+          // Activate a worker that finishes installing during this session.
+          reg.addEventListener('updatefound', function () {
+            var nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', function () {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                nw.postMessage({ type: 'SKIP_WAITING' });
+              }
             });
-            reg.update();
           });
+        }
+
+        function checkForUpdates() {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (reg) {
+              wireReg(reg);
+              reg.update();
+            });
+          });
+        }
+
+        // Check on first load, every time the app returns to the foreground,
+        // and periodically while it stays open. An installed app that is only
+        // ever resumed (never fully reloaded) would otherwise never re-check
+        // for a new version — that is what left players stuck on stale, frozen
+        // code and expecting them to reload manually after every deploy.
+        checkForUpdates();
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') checkForUpdates();
         });
+        setInterval(checkForUpdates, 5 * 60 * 1000);
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>

@@ -1,10 +1,12 @@
 // STONE Service Worker — push notifications + offline app shell cache
-// v8 — bump triggers the auto-update flow in index.html: the page reloads once
+// v9 — bump triggers the auto-update flow in index.html: the page reloads once
 //      when this worker activates, so installed apps stop running stale code.
+//      v9 also ships foreground + periodic update checks (index.html), so an
+//      installed app that is only ever resumed now still catches new deploys.
 // NOTE: bump this version on any deploy that must reach already-installed apps;
 //       the browser does not re-detect an unchanged worker.
 
-const CACHE_NAME = 'stone-v8';
+const CACHE_NAME = 'stone-v9';
 const SHELL_URLS = [
   '/',
   '/stone-bg.jpg',
